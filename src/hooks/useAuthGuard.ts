@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useCheckSessionQuery, selectAuthStatus } from '@/src/store/auth';
 import { useAppSelector } from './store';
 
-export function useAuthGuard(redirectTo: string = '/') {
+export function useAuthGuard(redirectTo: string = '/dashboard') {
   const router = useRouter();
   const { data: sessionData, isLoading: isCheckingSession } = useCheckSessionQuery();
   const authStatus = useAppSelector(selectAuthStatus);

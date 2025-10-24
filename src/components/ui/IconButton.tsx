@@ -1,54 +1,60 @@
 'use client';
 
 import React, { type ReactNode } from 'react';
-import { Button, type ButtonProps } from './Button';
 
-export interface IconButtonProps extends Omit<ButtonProps, 'children' | 'leftIcon' | 'rightIcon'> {
+export interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode; // The icon component
   'aria-label': string; // Required for accessibility
   'aria-labelledby'?: string;
   'aria-describedby'?: string;
+  variant?: 'ghost' | 'solid' | 'outline';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
 }
 
 export const IconButton = function IconButton({
   children,
-  size = 'md',
+  size = 'sm',
   variant = 'ghost',
-  radius = 'xs',
-  className,
+  className = '',
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
   'aria-describedby': ariaDescribedBy,
   ...rest
 }: IconButtonProps) {
-  // Icon size mapping based on button size
-  const iconSizeClasses = {
-    xs: 'h-3 w-3',
-    sm: 'h-4 w-4', 
-    md: 'h-5 w-5',
-    lg: 'h-6 w-6',
+  // Consistent small button size for all variants
+  const buttonSizeClasses = 'h-8 w-8';
+  
+  // Icon size - small for all variants
+  const iconSizeClasses = 'h-4 w-4';
+  
+  // Variant styles
+  const variantClasses = {
+    ghost: 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700',
+    solid: 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 border border-gray-900 dark:border-gray-100',
+    outline: 'border border-gray-300 dark:border-gray-600 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
   };
 
-  // Wrap the icon in a span with size classes
-  const iconWithSize = (
-    <span className={iconSizeClasses[size]}>
-      {children}
-    </span>
-  );
-
   return (
-    <Button
+    <button
       {...rest}
-      size={size}
-      variant={variant}
-      radius={radius}
-      className={className}
+      className={`
+        ${buttonSizeClasses}
+        ${variantClasses[variant]}
+        rounded-lg
+        flex items-center justify-center
+        transition-colors duration-200
+        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+        disabled:opacity-50 disabled:cursor-not-allowed
+        ${className}
+      `.trim()}
       aria-label={ariaLabel}
       aria-labelledby={ariaLabelledBy}
       aria-describedby={ariaDescribedBy}
     >
-      {iconWithSize}
-    </Button>
+      <span className={iconSizeClasses}>
+        {children}
+      </span>
+    </button>
   );
 };
 

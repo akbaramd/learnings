@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthState } from '@/src/hooks/useAuthState';
+import { useAuth } from '@/src/hooks/useAuth';
 
 interface ProtectedLayoutProps {
   children: React.ReactNode;
@@ -18,7 +18,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
     hasError, 
     user, 
     refetchSession 
-  } = useAuthState();
+  } = useAuth();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -30,7 +30,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900" dir="rtl">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400 text-sm">
@@ -44,7 +44,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   // Show error state with retry option
   if (hasError) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900" dir="rtl">
         <div className="text-center">
           <div className="w-16 h-16 mx-auto mb-4 text-red-600">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,7 +68,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   // If not authenticated, will redirect to login
   if (!isAuthenticated) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900" dir="rtl">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-red-600 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400 text-sm">
@@ -79,5 +79,5 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
     );
   }
 
-  return <>{children}</>;
+  return <div dir="rtl">{children}</div>;
 }

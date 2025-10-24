@@ -42,7 +42,7 @@ export default function LoginPage() {
   const [sendOtpMutation, { isLoading, error }] = useSendOtpMutation();
   
   // Check authentication and redirect if already logged in
-  const { isLoading: isCheckingSession } = useAuthGuard('/');
+  const { isLoading: isCheckingSession } = useAuthGuard('/dashboard');
   
   // دریافت challengeId و auth status از Redux store
   const challengeId = useAppSelector(selectChallengeId);

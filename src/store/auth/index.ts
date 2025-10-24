@@ -48,7 +48,6 @@ export {
 
 // Export auth hooks
 export { useAuth } from '../../hooks/useAuth';
-export { useAuthState } from '../../hooks/useAuthState';
 export { useAuthGuard } from '../../hooks/useAuthGuard';
 
 

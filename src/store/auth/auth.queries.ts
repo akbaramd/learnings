@@ -149,8 +149,10 @@ export const authApi = createApi({
             // Only update to authenticated if we're not in OTP flow
             if (currentStatus !== 'otp-sent') {
               dispatch(setAuthStatus('authenticated'));
-              // Fetch user profile if authenticated
-              dispatch(authApi.endpoints.getMe.initiate());
+              // Only fetch user profile if we're not already authenticated
+              if (currentStatus !== 'authenticated') {
+                dispatch(authApi.endpoints.getMe.initiate());
+              }
             }
           } else {
             // Don't override OTP flow state
@@ -180,7 +182,7 @@ export const authApi = createApi({
         method: 'GET',
       }),
       providesTags: ['User'],
-      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+      async onQueryStarted(arg, { dispatch, queryFulfilled, getState }) {
         try {
           const { data } = await queryFulfilled;
 
@@ -199,32 +201,52 @@ export const authApi = createApi({
             dispatch(setUser(user));
             dispatch(setAuthStatus('authenticated'));
           }
-        } catch {
-          // If getting user profile fails, user might not be authenticated
-          dispatch(clearUser());
-          dispatch(setAuthStatus('anonymous'));
+        } catch (error: unknown) {
+          // Check if it's a 401 error (unauthorized)
+          const currentState = getState() as RootState;
+          const currentStatus = currentState.auth.status;
+          
+          // If getting user profile fails with 401, user is not authenticated
+          if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
+            console.log('getMe returned 401, clearing auth state');
+            dispatch(clearUser());
+            dispatch(setAuthStatus('anonymous'));
+          } else if (currentStatus !== 'otp-sent') {
+            // Only clear state if we're not in OTP flow
+            dispatch(clearUser());
+            dispatch(setAuthStatus('anonymous'));
+          }
         }
       },
     }),
 
     // Logout mutation
-    logout: builder.mutation<LogoutResponse, void>({
-      query: () => ({
+    logout: builder.mutation<LogoutResponse, { refreshToken?: string }>({
+      query: ({ refreshToken }) => ({
         url: '/auth/logout',
         method: 'POST',
+        body: { refreshToken: refreshToken || null },
       }),
-      invalidatesTags: ['Auth', 'User'],
+      invalidatesTags: ['Auth'], // Only invalidate Auth, not User to prevent /me refetch
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           dispatch(setAuthStatus('loading'));
           dispatch(clearError());
 
-          await queryFulfilled;
+          const { data } = await queryFulfilled;
 
-          // Clear all auth state on successful logout
-          dispatch(clearUser());
-          dispatch(clearChallengeId());
-          dispatch(setAuthStatus('anonymous'));
+          // Only clear state if logout was successful
+          if (data?.result?.isSuccess) {
+            // Clear all auth state on successful logout
+            dispatch(clearUser());
+            dispatch(clearChallengeId());
+            dispatch(setAuthStatus('anonymous'));
+          } else {
+            // If logout failed, keep current state
+            dispatch(setAuthStatus('authenticated'));
+            const errorMessage = data?.errors?.[0] || 'Logout failed';
+            dispatch(setError(errorMessage));
+          }
         } catch (error: unknown) {
           // Even if logout fails on server, clear local state
           dispatch(clearUser());

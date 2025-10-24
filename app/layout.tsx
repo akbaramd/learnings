@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { ClientProviders } from "../src/components/ClientProviders";
 import Providers from "../src/components/StoreProvider";
+import { ErrorBoundary } from "../src/components/ErrorBoundary";
 
 import { Vazirmatn } from 'next/font/google';
 
@@ -28,11 +29,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fa" dir="rtl">
       <head />
       <body className={`${vazirmatn.variable}`}>
-        <Providers>
-          <ClientProviders>
-            {children}
-          </ClientProviders>
-        </Providers>
+        <ErrorBoundary>
+          <Providers>
+            <ClientProviders>
+              {children}
+            </ClientProviders>
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   );

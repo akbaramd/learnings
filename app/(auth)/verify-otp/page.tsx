@@ -46,7 +46,7 @@ export default function VerifyOtpPage() {
       success('کد تأیید موفق!', 'اکنون می‌توانید وارد شوید.');
       // Navigate to dashboard/index page
       setTimeout(() => {
-        router.push('/');
+        router.push('/dashboard');
       }, 1500);
     }
   }, [isAuthenticated, success, router]);
