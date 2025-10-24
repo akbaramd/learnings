@@ -60,6 +60,18 @@ export default function Home() {
           </a>
         </div>
       </main>
+      
+      {/* Footer row stays inside viewport; no page scroll side effect */}
+      <footer
+        className={[
+          "border-t border-[var(--color-border)] text-[11px] sm:text-xs leading-4 text-neutral-500 text-center",
+          "px-4 py-3",
+          "pb-[max(env(safe-area-inset-bottom),0.75rem)]", // iOS safe-area
+          "bg-white/60 backdrop-blur-[2px]",               // subtle contrast on light bg
+        ].join(" ")}
+      >
+        © 2025 Bonyan Software Group — All rights reserved.
+      </footer>
     </div>
   );
 }

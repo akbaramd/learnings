@@ -1,26 +1,202 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Custom Dark Mode Variant - Manual Toggle */
+@custom-variant dark (&:where(.dark, .dark *));
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Toast Animations */
+@keyframes shrink {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Tokens */
+@theme {
+  --size-4: 1rem;
+  --size-10: 2.5rem;
+
+  --radius-sm: 0.125rem;
+  --radius-md: 0.25rem;
+
+  --color-surface: #ffffff;
+  --color-border: #e5e7eb;
+  --color-text: #0a0a0a;
+  --color-muted: #6b7280;
+
+  --color-sky-100: #dbeafe;
+  --color-sky-600: #0284c7;
+
+  --color-green-600: #16a34a;
+  --color-green-700: #15803d;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+
+  /* Font Family Configuration */
+  --font-family-sans:  'Vazirmatn', 'Tahoma', 'Arial', sans-serif;
+  --font-family-serif:  'Vazirmatn', 'Times New Roman', serif;
+  --font-family-mono:  'Vazirmatn', 'Courier New', monospace : 'Courier New', monospace;
+  --font-display: 'Vazirmatn', 'Tahoma', 'Arial', sans-serif : 'Tahoma', 'Arial', sans-serif;
+  
+  /* Font Weight Configuration */
+  --font-weight-normal: 500;
+  --font-weight-medium: 500;
+  
+  /* Font Feature Settings for Vazirmatn */
+  --font-display--font-feature-settings: "liga", "kern", "calt";
+  --font-display--font-variation-settings: "wght" 500;
+}
+
+/* Animations */
+@keyframes dot { 0%,20%{opacity:.2} 40%{opacity:1} 100%{opacity:.2} }
+@keyframes sweep { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+/* Soft glow for typing status box */
+@keyframes glow {
+  0%   { box-shadow: 0 0 0 0 rgba(2,132,199,.30), inset 0 0 0 1px rgba(2,132,199,.25); }
+  50%  { box-shadow: 0 0 14px 2px rgba(2,132,199,.45), inset 0 0 0 1px rgba(2,132,199,.35); }
+  100% { box-shadow: 0 0 0 0 rgba(2,132,199,.30), inset 0 0 0 1px rgba(2,132,199,.25); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe\:animate-none { animation: none !important; }
+}
+
+/* Base */
+@layer base {
+  html, body { 
+    -webkit-font-smoothing: antialiased; 
+    -moz-osx-font-smoothing: grayscale;
+    direction: rtl;
+    font-family: var(--font-family-sans);
+    font-weight: var(--font-weight-normal);
+  }
+  
+  /* RTL Support */
+  [dir="rtl"] {
+    direction: rtl;
+  }
+  
+  [dir="ltr"] {
+    direction: ltr;
+  }
+}
+
+/* Components */
+@layer components {
+  .card { @apply rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-4; }
+
+  .input {
+    @apply h-10 w-full rounded-sm border border-neutral-300 px-4 text-base text-neutral-900
+           hover:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+  .input--ring-default { @apply focus:ring-[var(--color-sky-600)]   focus:border-[var(--color-sky-600)]; }
+  .input--ring-valid   { @apply focus:ring-[var(--color-green-600)] focus:border-[var(--color-green-600)]; }
+  .input--ring-invalid { @apply focus:ring-[var(--color-red-600)]   focus:border-[var(--color-red-600)]; }
+
+  /* Status square buttons (outside input) */
+  .status-box {
+    @apply grid place-items-center h-10 w-10 rounded-sm select-none cursor-pointer
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-sky-600)]
+           transition-[background-color,box-shadow,transform] duration-150 overflow-hidden;
+  }
+
+  /* Typing = neutral bg + animated glow (no gradient) */
+  .status--typing {
+    @apply bg-white text-neutral-800;               /* plain background */
+    animation: glow 1.6s ease-in-out infinite;      /* blue glow */
+  }
+
+  /* Valid = solid green background (no gradient) */
+  .status--valid {
+    @apply bg-[var(--color-green-600)] text-white hover:bg-[var(--color-green-700)] active:translate-y-[1px];
+  }
+
+  /* Invalid = solid red background (no gradient) */
+  .status--invalid {
+    @apply bg-[var(--color-red-600)] text-white hover:bg-[var(--color-red-700)] active:translate-y-[1px];
+  }
+
+  /* Idle = neutral button look (no dark border, soft inner edge) */
+  .status--idle {
+    @apply bg-white text-neutral-600 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] hover:bg-neutral-100 active:translate-y-[1px];
+  }
+
+  /* Primary button core */
+  .btn {
+    @apply relative h-10 w-full rounded-sm px-4 text-sm font-semibold
+           transition-[background-color,transform,opacity,box-shadow] duration-150 overflow-hidden;
+  }
+  .btn--primary {
+    @apply bg-[var(--color-green-600)] text-white hover:bg-[var(--color-green-700)]
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-green-700)]
+           active:[transform:scale(.98)];
+  }
+  .btn--disabled { @apply cursor-not-allowed bg-neutral-200 text-neutral-500; }
+
+  /* Loading variant: ONLY during loading do we show the sweep + wait cursor */
+  .btn--loading {
+    @apply cursor-wait;
+  }
+  .btn--loading::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.35) 50%, transparent 100%);
+    transform: translateX(-100%);
+    animation: sweep 1.4s linear infinite;
+    will-change: transform; pointer-events: none; filter: saturate(120%); mix-blend-mode: screen;
+  }
+
+  /* Typing dots cluster (status button content) */
+  .dots { @apply inline-flex items-center; }
+  .dots > i { @apply inline-block w-1 h-1 rounded-full bg-current; animation: dot 1.2s infinite; }
+  .dots > i:nth-child(2) { animation-delay: .2s; @apply ml-1; }
+  .dots > i:nth-child(3) { animation-delay: .4s; @apply ml-1; }
+}
+
+/* Utilities */
+@utility tap-highlight-none { -webkit-tap-highlight-color: transparent; }
+
+/* Dynamic Height Classes */
+@utility h-screen { height: 100vh; }
+@utility h-full { height: 100%; }
+@utility h-auto { height: auto; }
+@utility h-min { height: min-content; }
+@utility h-max { height: max-content; }
+@utility h-fit { height: fit-content; }
+@utility h-dvh { height: 100dvh; }
+@utility h-dvw { height: 100dvw; }
+@utility h-lvh { height: 100lvh; }
+@utility h-lvw { height: 100lvw; }
+@utility h-svh { height: 100svh; }
+@utility h-svw { height: 100svw; }
+
+/* Dynamic Width Classes */
+@utility w-screen { width: 100vw; }
+@utility w-full { width: 100%; }
+@utility w-auto { width: auto; }
+@utility w-min { width: min-content; }
+@utility w-max { width: max-content; }
+@utility w-fit { width: fit-content; }
+@utility w-dvw { width: 100dvw; }
+@utility w-dvh { width: 100dvh; }
+@utility w-lvw { width: 100lvw; }
+@utility w-lvh { width: 100lvh; }
+@utility w-svw { width: 100svw; }
+@utility w-svh { width: 100svh; }
+
+/* Dynamic Max Width Classes */
+@utility max-w-28rem { max-width: 28rem; }
+@utility max-w-32rem { max-width: 32rem; }
+@utility max-w-36rem { max-width: 36rem; }
+@utility max-w-40rem { max-width: 40rem; }
+@utility max-w-44rem { max-width: 44rem; }
+@utility max-w-48rem { max-width: 48rem; }
+
+/* Font Display Utility */
+@utility font-display {
+  font-family: var(--font-display);
+  font-feature-settings: var(--font-display--font-feature-settings);
+  font-variation-settings: var(--font-display--font-variation-settings);
 }
