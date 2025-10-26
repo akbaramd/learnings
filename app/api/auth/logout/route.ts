@@ -114,8 +114,8 @@ export async function POST(req: NextRequest) {
     
     const errorResponse: LogoutResponse = {
       result: null,
-      errors: ['Internal server error']
+      errors: [error instanceof Error ? error.message : String(error),'Failed to logout. Please try again.']
     };
-    return NextResponse.json(errorResponse, { status: 500 });
+    return NextResponse.json(errorResponse, { status: 400 });
   }
 }

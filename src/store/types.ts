@@ -2,17 +2,25 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { api } from '@/src/services/apiBase';
 import { authReducer, authApi } from './auth';
+import { notificationsReducer, notificationsApi } from './notifications';
+import { walletsReducer, walletsApi } from './wallets';
 
 export const store = configureStore({
   reducer: {
     [api.reducerPath]: api.reducer,
     [authApi.reducerPath]: authApi.reducer,
+    [notificationsApi.reducerPath]: notificationsApi.reducer,
+    [walletsApi.reducerPath]: walletsApi.reducer,
     auth: authReducer,
+    notifications: notificationsReducer,
+    wallets: walletsReducer,
   },
   middleware: (getDefault) => 
     getDefault()
       .concat(api.middleware)
-      .concat(authApi.middleware),
+      .concat(authApi.middleware)
+      .concat(notificationsApi.middleware)
+      .concat(walletsApi.middleware),
   devTools: process.env.NODE_ENV !== 'production',
 });
 

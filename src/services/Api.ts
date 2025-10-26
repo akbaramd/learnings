@@ -295,107 +295,77 @@ export interface BankInfoDto {
   isAvailable?: boolean;
 }
 
-export interface BillPaymentHistoryDto {
+export interface BillDetailDto {
   /** @format uuid */
-  paymentId?: string;
-  /** @format double */
-  amountRials?: number;
-  method?: string | null;
-  status?: string | null;
-  statusText?: string | null;
-  gateway?: string | null;
-  gatewayTransactionId?: string | null;
-  gatewayReference?: string | null;
+  id?: string;
   /** @format date-time */
   createdAt?: string;
+  createdBy?: string | null;
   /** @format date-time */
-  completedAt?: string | null;
-  failureReason?: string | null;
-}
-
-export interface BillPaymentItemSummaryDto {
-  /** @format uuid */
-  itemId?: string;
-  title?: string | null;
-  description?: string | null;
-  /** @format double */
-  unitPriceRials?: number;
-  /** @format int32 */
-  quantity?: number;
-  /** @format double */
-  discountPercentage?: number | null;
-  /** @format double */
-  lineTotalRials?: number;
-}
-
-export interface BillPaymentStatusResponse {
-  /** @format uuid */
-  billId?: string;
+  lastModifiedAt?: string | null;
+  lastModifiedBy?: string | null;
+  isDeleted?: boolean;
+  /** @format date-time */
+  deletedAt?: string | null;
+  deletedBy?: string | null;
   billNumber?: string | null;
   title?: string | null;
   referenceId?: string | null;
-  trackingCode?: string | null;
   billType?: string | null;
   /** @format uuid */
-  userExternalUserId?: string;
+  externalUserId?: string;
   userFullName?: string | null;
   status?: string | null;
   statusText?: string | null;
-  isPaid?: boolean;
-  isPartiallyPaid?: boolean;
-  isOverdue?: boolean;
-  isCancelled?: boolean;
   /** @format double */
   totalAmountRials?: number;
   /** @format double */
   paidAmountRials?: number;
   /** @format double */
   remainingAmountRials?: number;
-  description?: string | null;
+  /** @format double */
+  discountAmountRials?: number | null;
+  discountCode?: string | null;
+  /** @format uuid */
+  discountCodeId?: string | null;
   /** @format date-time */
   issueDate?: string;
   /** @format date-time */
   dueDate?: string | null;
   /** @format date-time */
   fullyPaidDate?: string | null;
+  trackingCode?: string | null;
+  description?: string | null;
   metadata?: Record<string, string>;
-  paymentHistory?: BillPaymentHistoryDto[] | null;
-  refundHistory?: BillRefundHistoryDto[] | null;
-  billItems?: BillPaymentItemSummaryDto[] | null;
+  isPaid?: boolean;
+  isPartiallyPaid?: boolean;
+  isOverdue?: boolean;
+  isCancelled?: boolean;
   /** @format double */
   paymentCompletionPercentage?: number;
+  /** @format int64 */
+  secondsUntilDue?: number | null;
+  /** @format int64 */
+  secondsOverdue?: number;
   /** @format int32 */
-  daysUntilDue?: number;
+  itemsCount?: number;
   /** @format int32 */
-  daysOverdue?: number;
+  paymentsCount?: number;
+  /** @format int32 */
+  refundsCount?: number;
+  items?: BillItemDto[] | null;
+  payments?: PaymentDto[] | null;
+  refunds?: RefundDto[] | null;
 }
 
-export interface BillPaymentStatusResponseApplicationResult {
+export interface BillDetailDtoApplicationResult {
   isSuccess?: boolean;
   message?: string | null;
   errors?: string[] | null;
-  data?: BillPaymentStatusResponse;
+  data?: BillDetailDto;
 }
 
-export interface BillRefundHistoryDto {
-  /** @format uuid */
-  refundId?: string;
-  /** @format double */
-  amountRials?: number;
-  reason?: string | null;
-  status?: string | null;
-  statusText?: string | null;
-  /** @format uuid */
-  requestedByExternalUserId?: string;
-  /** @format date-time */
-  requestedAt?: string;
-  /** @format date-time */
-  completedAt?: string | null;
-  gatewayRefundId?: string | null;
-  gatewayReference?: string | null;
-}
-
-export interface BillWithDiscountDto {
+export interface BillDiscountSnapshotDto {
   /** @format uuid */
   billId?: string;
   billNumber?: string | null;
@@ -403,15 +373,12 @@ export interface BillWithDiscountDto {
   referenceId?: string | null;
   billType?: string | null;
   status?: string | null;
+  statusText?: string | null;
   /** @format uuid */
   externalUserId?: string;
   userFullName?: string | null;
   /** @format double */
   originalTotalAmountRials?: number;
-  /** @format double */
-  discountAmountRials?: number;
-  /** @format double */
-  newTotalAmountRials?: number;
   /** @format double */
   paidAmountRials?: number;
   /** @format double */
@@ -431,7 +398,101 @@ export interface BillWithDiscountDto {
   isOverdue?: boolean;
   isCancelled?: boolean;
   canApplyDiscount?: boolean;
-  items?: DiscountValidationItemSummaryDto[] | null;
+  items?: DiscountValidationItemDto[] | null;
+}
+
+export interface BillDto {
+  /** @format uuid */
+  id?: string;
+  /** @format date-time */
+  createdAt?: string;
+  createdBy?: string | null;
+  /** @format date-time */
+  lastModifiedAt?: string | null;
+  lastModifiedBy?: string | null;
+  isDeleted?: boolean;
+  /** @format date-time */
+  deletedAt?: string | null;
+  deletedBy?: string | null;
+  billNumber?: string | null;
+  title?: string | null;
+  referenceId?: string | null;
+  billType?: string | null;
+  /** @format uuid */
+  externalUserId?: string;
+  userFullName?: string | null;
+  status?: string | null;
+  statusText?: string | null;
+  /** @format double */
+  totalAmountRials?: number;
+  /** @format double */
+  paidAmountRials?: number;
+  /** @format double */
+  remainingAmountRials?: number;
+  /** @format double */
+  discountAmountRials?: number | null;
+  discountCode?: string | null;
+  /** @format uuid */
+  discountCodeId?: string | null;
+  /** @format date-time */
+  issueDate?: string;
+  /** @format date-time */
+  dueDate?: string | null;
+  /** @format date-time */
+  fullyPaidDate?: string | null;
+  trackingCode?: string | null;
+  description?: string | null;
+  metadata?: Record<string, string>;
+  isPaid?: boolean;
+  isPartiallyPaid?: boolean;
+  isOverdue?: boolean;
+  isCancelled?: boolean;
+  /** @format double */
+  paymentCompletionPercentage?: number;
+  /** @format int64 */
+  secondsUntilDue?: number | null;
+  /** @format int64 */
+  secondsOverdue?: number;
+  /** @format int32 */
+  itemsCount?: number;
+  /** @format int32 */
+  paymentsCount?: number;
+  /** @format int32 */
+  refundsCount?: number;
+}
+
+export interface BillDtoPaginatedResult {
+  items?: BillDto[] | null;
+  /** @format int32 */
+  totalCount?: number;
+  /** @format int32 */
+  pageNumber?: number;
+  /** @format int32 */
+  pageSize?: number;
+}
+
+export interface BillDtoPaginatedResultApplicationResult {
+  isSuccess?: boolean;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: BillDtoPaginatedResult;
+}
+
+export interface BillItemDto {
+  /** @format uuid */
+  itemId?: string;
+  title?: string | null;
+  description?: string | null;
+  /** @format double */
+  unitPriceRials?: number;
+  /** @format int32 */
+  quantity?: number;
+  /** @format double */
+  discountPercentage?: number | null;
+  /** @format double */
+  lineTotalRials?: number;
+  /** @format date-time */
+  createdAt?: string;
 }
 
 export interface BulkUpdateSettingsCommand {
@@ -639,47 +700,6 @@ export interface CreateAgencyRequest {
   managerPhone?: string | null;
   /** @format date-time */
   establishedDate?: string | null;
-}
-
-export interface CreateBillCommand {
-  title?: string | null;
-  referenceId?: string | null;
-  billType?: string | null;
-  /** @format uuid */
-  externalUserId?: string;
-  userFullName?: string | null;
-  description?: string | null;
-  /** @format date-time */
-  dueDate?: string | null;
-  metadata?: Record<string, string>;
-  items?: CreateBillItemRequest[] | null;
-}
-
-export interface CreateBillItemRequest {
-  title?: string | null;
-  description?: string | null;
-  /** @format double */
-  unitPriceRials?: number;
-  /** @format int32 */
-  quantity?: number;
-  /** @format double */
-  discountPercentage?: number | null;
-}
-
-export interface CreateBillResponse {
-  /** @format uuid */
-  billId?: string;
-  billNumber?: string | null;
-  status?: string | null;
-  /** @format date-time */
-  issueDate?: string;
-}
-
-export interface CreateBillResponseApplicationResult {
-  isSuccess?: boolean;
-  message?: string | null;
-  errors?: string[] | null;
-  data?: CreateBillResponse;
 }
 
 export interface CreateCategoryCommand {
@@ -1026,12 +1046,13 @@ export interface DeleteClaimsFromUserCommand {
   removedBy?: string | null;
 }
 
-export interface DiscountCodeDto {
+export interface DiscountCodeSnapshotDto {
   /** @format uuid */
   discountCodeId?: string;
   code?: string | null;
   title?: string | null;
   type?: string | null;
+  status?: string | null;
   /** @format double */
   value?: number;
   /** @format date-time */
@@ -1042,8 +1063,9 @@ export interface DiscountCodeDto {
   usageLimit?: number | null;
   /** @format int32 */
   currentUsages?: number;
+  /** @format int32 */
+  remainingUsages?: number;
   isSingleUse?: boolean;
-  status?: string | null;
   description?: string | null;
   /** @format double */
   minimumBillAmountRials?: number | null;
@@ -1052,29 +1074,11 @@ export interface DiscountCodeDto {
   isExpired?: boolean;
   isDepleted?: boolean;
   isActive?: boolean;
-  /** @format int32 */
-  remainingUsages?: number;
 }
 
-export interface DiscountValidationItemSummaryDto {
-  /** @format uuid */
-  itemId?: string;
-  description?: string | null;
-  /** @format double */
-  unitPriceRials?: number;
-  /** @format int32 */
-  quantity?: number;
-  /** @format double */
-  totalAmountRials?: number;
-  referenceId?: string | null;
-  metadata?: Record<string, string>;
-}
-
-export interface DiscountValidationResponse {
+export interface DiscountValidationDto {
   isValid?: boolean;
   errors?: string[] | null;
-  bill?: BillWithDiscountDto;
-  discountCode?: DiscountCodeDto;
   /** @format double */
   discountAmountRials?: number;
   /** @format double */
@@ -1083,13 +1087,30 @@ export interface DiscountValidationResponse {
   discountPercentage?: number | null;
   isPercentageDiscount?: boolean;
   isFixedAmountDiscount?: boolean;
+  bill?: BillDiscountSnapshotDto;
+  discountCode?: DiscountCodeSnapshotDto;
 }
 
-export interface DiscountValidationResponseApplicationResult {
+export interface DiscountValidationDtoApplicationResult {
   isSuccess?: boolean;
   message?: string | null;
   errors?: string[] | null;
-  data?: DiscountValidationResponse;
+  data?: DiscountValidationDto;
+}
+
+export interface DiscountValidationItemDto {
+  /** @format uuid */
+  itemId?: string;
+  title?: string | null;
+  description?: string | null;
+  /** @format double */
+  unitPriceRials?: number;
+  /** @format int32 */
+  quantity?: number;
+  /** @format double */
+  lineTotalRials?: number;
+  referenceId?: string | null;
+  metadata?: Record<string, string>;
 }
 
 export interface FacilityCapabilityPolicyDto {
@@ -1754,8 +1775,6 @@ export interface NotificationDtoPaginatedResult {
   pageNumber?: number;
   /** @format int32 */
   pageSize?: number;
-  /** @format int32 */
-  totalPages?: number;
 }
 
 export interface NotificationDtoPaginatedResultApplicationResult {
@@ -1962,13 +1981,14 @@ export interface PaymentCallbackResult {
   paymentId?: string;
   /** @format double */
   trackingNumber?: number;
+  trackingCode?: string | null;
+  billType?: string | null;
   isSuccessful?: boolean;
   message?: string | null;
   transactionCode?: string | null;
   amount?: Money;
   /** @format date-time */
   processedAt?: string;
-  redirectUrl?: string | null;
   newStatus?: PaymentStatus;
   /** @format uuid */
   billId?: string;
@@ -1990,6 +2010,28 @@ export interface PaymentCallbackResultApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: PaymentCallbackResult;
+}
+
+export interface PaymentDto {
+  /** @format uuid */
+  paymentId?: string;
+  /** @format uuid */
+  billId?: string;
+  billNumber?: string | null;
+  /** @format double */
+  amountRials?: number;
+  method?: string | null;
+  status?: string | null;
+  statusText?: string | null;
+  /** @format date-time */
+  createdAt?: string;
+  /** @format date-time */
+  completedAt?: string | null;
+  trackingNumber?: string | null;
+  gateway?: string | null;
+  gatewayTransactionId?: string | null;
+  /** @format int64 */
+  secondsUntilExpiry?: number | null;
 }
 
 export interface PaymentGatewayInfo {
@@ -2366,6 +2408,32 @@ export interface RefreshTokenResponseApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: RefreshTokenResponse;
+}
+
+export interface RefundDto {
+  /** @format uuid */
+  refundId?: string;
+  /** @format uuid */
+  billId?: string;
+  /** @format double */
+  amountRials?: number;
+  status?: string | null;
+  statusText?: string | null;
+  reason?: string | null;
+  /** @format uuid */
+  requestedByExternalUserId?: string;
+  /** @format date-time */
+  requestedAt?: string;
+  /** @format date-time */
+  processedAt?: string | null;
+  /** @format date-time */
+  completedAt?: string | null;
+  gatewayRefundId?: string | null;
+  gatewayReference?: string | null;
+  processorNotes?: string | null;
+  rejectionReason?: string | null;
+  /** @format int64 */
+  secondsSinceRequested?: number;
 }
 
 export interface RejectFacilityRequestRequest {
@@ -3803,8 +3871,6 @@ export interface TourDtoPaginatedResult {
   pageNumber?: number;
   /** @format int32 */
   pageSize?: number;
-  /** @format int32 */
-  totalPages?: number;
 }
 
 export interface TourDtoPaginatedResultApplicationResult {
@@ -4093,87 +4159,6 @@ export interface UserAnswerStatusDto {
   statusMessage?: string | null;
 }
 
-export interface UserBillSummaryDto {
-  /** @format uuid */
-  billId?: string;
-  billNumber?: string | null;
-  title?: string | null;
-  referenceId?: string | null;
-  billType?: string | null;
-  status?: string | null;
-  isPaid?: boolean;
-  isPartiallyPaid?: boolean;
-  isOverdue?: boolean;
-  isCancelled?: boolean;
-  /** @format double */
-  totalAmountRials?: number;
-  /** @format double */
-  paidAmountRials?: number;
-  /** @format double */
-  remainingAmountRials?: number;
-  /** @format date-time */
-  issueDate?: string;
-  /** @format date-time */
-  dueDate?: string | null;
-  /** @format date-time */
-  fullyPaidDate?: string | null;
-  /** @format double */
-  paymentCompletionPercentage?: number;
-  /** @format int32 */
-  daysUntilDue?: number;
-  /** @format int32 */
-  daysOverdue?: number;
-  /** @format int32 */
-  itemsCount?: number;
-  /** @format int32 */
-  paymentsCount?: number;
-}
-
-export interface UserBillsResponse {
-  /** @format uuid */
-  userExternalUserId?: string;
-  /** @format int32 */
-  totalCount?: number;
-  /** @format int32 */
-  pageNumber?: number;
-  /** @format int32 */
-  pageSize?: number;
-  /** @format int32 */
-  totalPages?: number;
-  bills?: UserBillSummaryDto[] | null;
-  statistics?: UserBillsStatisticsDto;
-}
-
-export interface UserBillsResponseApplicationResult {
-  isSuccess?: boolean;
-  message?: string | null;
-  errors?: string[] | null;
-  data?: UserBillsResponse;
-}
-
-export interface UserBillsStatisticsDto {
-  /** @format int32 */
-  totalBills?: number;
-  /** @format int32 */
-  paidBills?: number;
-  /** @format int32 */
-  unpaidBills?: number;
-  /** @format int32 */
-  partiallyPaidBills?: number;
-  /** @format int32 */
-  overdueBills?: number;
-  /** @format int32 */
-  cancelledBills?: number;
-  /** @format double */
-  totalAmountRials?: number;
-  /** @format double */
-  paidAmountRials?: number;
-  /** @format double */
-  remainingAmountRials?: number;
-  /** @format double */
-  overdueAmountRials?: number;
-}
-
 export interface UserClaimDto {
   /** @format uuid */
   id?: string;
@@ -4273,8 +4258,6 @@ export interface UserDtoPaginatedResult {
   pageNumber?: number;
   /** @format int32 */
   pageSize?: number;
-  /** @format int32 */
-  totalPages?: number;
 }
 
 export interface UserDtoPaginatedResultApplicationResult {
@@ -4431,8 +4414,6 @@ export interface UserReservationDtoPaginatedResult {
   pageNumber?: number;
   /** @format int32 */
   pageSize?: number;
-  /** @format int32 */
-  totalPages?: number;
 }
 
 export interface UserReservationDtoPaginatedResultApplicationResult {
@@ -4521,12 +4502,6 @@ export interface UserSurveyResponsesResponseApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: UserSurveyResponsesResponse;
-}
-
-export interface ValidateDiscountCodeRequest {
-  /** @format uuid */
-  billId?: string;
-  discountCode?: string | null;
 }
 
 export interface VerifyOtpRequest {
@@ -5056,44 +5031,16 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns a paginated list of BillDto for the current user with filtering and sorting.
      *
      * @tags Bills
-     * @name CreateBill
-     * @request POST:/api/v1/bills
+     * @name GetMyBills
+     * @summary List current user's bills (paginated)
+     * @request GET:/api/v1/me/bills
      * @secure
      */
-    createBill: (data: CreateBillCommand, params: RequestParams = {}) =>
-      this.request<
-        CreateBillResponseApplicationResult,
-        void | {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/v1/bills`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Bills
-     * @name GetUserBills
-     * @request GET:/api/v1/bills/user/{externalUserId}
-     * @secure
-     */
-    getUserBills: (
-      externalUserId: string,
+    getMyBills: (
+      data: any,
       query?: {
         status?: string;
         billType?: string;
@@ -5119,7 +5066,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<
-        UserBillsResponseApplicationResult,
+        BillDtoPaginatedResultApplicationResult,
         void | {
           /** @example "internal_server_error" */
           error?: string;
@@ -5129,36 +5076,36 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/bills/user/${externalUserId}`,
+        path: `/api/v1/me/bills`,
         method: "GET",
         query: query,
+        body: data,
         secure: true,
         format: "json",
         ...params,
       }),
 
     /**
-     * @description 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Admin/operator variant. Requires explicit externalUserId.
      *
-     * @tags Bills
-     * @name GetBillPaymentStatus
-     * @request GET:/api/v1/bills/{billId}/status
+     * @tags Discount Codes
+     * @name ValidateDiscountCodeForUser
+     * @summary Validate a discount code for a specific user's bill
+     * @request GET:/api/v1/me/bills/{billId}/discount-codes/{code}/validation
      * @secure
      */
-    getBillPaymentStatus: (
+    validateDiscountCodeForUser: (
       billId: string,
-      query?: {
-        /** @default false */
-        includePaymentHistory?: boolean;
-        /** @default false */
-        includeRefundHistory?: boolean;
-        /** @default false */
-        includeBillItems?: boolean;
+      code: string,
+      query: {
+        /** @format uuid */
+        externalUserId: string;
       },
+      data: any,
       params: RequestParams = {},
     ) =>
       this.request<
-        BillPaymentStatusResponseApplicationResult,
+        DiscountValidationDtoApplicationResult,
         void | {
           /** @example "internal_server_error" */
           error?: string;
@@ -5168,36 +5115,64 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/bills/${billId}/status`,
+        path: `/api/v1/me/bills/${billId}/discount-codes/${code}/validation`,
         method: "GET",
         query: query,
+        body: data,
         secure: true,
         format: "json",
         ...params,
       }),
 
     /**
-     * @description 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns BillDetailDto including items, payments, and refunds.
      *
      * @tags Bills
-     * @name GetBillPaymentStatusByNumber
-     * @request GET:/api/v1/bills/number/{billNumber}/status
+     * @name GetBillDetailsById
+     * @summary Get bill details by Id
+     * @request GET:/api/v1/bills/{billId}
      * @secure
      */
-    getBillPaymentStatusByNumber: (
+    getBillDetailsById: (
+      billId: string,
+      data: any,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        BillDetailDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/bills/${billId}`,
+        method: "GET",
+        body: data,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns BillDetailDto including items, payments, and refunds.
+     *
+     * @tags Bills
+     * @name GetBillDetailsByNumber
+     * @summary Get bill details by bill number
+     * @request GET:/api/v1/bills/by-number/{billNumber}
+     * @secure
+     */
+    getBillDetailsByNumber: (
       billNumber: string,
-      query?: {
-        /** @default false */
-        includePaymentHistory?: boolean;
-        /** @default false */
-        includeRefundHistory?: boolean;
-        /** @default false */
-        includeBillItems?: boolean;
-      },
+      data: any,
       params: RequestParams = {},
     ) =>
       this.request<
-        BillPaymentStatusResponseApplicationResult,
+        BillDetailDtoApplicationResult,
         void | {
           /** @example "internal_server_error" */
           error?: string;
@@ -5207,38 +5182,31 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/bills/number/${billNumber}/status`,
+        path: `/api/v1/bills/by-number/${billNumber}`,
         method: "GET",
-        query: query,
+        body: data,
         secure: true,
         format: "json",
         ...params,
       }),
 
     /**
-     * @description 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Resolves a bill by tracking code (reference) and bill type; returns BillDetailDto.
      *
      * @tags Bills
-     * @name GetBillPaymentStatusByTrackingCode
-     * @request GET:/api/v1/bills/tracking/{trackingCode}/status
+     * @name GetBillDetailsByTrackingCode
+     * @summary Get bill details by tracking code
+     * @request GET:/api/v1/bills/by-tracking/{billType}:{trackingCode}
      * @secure
      */
-    getBillPaymentStatusByTrackingCode: (
+    getBillDetailsByTrackingCode: (
       trackingCode: string,
-      query?: {
-        /** @default "WalletDeposit" */
-        billType?: string;
-        /** @default false */
-        includePaymentHistory?: boolean;
-        /** @default false */
-        includeRefundHistory?: boolean;
-        /** @default false */
-        includeBillItems?: boolean;
-      },
+      billType: string,
+      data: any,
       params: RequestParams = {},
     ) =>
       this.request<
-        BillPaymentStatusResponseApplicationResult,
+        BillDetailDtoApplicationResult,
         void | {
           /** @example "internal_server_error" */
           error?: string;
@@ -5248,23 +5216,28 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/bills/tracking/${trackingCode}/status`,
+        path: `/api/v1/bills/by-tracking/${billType}:${trackingCode}`,
         method: "GET",
-        query: query,
+        body: data,
         secure: true,
         format: "json",
         ...params,
       }),
 
     /**
-     * @description 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Transitions a draft bill to the issued state.
      *
      * @tags Bills
      * @name IssueBill
-     * @request POST:/api/v1/bills/{billId}/issue
+     * @summary Issue a bill
+     * @request POST:/api/v1/bills/{billId}:issue
      * @secure
      */
-    issueBill: (billId: string, params: RequestParams = {}) =>
+    issueBill: (
+      billId: string,
+      data: any,
+      params: RequestParams = {},
+    ) =>
       this.request<
         IssueBillResponseApplicationResult,
         void | {
@@ -5276,19 +5249,21 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/bills/${billId}/issue`,
+        path: `/api/v1/bills/${billId}:issue`,
         method: "POST",
+        body: data,
         secure: true,
         format: "json",
         ...params,
       }),
 
     /**
-     * @description 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Cancels an active bill; returns operation result.
      *
      * @tags Bills
      * @name CancelBill
-     * @request POST:/api/v1/bills/{billId}/cancel
+     * @summary Cancel a bill
+     * @request POST:/api/v1/bills/{billId}:cancel
      * @secure
      */
     cancelBill: (
@@ -5307,7 +5282,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/bills/${billId}/cancel`,
+        path: `/api/v1/bills/${billId}:cancel`,
         method: "POST",
         body: data,
         secure: true,
@@ -5342,38 +5317,6 @@ export class Api<
         method: "GET",
         body: data,
         secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Discount Codes
-     * @name ValidateDiscountCode
-     * @request POST:/api/v1/discount-codes/validate
-     * @secure
-     */
-    validateDiscountCode: (
-      data: ValidateDiscountCodeRequest,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        DiscountValidationResponseApplicationResult,
-        void | {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/v1/discount-codes/validate`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
         format: "json",
         ...params,
       }),
@@ -8838,7 +8781,7 @@ export class Api<
      *
      * @tags Wallets
      * @name CreateWalletDeposit
-     * @request POST:/api/v1/wallets/deposit
+     * @request POST:/api/v1/me/wallets/deposit
      * @secure
      */
     createWalletDeposit: (
@@ -8856,7 +8799,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/wallets/deposit`,
+        path: `/api/v1/me/wallets/deposit`,
         method: "POST",
         body: data,
         secure: true,
@@ -8869,11 +8812,11 @@ export class Api<
      * @description 🔒 This endpoint requires authentication.
      *
      * @tags Wallets
-     * @name GetWalletBalance
-     * @request GET:/api/v1/wallets/balance
+     * @name GetUserWalletBalance
+     * @request GET:/api/v1/me/wallets/balance
      * @secure
      */
-    getWalletBalance: (params: RequestParams = {}) =>
+    getUserWalletBalance: (params: RequestParams = {}) =>
       this.request<
         WalletBalanceResponseApplicationResult,
         void | {
@@ -8885,7 +8828,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/wallets/balance`,
+        path: `/api/v1/me/wallets/balance`,
         method: "GET",
         secure: true,
         format: "json",
@@ -8896,11 +8839,11 @@ export class Api<
      * @description 🔒 This endpoint requires authentication.
      *
      * @tags Wallets
-     * @name GetWalletTransactions
-     * @request GET:/api/v1/wallets/transactions
+     * @name ListUserWalletTransactions
+     * @request GET:/api/v1/me/wallets/transactions
      * @secure
      */
-    getWalletTransactions: (
+    listUserWalletTransactions: (
       query?: {
         /**
          * @format int32
@@ -8932,7 +8875,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/wallets/transactions`,
+        path: `/api/v1/me/wallets/transactions`,
         method: "GET",
         query: query,
         secure: true,
@@ -8944,11 +8887,11 @@ export class Api<
      * @description 🔒 This endpoint requires authentication.
      *
      * @tags Wallets
-     * @name GetWalletDeposits
-     * @request GET:/api/v1/wallets/deposits
+     * @name ListUserWalletDeposits
+     * @request GET:/api/v1/me/wallets/deposits
      * @secure
      */
-    getWalletDeposits: (
+    listUserWalletDeposits: (
       query?: {
         /**
          * @format int32
@@ -8979,7 +8922,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/wallets/deposits`,
+        path: `/api/v1/me/wallets/deposits`,
         method: "GET",
         query: query,
         secure: true,

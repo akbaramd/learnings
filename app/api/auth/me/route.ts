@@ -1,33 +1,12 @@
 // app/api/auth/me/route.ts (Server-only)
 import { NextRequest, NextResponse } from 'next/server';
-import { Api } from '@/src/services/Api';
-import { cookies } from 'next/headers';
-import { GetMeResponse } from '@/src/store/auth/auth.types';
+import { createApiInstance, handleApiError } from '@/app/api/generatedClient';
+import { GetMeResponse, UserRole } from '@/src/store/auth/auth.types';
+import { AxiosError } from 'axios';
 
 export async function GET(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    
-    // Get access token from cookies
-    const accessToken = cookieStore.get('accessToken')?.value;
-    
-    if (!accessToken) {
-      const errorResponse: GetMeResponse = {
-        result: null,
-        errors: ['No access token found']
-      };
-      return NextResponse.json(errorResponse, { status: 401 });
-    }
-
-    const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://auth.wa-nezam.org';
-    
-    const api = new Api({
-      baseURL: baseURL,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
-      },
-    });
+    const api = createApiInstance(req);
 
     // استفاده از getCurrentUser برای دریافت پروفایل کامل
     const upstream = await api.api.getCurrentUser({}); 
@@ -42,7 +21,7 @@ export async function GET(req: NextRequest) {
         lastName: upstream.data.data.lastName || undefined,
         nationalId: upstream.data.data.nationalId || undefined,
         phone: upstream.data.data.phone || undefined,
-        roles: upstream.data.data.roles || undefined,
+        roles: upstream.data.data.roles?.map(role => role as UserRole) || undefined,
         claims: upstream.data.data.claims || undefined,
         preferences: upstream.data.data.preferences || undefined
       } : null,
@@ -63,10 +42,6 @@ export async function GET(req: NextRequest) {
       type: typeof error,
     });
     
-    const errorResponse: GetMeResponse = {
-      result: null,
-      errors: ['Internal server error']
-    };
-    return NextResponse.json(errorResponse, { status: 500 });
+    return handleApiError(error as AxiosError, req);
   }
 }

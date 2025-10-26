@@ -20,6 +20,10 @@ export {
   clearError,
   setInitialized,
   reset,
+  setLoading,
+  setOtpSent,
+  setAuthenticated,
+  setAnonymous,
 } from './auth.slice';
 
 export {
@@ -34,6 +38,9 @@ export {
   selectMaskedPhone,
   selectAuthError,
   selectAuthInfo,
+  selectOtpFlowState,
+  selectAuthSummary,
+  selectUserPermissions,
 } from './auth.selectors';
 
 // Export auth query hooks
@@ -44,6 +51,8 @@ export {
   useLogoutMutation,
   useRefreshTokenMutation,
   useGetMeQuery,
+  useLazyCheckSessionQuery,
+  useLazyGetMeQuery,
 } from './auth.queries';
 
 // Export auth hooks

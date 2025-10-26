@@ -245,7 +245,7 @@ netstat -ano | findstr :3000
 ### Debugging Steps
 1. Check PM2 logs: `pm2 logs learnings-nextjs`
 2. Verify IIS configuration
-3. Test Next.js directly: `http://localhost:3000`
+3. Test Next.js directly: `https://auth.wa-nezam.org`
 4. Check Windows Event Viewer for IIS errors
 5. Verify firewall settings
 

@@ -48,7 +48,7 @@ export default function LoginPage() {
   const challengeId = useAppSelector(selectChallengeId);
   const authStatus = useAppSelector(selectAuthStatus);
 
-  const [nationalId, setNationalId] = useState('');
+  const [nationalId, setNationalId] = useState('2753934177');
   const [status, setStatus] = useState<UiStatus>('idle');
   const [errorText, setErrorText] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);

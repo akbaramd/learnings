@@ -11,7 +11,7 @@ export default function LoginLayout({ children }: { children: ReactNode }) {
   return (
     <div
       dir="rtl"
-      className="flex flex-col h-screen overflow-hidden bg-gradient-to-b from-[var(--color-sky-100)] to-white dark:from-gray-900 dark:to-gray-800"
+      className="flex flex-col h-screen overflow-hidden bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-gray-800"
     >
       {/* MAIN: fills remaining space; is the only scroll container */}
       <div className="flex items-center justify-center px-4 py-4 flex-1 min-h-0">

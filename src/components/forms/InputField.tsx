@@ -105,7 +105,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
       disabled,
       className,
       onChange,
-      showValidationBox = true,
+      showValidationBox = false,
       showBoxOnSuccess = false,
       ...rest
     },
@@ -129,6 +129,10 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
           'text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-gray-400',
           'disabled:bg-neutral-100 dark:disabled:bg-gray-700 disabled:text-neutral-500 dark:disabled:text-gray-400 disabled:cursor-not-allowed',
           'transition-[border-color,box-shadow,background-color] duration-150',
+          // Custom number input styling
+          '[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
+          '[&::-webkit-outer-spin-button]:m-0 [&::-webkit-inner-spin-button]:m-0',
+          '[&[type=number]]:[-moz-appearance:textfield]',
         ].join(' '),
       [sizeCfg.input, variant, status]
     );
@@ -360,6 +364,55 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
           .if-dots i:nth-child(1) { animation-delay: -0.24s; }
           .if-dots i:nth-child(2) { animation-delay: -0.12s; }
           .if-dots i:nth-child(3) { animation-delay: 0s; }
+          
+          /* Custom number input arrows */
+          :global(input[type="number"]) {
+            -moz-appearance: textfield;
+          }
+          :global(input[type="number"]::-webkit-outer-spin-button),
+          :global(input[type="number"]::-webkit-inner-spin-button) {
+            -webkit-appearance: none;
+            margin: 0;
+            background: transparent;
+            cursor: pointer;
+            display: block;
+            width: 20px;
+            height: 20px;
+            position: relative;
+            opacity: 0.6;
+            transition: opacity 0.2s ease;
+          }
+          :global(input[type="number"]::-webkit-outer-spin-button:hover),
+          :global(input[type="number"]::-webkit-inner-spin-button:hover) {
+            opacity: 1;
+          }
+          
+          /* Light mode arrows */
+          :global(input[type="number"]::-webkit-outer-spin-button)::before,
+          :global(input[type="number"]::-webkit-inner-spin-button)::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-bottom: 6px solid #6b7280;
+          }
+          :global(input[type="number"]::-webkit-inner-spin-button)::before {
+            border-bottom: none;
+            border-top: 6px solid #6b7280;
+            top: 40%;
+          }
+          
+          /* Dark mode arrows */
+          :global(.dark input[type="number"]::-webkit-outer-spin-button)::before,
+          :global(.dark input[type="number"]::-webkit-inner-spin-button)::before {
+            border-bottom-color: #9ca3af;
+            border-top-color: #9ca3af;
+          }
         `}</style>
       </>
     );

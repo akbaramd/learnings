@@ -137,14 +137,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       >
         {shimmerEl}
 
-        <span className="pointer-events-none inline-flex items-center justify-center">
-          <span className="inline-flex items-center">{loading ? spinner : leftIcon}</span>
-          <span className="mx-2 rtl:mx-2">{loading ? loadingText : children}</span>
-          {!loading && rightIcon ? (
-            <span className="inline-flex items-center">{rightIcon}</span>
-          ) : (
-            <span aria-hidden="true" className="inline-block" />
-          )}
+        <span className="pointer-events-none flex items-center justify-center gap-2">
+          {loading ? spinner : leftIcon}
+          <span>{loading ? loadingText : children}</span>
+          {!loading && rightIcon}
         </span>
       </HUIButton>
 

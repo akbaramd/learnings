@@ -1,9 +1,25 @@
 // src/store/auth/auth.selectors.ts
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../index';
+import { UserRole } from './auth.types';
 
-// Base selector for auth state
-const selectAuthState = (state: RootState) => state.auth;
+// Base selector for auth state with validation
+const selectAuthState = (state: RootState) => {
+  const auth = state.auth;
+  // Validate auth state structure
+  if (!auth || typeof auth !== 'object') {
+    console.warn('Invalid auth state structure');
+    return {
+      status: 'idle' as const,
+      user: null,
+      challengeId: null,
+      maskedPhoneNumber: null,
+      error: null,
+      isInitialized: false,
+    };
+  }
+  return auth;
+};
 
 // Auth status selectors
 export const selectAuthStatus = createSelector(
@@ -102,22 +118,17 @@ export const selectAuthInfo = createSelector(
 export const selectUserPermissions = createSelector(
   [selectUserRoles],
   (roles) => ({
-    canAccessAdmin: roles.includes('admin') || roles.includes('super_admin'),
-    canManageUsers: roles.includes('admin') || roles.includes('user_manager'),
-    canViewReports: roles.includes('admin') || roles.includes('reporter'),
-    hasRole: (role: string) => roles.includes(role),
+    canAccessAdmin: roles.includes('admin' as UserRole) || roles.includes('super_admin' as UserRole),
+    canManageUsers: roles.includes('admin' as UserRole) || roles.includes('user_manager' as UserRole),
+    canViewReports: roles.includes('admin' as UserRole) || roles.includes('reporter' as UserRole),
+    hasRole: (role: UserRole) => roles.includes(role),
   })
 );
 
-// Loading state selectors
-export const selectIsAuthLoading = createSelector(
-  [selectAuthStatus],
-  (status) => status === 'loading'
-);
-
+// Loading state selectors (remove duplicate)
 export const selectIsSessionLoading = createSelector(
-  [selectAuthStatus],
-  (status) => status === 'loading' && !selectIsInitialized
+  [selectAuthStatus, selectIsInitialized],
+  (status, isInitialized) => status === 'loading' && !isInitialized
 );
 
 // Combined selectors for common use cases
@@ -129,4 +140,29 @@ export const selectAuthReady = createSelector(
 export const selectCanProceedToOtp = createSelector(
   [selectHasChallengeId, selectIsLoading],
   (hasChallengeId, isLoading) => hasChallengeId && !isLoading
+);
+
+// OTP flow state selector
+export const selectOtpFlowState = createSelector(
+  [selectAuthStatus, selectHasChallengeId, selectMaskedPhone],
+  (status, hasChallengeId, maskedPhone) => ({
+    isOtpSent: status === 'otp-sent',
+    hasChallengeId,
+    maskedPhone,
+    canVerifyOtp: hasChallengeId && status === 'otp-sent',
+  })
+);
+
+// Auth state summary selector
+export const selectAuthSummary = createSelector(
+  [selectAuthStatus, selectIsAuthenticated, selectIsLoading, selectIsInitialized, selectUser],
+  (status, isAuthenticated, isLoading, isInitialized, user) => ({
+    status,
+    isAuthenticated,
+    isLoading,
+    isInitialized,
+    hasUser: !!user,
+    userId: user?.id,
+    userName: user?.userName,
+  })
 );

@@ -37,11 +37,17 @@ export async function POST(req: NextRequest) {
     } 
     return res;
   } catch (error) {
-    console.error('Send OTP BFF error:', error);
+    console.error('Send OTP BFF error:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      type: typeof error,
+    });
+
     const errorResponse: SendOtpResponse = {
       result: null,
-      errors: ['Internal server error']
+      errors: [error instanceof Error ? error.message : String(error), 'Failed to send OTP. Please try again.']
     };
-    return NextResponse.json(errorResponse, { status: 500 });
+    return NextResponse.json(errorResponse, { status: 400 });
   }
 }

@@ -90,11 +90,17 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(response, { status: 200 });
     }
   } catch (error) {
-    console.error('Session BFF error:', error);
+    console.error('Session BFF error:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      type: typeof error,
+    });
+    
     // In case of error, assume not authenticated
     const errorResponse: SessionResponse = {
       result: { authenticated: false },
-      errors: ['Session check failed']
+      errors: [error instanceof Error ? error.message : String(error),'Session check failed. Please try again.']
     };
     return NextResponse.json(errorResponse, { status: 200 });
   }

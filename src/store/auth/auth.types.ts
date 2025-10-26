@@ -1,11 +1,17 @@
 // src/store/auth/auth.types.ts
 // All auth-related types
 
+// Auth status type with better type safety
+export type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'anonymous' | 'error' | 'otp-sent';
+
+// User roles type for better type safety
+export type UserRole = 'admin' | 'super_admin' | 'user_manager' | 'reporter' | 'user';
+
 // User types
 export interface User {
   id: string;
   userName: string;
-  roles: string[];
+  roles: UserRole[];
   firstName?: string;
   lastName?: string;
   nationalId?: string;
@@ -20,14 +26,14 @@ export interface UserProfile {
   lastName?: string;
   nationalId?: string;
   phone?: string;
-  roles?: string[];
+  roles?: UserRole[];
   claims?: unknown[];
   preferences?: unknown[];
 }
 
 // Auth state
 export interface AuthState {
-  status: 'idle' | 'loading' | 'authenticated' | 'anonymous' | 'error' | 'otp-sent';
+  status: AuthStatus;
   user: User | null;
   challengeId: string | null;
   maskedPhoneNumber: string | null;
@@ -41,10 +47,10 @@ export interface ApiResponse<T = unknown | null> {
   errors: string[] | null;
 }
 
-// Request types
+// Request types with better validation
 export interface SendOtpRequest {
   nationalCode: string;
-  purpose?: string;
+  purpose?: 'login' | 'register' | 'reset_password';
   deviceId?: string;
 }
 
