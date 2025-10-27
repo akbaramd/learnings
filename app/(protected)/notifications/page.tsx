@@ -1,13 +1,19 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { PageHeader } from '@/src/components/ui/PageHeader';
+import { Button } from '@/src/components/ui/Button';
 import { useMarkAsReadMutation, useMarkAllAsReadMutation, Notification, useLazyGetUnreadCountQuery, useLazyGetNotificationsPaginatedQuery } from '@/src/store/notifications';
 import {
+  PiBell,
   PiCheck,
   PiX,
   PiClock,
   PiInfo,
   PiCheckCircle,
+  PiArrowClockwise,
+  PiCheckCircle as PiCheckCircle2,
 } from 'react-icons/pi';
 
 function formatRelativeFa(dateString: string) {
@@ -37,6 +43,48 @@ function getNotificationIcon(context?: string | null) {
   }
 }
 
+function getContextLabel(context?: string | null): string {
+  // Convert context to lowercase for case-insensitive matching
+  const normalizedContext = (context || '').toLowerCase().trim();
+  
+  const labels: Record<string, string> = {
+    'payment': 'پرداخت',
+    'billpayment': 'پرداخت صورت حساب',
+    'bill_payment': 'پرداخت صورت حساب',
+    'bill-payment': 'پرداخت صورت حساب',
+    'security': 'امنیت',
+    'promotion': 'تخفیف',
+    'booking': 'رزرو',
+    'system': 'سیستم',
+    'account': 'حساب کاربری',
+    'bill': 'صورت حساب',
+    'invoice': 'صورت حساب',
+    'order': 'سفارش',
+    'transaction': 'تراکنش',
+    'notification': 'اعلان',
+    'announcement': 'اعلامیه',
+  };
+  
+  // Check exact match first
+  if (labels[normalizedContext]) {
+    return labels[normalizedContext];
+  }
+  
+  // Check if contains keywords
+  if (normalizedContext.includes('bill') && normalizedContext.includes('payment')) {
+    return 'پرداخت صورت حساب';
+  }
+  if (normalizedContext.includes('bill')) {
+    return 'صورت حساب';
+  }
+  if (normalizedContext.includes('payment')) {
+    return 'پرداخت';
+  }
+  
+  // Return original if no match, but try to make it more readable
+  return normalizedContext || 'عمومی';
+}
+
 function NotificationItem({ notification }: { notification: Notification }) {
   const [markAsRead] = useMarkAsReadMutation();
 
@@ -52,20 +100,24 @@ function NotificationItem({ notification }: { notification: Notification }) {
 
   return (
     <div 
-      className={`rounded-lg border p-4 cursor-pointer transition-colors ${
+      className={`rounded-lg border p-4 cursor-pointer transition-all duration-300 ${
         notification.isRead 
-          ? 'bg-gray-50 dark:bg-gray-800' 
-          : 'bg-white dark:bg-gray-700'
-      } border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600`}
+          ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 opacity-75' 
+          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm ring-2 ring-blue-200 dark:ring-blue-900/30'
+      } hover:shadow-md hover:scale-[1.01]`}
       onClick={handleMarkAsRead}
     >
       <div className="flex items-start gap-3">
-        <div className="mt-1">
+        <div className={`mt-1 p-2 rounded-full ${
+          notification.isRead 
+            ? 'bg-gray-100 dark:bg-gray-700' 
+            : 'bg-blue-50 dark:bg-blue-900/20'
+        }`}>
           {getNotificationIcon(notification.context)}
         </div>
         <div className="flex-1">
           <div className="flex items-center justify-between">
-            <h3 className={`text-sm font-medium ${
+            <h3 className={`text-sm font-semibold ${
               notification.isRead 
                 ? 'text-gray-600 dark:text-gray-300' 
                 : 'text-gray-900 dark:text-gray-100'
@@ -73,20 +125,28 @@ function NotificationItem({ notification }: { notification: Notification }) {
               {notification.title || 'اعلان'}
             </h3>
             {!notification.isRead && (
-              <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+              <div className="h-2.5 w-2.5 rounded-full bg-blue-500 animate-pulse"></div>
             )}
           </div>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
             {notification.message || 'پیام اعلان'}
           </p>
-          <div className="mt-2 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-500">
-            <PiClock className="h-3 w-3" />
-            {notification.createdAt ? formatRelativeFa(notification.createdAt) : 'نامشخص'}
+          <div className="mt-2.5 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+            <PiClock className="h-3.5 w-3.5" />
+            <span>{notification.createdAt ? formatRelativeFa(notification.createdAt) : 'نامشخص'}</span>
           </div>
           {notification.context && (
-            <div className="mt-1">
-              <span className="inline-block rounded-full bg-gray-200 dark:bg-gray-600 px-2 py-1 text-xs text-gray-600 dark:text-gray-300">
-                {notification.context}
+            <div className="mt-2">
+              <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${
+                notification.context === 'payment' 
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                  : notification.context === 'security'
+                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                  : notification.context === 'promotion'
+                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                  : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+              }`}>
+                {getContextLabel(notification.context)}
               </span>
             </div>
           )}
@@ -97,13 +157,14 @@ function NotificationItem({ notification }: { notification: Notification }) {
 }
 
 export default function NotificationsPage() {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const [allNotifications, setAllNotifications] = useState<Notification[]>([]);
   const pageSize = 10;
   const isFirstPageRef = useRef(true);
   
   // Lazy query hooks
-  const [triggerGetUnreadCount, { data: unreadCountData, isLoading: unreadLoading }] = useLazyGetUnreadCountQuery();
+  const [triggerGetUnreadCount, { data: unreadCountData }] = useLazyGetUnreadCountQuery();
   const [triggerGetNotificationsPaginated, { 
     data: notificationsData, 
     isLoading: notificationsLoading, 
@@ -241,59 +302,84 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="py-4">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          همه اعلان‌ها
-        </h2>
-        <div className="flex items-center gap-2">
-          {unreadCount > 0 && (
-            <button
-              onClick={handleMarkAllAsRead}
-              disabled={markAllLoading}
-              className="text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 disabled:opacity-50"
-            >
-              {markAllLoading ? 'در حال پردازش...' : 'همه را خوانده شده علامت‌گذاری کن'}
-            </button>
-          )}
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            {unreadLoading ? '...' : `${unreadCount} خوانده نشده`}
-          </span>
-        </div>
-      </div>
-      
-      {notifications.length === 0 ? (
-        <div className="text-center py-8">
-          <PiInfo className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-gray-400">
-            هیچ اعلانی وجود ندارد
-          </p>
-        </div>
-      ) : (
-        <>
-          <div className="space-y-3">
-            {notifications.map((notification) => (
-              <NotificationItem key={notification.id} notification={notification} />
-            ))}
-          </div>
-          
-          {page < totalPages && (
-            <div className="mt-6 text-center">
-              <button
-                onClick={handleLoadMore}
-                disabled={notificationsLoading}
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-              >
-                {notificationsLoading ? 'در حال بارگذاری...' : 'بارگذاری بیشتر'}
-              </button>
+    <div className="h-full flex flex-col" dir="rtl">
+      <PageHeader
+        title="اعلان‌ها"
+        titleIcon={<PiBell className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+        subtitle={unreadCount > 0 ? `${unreadCount} اعلان خوانده نشده` : undefined}
+        showBackButton
+        onBack={() => {
+          // Check if came from dashboard
+          if (document.referrer && document.referrer.includes('/dashboard')) {
+            router.back();
+          } else {
+            router.push('/dashboard');
+          }
+        }}
+        rightActions={[
+          {
+            icon: <PiArrowClockwise className="h-4 w-4" />,
+            onClick: handleRefresh,
+            label: 'تازه‌سازی',
+            'aria-label': 'تازه‌سازی',
+          },
+          ...(unreadCount > 0 ? [{
+            icon: <PiCheckCircle2 className="h-4 w-4" />,
+            onClick: handleMarkAllAsRead,
+            label: 'علامت همه به عنوان خوانده شده',
+            'aria-label': 'علامت همه به عنوان خوانده شده',
+            disabled: markAllLoading,
+          }] : []),
+        ]}
+      />
+
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4">
+          {notifications.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+                <PiInfo className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                هیچ اعلانی وجود ندارد
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                زمانی که اعلان جدیدی دریافت کنید، اینجا نمایش داده می‌شود
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {notifications.map((notification) => (
+                <NotificationItem key={notification.id} notification={notification} />
+              ))}
+              
+              {/* Load More Button */}
+              {page < totalPages && (
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <Button
+                    variant="secondary"
+                    onClick={handleLoadMore}
+                    disabled={notificationsLoading}
+                    block
+                    loading={notificationsLoading}
+                    loadingText="در حال بارگذاری..."
+                  >
+                    بارگذاری بیشتر
+                  </Button>
+                </div>
+              )}
+              
+              {/* Results Counter */}
+              {totalCount > 0 && (
+                <div className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                  نمایش {notifications.length} از {totalCount} اعلان
+                </div>
+              )}
             </div>
           )}
-          
-          <div className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-            نمایش {notifications.length} از {totalCount} اعلان
-          </div>
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -213,7 +213,7 @@ export default function DepositsPage({ params }: DepositsPageProps) {
           background: #6B7280;
         }
       `}</style>
-      <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900" dir="rtl">
+      <div className="h-full flex flex-col" dir="rtl">
         {/* Breadcrumb Header */}
         <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
           <div className="px-4 py-3">

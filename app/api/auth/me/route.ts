@@ -12,9 +12,12 @@ export async function GET(req: NextRequest) {
     const upstream = await api.api.getCurrentUser({}); 
     const status = upstream.status ?? 200;
 
-    // Strongly typed response structure
+    // Strongly typed response structure using ApplicationResult
     const response: GetMeResponse = {
-      result: status === 200 && upstream.data?.isSuccess && upstream.data.data?.id ? {
+      isSuccess: status === 200 && upstream.data?.isSuccess && !!upstream.data.data?.id || false,
+      message: upstream.data?.message || (status === 200 && upstream.data?.isSuccess ? 'User profile retrieved successfully' : 'Failed to get user profile'),
+      errors: upstream.data?.errors || undefined,
+      data: status === 200 && upstream.data?.isSuccess && upstream.data.data?.id ? {
         id: upstream.data.data.id,
         name: upstream.data.data.name || undefined,
         firstName: upstream.data.data.firstName || undefined,
@@ -24,8 +27,7 @@ export async function GET(req: NextRequest) {
         roles: upstream.data.data.roles?.map(role => role as UserRole) || undefined,
         claims: upstream.data.data.claims || undefined,
         preferences: upstream.data.data.preferences || undefined
-      } : null,
-      errors: status !== 200 || !upstream.data?.isSuccess ? upstream.data?.errors || ['Failed to get user profile'] : null
+      } : undefined
     };
 
     const res = NextResponse.json(response, { status });
@@ -42,6 +44,6 @@ export async function GET(req: NextRequest) {
       type: typeof error,
     });
     
-    return handleApiError(error as AxiosError, req);
+    return handleApiError(error as AxiosError);
   }
 }

@@ -22,7 +22,7 @@ export const IconButton = function IconButton({
   ...rest
 }: IconButtonProps) {
   // Consistent small button size for all variants
-  const buttonSizeClasses = 'h-8 w-8';
+  const buttonSizeClasses = 'h-10 w-10';
   
   // Icon size - small for all variants
   const iconSizeClasses = 'h-4 w-4';

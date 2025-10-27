@@ -1,5 +1,5 @@
 // src/store/auth/auth.queries.ts
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi } from '@reduxjs/toolkit/query/react';
 import type { RootState } from '../types';
 import {
   SendOtpRequest,
@@ -22,6 +22,8 @@ import {
   setError,
   setInitialized,
 } from './auth.slice';
+import { baseQueryWithReauth } from '@/src/store/api/baseApi';
+import { notifyLogoutAllTabs } from '@/src/hooks/useAuthGuard';
 
 // Error handling utility
 export const handleApiError = (error: unknown): string => {
@@ -43,16 +45,10 @@ export const handleApiError = (error: unknown): string => {
   return 'An unexpected error occurred';
 };
 
-// Auth API slice
+// Auth API slice with reauth support
 export const authApi = createApi({
   reducerPath: 'authApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: '/api',
-    prepareHeaders: (headers) => {
-      headers.set('content-type', 'application/json');
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithReauth,
   tagTypes: ['Auth', 'User'],
   // Add proper caching configuration
   keepUnusedDataFor: 300, // Keep data for 5 minutes
@@ -75,14 +71,14 @@ export const authApi = createApi({
 
           const { data } = await queryFulfilled;
 
-          if (data?.result?.challengeId) {
-            dispatch(setChallengeId(data.result.challengeId));
-            if (data.result.maskedPhoneNumber) {
-              dispatch(setMaskedPhoneNumber(data.result.maskedPhoneNumber));
+          if (data?.isSuccess && data?.data?.challengeId) {
+            dispatch(setChallengeId(data.data.challengeId));
+            if (data.data.maskedPhoneNumber) {
+              dispatch(setMaskedPhoneNumber(data.data.maskedPhoneNumber));
             }
             dispatch(setAuthStatus('otp-sent'));
           } else {
-            dispatch(setError('No challengeId returned from server.'));
+            dispatch(setError(data?.errors?.[0] || 'No challengeId returned from server.'));
             dispatch(setAuthStatus('error'));
           }
         } catch (error: unknown) {
@@ -108,13 +104,13 @@ export const authApi = createApi({
 
           const { data } = await queryFulfilled;
 
-          if (data?.result?.isSuccess && data.result.userId) {
+          if (data?.isSuccess && data?.data?.userId) {
             dispatch(clearChallengeId());
             dispatch(setAuthStatus('authenticated'));
             // Fetch user profile after successful verification
             dispatch(authApi.endpoints.getMe.initiate());
           } else {
-            dispatch(setError('OTP verification failed.'));
+            dispatch(setError(data?.errors?.[0] || 'OTP verification failed.'));
             dispatch(setAuthStatus('error'));
           }
         } catch (error: unknown) {
@@ -145,7 +141,7 @@ export const authApi = createApi({
 
           const { data } = await queryFulfilled;
 
-          if (data?.result?.authenticated) {
+          if (data?.isSuccess && data?.data?.authenticated) {
             if (currentStatus !== 'otp-sent') {
               dispatch(setAuthStatus('authenticated'));
               // Don't automatically fetch user profile - let components decide when to fetch
@@ -182,8 +178,8 @@ export const authApi = createApi({
         try {
           const { data } = await queryFulfilled;
 
-          if (data?.result) {
-            const userProfile: UserProfile = data.result;
+          if (data?.data) {
+            const userProfile: UserProfile = data.data;
             const user = {
               id: userProfile.id,
               userName: userProfile.name || userProfile.firstName || 'Unknown',
@@ -227,10 +223,13 @@ export const authApi = createApi({
 
           const { data } = await queryFulfilled;
 
-          if (data?.result?.isSuccess) {
+          if (data?.isSuccess && data?.data?.isSuccess) {
             dispatch(clearUser());
             dispatch(clearChallengeId());
             dispatch(setAuthStatus('anonymous'));
+            
+            // Notify all tabs about logout
+            notifyLogoutAllTabs();
           } else {
             dispatch(setAuthStatus('authenticated'));
             dispatch(setError(data?.errors?.[0] || 'Logout failed'));
@@ -240,6 +239,9 @@ export const authApi = createApi({
           dispatch(clearUser());
           dispatch(clearChallengeId());
           dispatch(setAuthStatus('anonymous'));
+          
+          // Notify all tabs about logout (even if server logout failed)
+          notifyLogoutAllTabs();
           
           const errorMessage = handleApiError(error);
           dispatch(setError(errorMessage));
@@ -258,7 +260,7 @@ export const authApi = createApi({
         try {
           const { data } = await queryFulfilled;
 
-          if (data?.result?.isSuccess && data.result.accessToken) {
+          if (data?.isSuccess && data?.data?.isSuccess) {
             dispatch(setAuthStatus('authenticated'));
           } else {
             dispatch(setAuthStatus('anonymous'));

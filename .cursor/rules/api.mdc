@@ -1,0 +1,396 @@
+---
+globs: app/api/**/*
+alwaysApply: true
+---
+
+# API Routes Development Rules
+
+You are an expert Next.js API routes architect. All API routes must follow Backend-for-Frontend (BFF) pattern and maintain strict type consistency.
+
+## 🏗️ Architecture Pattern
+
+All routes in `app/api/**` act as a proxy between client and upstream backend.
+
+- **BFF Pattern**: Routes proxy requests to upstream backend
+- **Upstream Connection**: Use `createApiInstance(req)` from `@/app/api/generatedClient`
+- **Environment Variables**:
+  - `UPSTREAM_API_BASE_URL` - for server-side API routes (backends) ✅ USE THIS
+  - `NEXT_PUBLIC_API_BASE_URL` - for client-side queries (RTK Query) ✅ ONLY IN CLIENT
+- **Runtime**: Use `export const runtime = 'nodejs'` for routes needing crypto
+
+---
+
+## ✅ MUST DO (All Endpoints)
+
+### 1. Import Required Modules
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { createApiInstance, handleApiError } from '@/app/api/generatedClient';
+import { ResponseType } from '@/src/store/[feature]/[feature].types';
+import { AxiosError } from 'axios';
+```
+
+### 2. Set Runtime for Auth Routes
+```typescript
+export const runtime = 'nodejs'; // Required for crypto module
+```
+
+### 3. Get API Instance
+```typescript
+const api = createApiInstance(req);
+```
+
+### 4. Call Upstream API
+```typescript
+const upstream = await api.api.upstreamMethod({
+  // parameters matching upstream API
+});
+const status = upstream.status ?? 200;
+```
+
+### 5. Transform to ApplicationResult<T>
+```typescript
+const response: ResponseType = {
+  isSuccess: !!upstream.data?.data,
+  message: upstream.data?.message || 'Operation completed',
+  errors: upstream.data?.errors || undefined,
+  data: upstream.data?.data || undefined
+};
+```
+
+### 6. Return Response with Headers
+```typescript
+const res = NextResponse.json(response, { status });
+res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+```
+
+### 7. Forward Upstream Cookies
+```typescript
+const setCookie = upstream.headers?.['set-cookie'];
+if (setCookie) {
+  if (Array.isArray(setCookie)) setCookie.forEach(c => res.headers.append('set-cookie', c));
+  else res.headers.set('set-cookie', setCookie as string);
+}
+return res;
+```
+
+### 8. Error Handling
+```typescript
+catch (error) {
+  console.error('[Feature] BFF error:', {
+    name: error instanceof Error ? error.name : 'Unknown',
+    message: error instanceof Error ? error.message : String(error),
+    stack: error instanceof Error ? error.stack : undefined,
+    type: typeof error,
+  });
+  
+  return handleApiError(error as AxiosError, req);
+}
+```
+
+---
+
+## 🚫 MUST NOT DO
+
+### ❌ Environment Variables
+- **NEVER use `NEXT_PUBLIC_API_BASE_URL` in API routes**
+- **NEVER hardcode URLs like `'https://auth.wa-nezam.org'`**
+- **ALWAYS use `UPSTREAM_API_BASE_URL`**
+
+```typescript
+// ❌ WRONG
+const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const baseURL = 'https://auth.wa-nezam.org';
+
+// ✅ CORRECT
+const api = createApiInstance(req); // Uses UPSTREAM_API_BASE_URL
+```
+
+### ❌ Response Types
+- **NEVER return arbitrary objects**
+- **NEVER skip ApplicationResult structure**
+- **ALWAYS match store types**
+
+```typescript
+// ❌ WRONG
+return NextResponse.json({ data: result });
+return NextResponse.json({ result });
+
+// ✅ CORRECT
+const response: ResponseType = {
+  isSuccess: true,
+  message: 'Success',
+  data: result
+};
+return NextResponse.json(response, { status: 200 });
+```
+
+### ❌ HTTP Status Codes
+- **NEVER return 401 from session endpoint (triggers refresh loop)**
+- **NEVER skip error handling**
+- **NEVER expose server errors**
+
+```typescript
+// ❌ WRONG - session endpoint
+return NextResponse.json({}, { status: 401 });
+
+// ✅ CORRECT - session always returns 200
+return NextResponse.json({ authenticated: false }, { status: 200 });
+```
+
+### ❌ Async/Await
+- **NEVER forget await params**
+- **NEVER forget await cookies()**
+
+```typescript
+// ❌ WRONG
+const { billId } = params;
+const cookieStore = cookies();
+
+// ✅ CORRECT
+const { billId } = await params;
+const cookieStore = await cookies();
+```
+
+---
+
+## 📋 Type Consistency Requirements
+
+### CRITICAL: Types Must Match Across All Layers
+
+All response types MUST be consistent:
+
+1. **Store Types** (`@/src/store/[feature]/[feature].types.ts`)
+2. **API Routes** (`app/api/[feature]/route.ts`)
+3. **Backend APIs** (Upstream response)
+
+### Example: End-to-End Type Matching
+
+#### Store Type Definition
+```typescript
+// src/store/auth/auth.types.ts
+export interface SendOtpData {
+  challengeId: string;
+  maskedPhoneNumber?: string;
+}
+
+export interface SendOtpResponse extends ApplicationResult<SendOtpData> {}
+```
+
+#### API Route Usage
+```typescript
+// app/api/auth/login/route.ts
+import { SendOtpResponse } from '@/src/store/auth/auth.types';
+
+const response: SendOtpResponse = {
+  isSuccess: !!upstream.data?.data?.challengeId,
+  message: upstream.data?.message || 'OTP sent successfully',
+  errors: upstream.data?.errors || undefined,
+  data: upstream.data?.data ? {
+    challengeId: upstream.data.data.challengeId,
+    maskedPhoneNumber: upstream.data.data.maskedPhoneNumber || undefined
+  } : undefined
+};
+```
+
+#### Backend API Response (Expected)
+```typescript
+// Upstream backend returns:
+{
+  isSuccess: true,
+  message: "OTP sent successfully",
+  data: {
+    challengeId: "abc123",
+    maskedPhoneNumber: "0912***1234"
+  }
+}
+```
+
+### ✅ Type Matching Rules
+
+1. **Import from Store**: Always import response types from `@/src/store/[feature]/[feature].types.ts`
+2. **Use ApplicationResult**: All responses extend `ApplicationResult<T>` from `@/src/store/api/api.types.ts`
+3. **Match Upstream**: API route response must match what upstream returns
+4. **Transform Safely**: Handle null/undefined upstream data gracefully
+5. **Type Safety**: Use TypeScript interfaces, not `any`
+
+```typescript
+// ❌ WRONG - No types, no consistency
+const response = { data: result };
+
+// ✅ CORRECT - Type-safe, consistent
+const response: CreatePaymentResponse = {
+  isSuccess: !!upstream.data?.data,
+  message: upstream.data?.message || 'Payment created',
+  errors: upstream.data?.errors || undefined,
+  data: upstream.data?.data || undefined
+};
+```
+
+---
+
+## 🔐 Security Requirements
+
+### CSRF Protection (Auth Routes Only)
+```typescript
+import { ensureCsrfCookie, verifyCsrfFromRequest } from '@/src/lib/csrf';
+
+// In handler:
+const res = NextResponse.next();
+ensureCsrfCookie(req, res);
+
+// For POST/PUT/DELETE, verify CSRF:
+const body = await req.json().catch(() => ({}));
+const isValid = verifyCsrfFromRequest(req, body.csrfToken);
+
+if (!isValid) {
+  return NextResponse.json({ 
+    isSuccess: false, 
+    message: 'Invalid CSRF token', 
+    errors: ['Invalid CSRF token'] 
+  }, { status: 403 });
+}
+```
+
+### Security Headers
+```typescript
+res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+```
+
+---
+
+## 📝 Complete Route Template
+
+```typescript
+// app/api/[feature]/[path]/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { createApiInstance, handleApiError } from '@/app/api/generatedClient';
+import { ResponseType } from '@/src/store/[feature]/[feature].types';
+import { AxiosError } from 'axios';
+
+// For auth routes needing crypto
+export const runtime = 'nodejs';
+
+/**
+ * GET/POST/PUT/DELETE /api/[feature]/[path]
+ * Brief description
+ */
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ paramName: string }> } // dynamic routes only
+) {
+  try {
+    // 1. Get API instance (uses UPSTREAM_API_BASE_URL)
+    const api = createApiInstance(req);
+    
+    // 2. Extract params if dynamic route
+    const { paramName } = await params;
+    
+    // 3. Validate input
+    if (!paramName) {
+      return NextResponse.json({ 
+        isSuccess: false, 
+        message: 'Param required', 
+        errors: ['Param required'],
+        data: null
+      }, { status: 400 });
+    }
+    
+    // 4. Call upstream API
+    const upstream = await api.api.upstreamMethod({ paramName });
+    const status = upstream.status ?? 200;
+    
+    // 5. Transform to ApplicationResult<T>
+    const response: ResponseType = {
+      isSuccess: !!upstream.data?.data,
+      message: upstream.data?.message || 'Operation completed',
+      errors: upstream.data?.errors || undefined,
+      data: upstream.data?.data || undefined
+    };
+    
+    // 6. Create response with headers
+    const res = NextResponse.json(response, { status });
+    res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    
+    // 7. Forward upstream cookies
+    const setCookie = upstream.headers?.['set-cookie'];
+    if (setCookie) {
+      if (Array.isArray(setCookie)) setCookie.forEach(c => res.headers.append('set-cookie', c));
+      else res.headers.set('set-cookie', setCookie as string);
+    }
+    
+    return res;
+  } catch (error) {
+    console.error('[Feature] BFF error:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      type: typeof error,
+    });
+    
+    return handleApiError(error as AxiosError, req);
+  }
+}
+```
+
+---
+
+## 🎯 HTTP Status Codes
+
+- **200**: Success ✅
+- **201**: Created ✅
+- **400**: Bad Request (validation)
+- **401**: Unauthorized (except session endpoint)
+- **403**: Forbidden (CSRF, permissions)
+- **404**: Not Found
+- **500**: Internal Server Error
+- **503**: Service Unavailable
+
+---
+
+## 🔄 Client-to-Server Flow
+
+```
+Client (RTK Query)
+  ↓ uses /api (Next.js baseUrl)
+Next.js API Route (BFF)
+  ↓ uses UPSTREAM_API_BASE_URL
+Upstream Backend
+```
+
+**Types flow**:
+1. Store defines `ResponseType extends ApplicationResult<T>`
+2. API route uses `ResponseType`
+3. Upstream must match structure
+4. All layers type-safe
+
+---
+
+## 📚 Examples
+
+- ✅ `app/api/auth/login/route.ts` - CSRF + ApplicationResult
+- ✅ `app/api/auth/session/route.ts` - Always 200, no refresh loop
+- ✅ `app/api/bills/[billId]/route.ts` - Dynamic params
+- ✅ `app/api/payments/route.ts` - POST with body
+
+---
+
+## 🎓 Summary
+
+**DO**:
+- ✅ Use `createApiInstance(req)` for upstream connection
+- ✅ Use `UPSTREAM_API_BASE_URL` env variable
+- ✅ Return `ApplicationResult<T>` structure
+- ✅ Match store types exactly
+- ✅ Handle errors with `handleApiError`
+- ✅ Set Cache-Control headers
+- ✅ Forward upstream cookies
+
+**DON'T**:
+- ❌ Use `NEXT_PUBLIC_API_BASE_URL` in API routes
+- ❌ Hardcode upstream URLs
+- ❌ Return arbitrary response objects
+- ❌ Return 401 from session endpoint
+- ❌ Forget to await params/cookies
+- ❌ Skip error handling
+- ❌ Use `any` types

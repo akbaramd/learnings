@@ -18,6 +18,10 @@ import {
   PiDiamondDuotone,
   PiArrowClockwise
 } from 'react-icons/pi';
+import GridSliderDemo from '@/src/components/ui/Slider';
+import { TourSection } from '@/src/components/tours/TourSection';
+import { Tour } from '@/src/components/tours/TourCard';
+import { ServicesGrid } from '@/src/components/services/ServiceCard';
 
 /* =========================
    Wallet (clean + minimal)
@@ -112,7 +116,7 @@ function WalletCard() {
   const showLoading = isLoading && !wallet;
 
   return (
-    <div className="rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-700 p-4 text-white shadow-sm">
+    <div className=" bg-gradient-to-br from-emerald-600 to-emerald-700 p-4 text-white shadow-sm">
       <div className="mb-3 flex items-center justify-between">
         <div className="text-sm/5 font-medium opacity-90">
           کیف پول اصلی
@@ -196,65 +200,68 @@ const services: Service[] = [
   { id: 'insurance',title: 'بیمه',    icon: <PiShieldCheck className="h-5 w-5" />,   accent: 'rose', disabled: true },
   { id: 'car',      title: 'خودرو',   icon: <PiTruck className="h-5 w-5" />,         accent: 'cyan', disabled: true }
 ];
-
-function ServiceCard({ s, onClick }: { s: Service; onClick?: (id: string) => void }) {
-  return (
-    <button
-      type="button"
-      onClick={() => !s.disabled && onClick?.(s.id)}
-      disabled={s.disabled}
-      className={`flex flex-col items-center gap-2 rounded-md border p-3 text-center transition-all duration-200 w-full ${
-        s.disabled
-          ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500'
-          : s.id === 'tour'
-          ? 'border-gray-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 hover:scale-105 dark:border-gray-700 dark:bg-emerald-900/30 dark:text-emerald-200 dark:hover:bg-emerald-900/40'
-          : 'border-gray-200 bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700'
-      }`}
-    >
-      <div className={`${
-        s.disabled 
-          ? 'text-gray-400 dark:text-gray-500' 
-          : s.id === 'tour'
-          ? 'text-emerald-700 dark:text-emerald-300'
-          : 'text-gray-600 dark:text-gray-300'
-      }`}>
-        {s.icon}
-      </div>
-      <span className={`text-xs font-medium ${
-        s.disabled 
-          ? 'text-gray-400 dark:text-gray-500' 
-          : s.id === 'tour'
-          ? 'text-emerald-800 dark:text-emerald-200'
-          : 'text-gray-700 dark:text-gray-200'
-      }`}>
-        {s.title}
-      </span>
-    </button>
-  );
-}
-
-function ServicesGrid() {
-  const handleClick = (serviceId: string) => {
-    // Only handle clicks for enabled services
-    const service = services.find(s => s.id === serviceId);
-    if (service?.disabled) {
-      console.log('Service is not ready yet:', serviceId);
-      return;
-    }
-    
-    // integrate navigation or modal here
-    // e.g., router.push(`/services/${serviceId}`)
-    console.log('Service clicked:', serviceId);
-  };
-
-  return (
-    <div className="grid grid-cols-3 gap-3">
-      {services.map(s => (
-        <ServiceCard key={s.id} s={s} onClick={handleClick} />
-      ))}
-    </div>
-  );
-}
+const STATIC_TOURS: Tour[] = [
+  {
+    id: 't1',
+    title: 'تور یک‌روزه جنگل الیمستان',
+    description: 'پیاده‌روی سبک و طبیعت‌گردی در جنگل مه‌آلود الیمستان.',
+    photos: ['https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTJ8Tajf9WJYhXLGNZSxlgAd5dGirm_FqHPtA&s'],
+    isRegistrationOpen: true,
+    difficultyLevel: 2,
+    price: 950000,
+    registrationStart: '2025-11-01',
+    registrationEnd: '2025-11-20',
+    tourStart: '2025-12-01',
+    tourEnd: '2025-12-01',
+    maxCapacity: 30,
+    remainingCapacity: 12,
+  },
+  {
+    id: 't2',
+    title: 'کویر مرنجاب و کاروانسرای عباسی',
+    description: 'تجربه بی‌نظیر رمل‌های کویری، آسمان پرستاره و سکوت کویر.',
+    photos: ['https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTJ8Tajf9WJYhXLGNZSxlgAd5dGirm_FqHPtA&s'],
+    isRegistrationOpen: true,
+    difficultyLevel: 1,
+    price: 1250000,
+    registrationStart: '2025-11-02',
+    registrationEnd: '2025-11-28',
+    tourStart: '2025-12-05',
+    tourEnd: '2025-12-06',
+    maxCapacity: 40,
+    remainingCapacity: 3,
+  },
+  {
+    id: 't3',
+    title: 'قله توچال از دربند',
+    description: 'برنامه صعود سبک تا پناهگاه شروین و قله توچال.',
+    photos: ['https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTJ8Tajf9WJYhXLGNZSxlgAd5dGirm_FqHPtA&s'],
+    isRegistrationOpen: false,
+    difficultyLevel: 3,
+    price: 800000,
+    registrationStart: '2025-10-15',
+    registrationEnd: '2025-10-25',
+    tourStart: '2025-11-03',
+    tourEnd: '2025-11-03',
+    maxCapacity: 25,
+    remainingCapacity: 0,
+  },
+  {
+    id: 't4',
+    title: 'ماسال و ییلاقات گیلان',
+    description: 'سفری دو روزه بین ابرها با ویوی بی‌نظیر ییلاقات.',
+    photos: ['https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTJ8Tajf9WJYhXLGNZSxlgAd5dGirm_FqHPtA&s'],
+    isRegistrationOpen: true,
+    difficultyLevel: 2,
+    price: 2100000,
+    registrationStart: '2025-11-05',
+    registrationEnd: '2025-11-30',
+    tourStart: '2025-12-10',
+    tourEnd: '2025-12-11',
+    maxCapacity: 35,
+    remainingCapacity: 20,
+  },
+];
 
 
 /* =========================
@@ -262,6 +269,8 @@ function ServicesGrid() {
 ========================= */
 
 export default function HomeDashboard() {
+
+
   return (
     <>
       <style jsx>{`
@@ -295,19 +304,23 @@ export default function HomeDashboard() {
           background: #6B7280;
         }
       `}</style>
-      <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900" dir="rtl">
+      <div className="h-full flex flex-col" dir="rtl">
        
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="p-4 space-y-4">
+          <div className="space-y-4">
             {/* Wallet */}
             <section>
               <WalletCard />
             </section>
 
             {/* Services (3 per row, minimal, modern) */}
-            <section>
-              <ServicesGrid />
+            <section className='px-4'>
+              <ServicesGrid  items={services} />
+              
+            </section>
+            <section className='px-4 my-6' >
+              <TourSection seeAllHref='/tours' title='تور ها' dir='rtl' tours={STATIC_TOURS}></TourSection>
             </section>
           </div>
         </div>

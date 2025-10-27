@@ -1,6 +1,8 @@
 // src/store/auth/auth.types.ts
 // All auth-related types
 
+import { ApplicationResult } from '@/src/store/api/api.types';
+
 // Auth status type with better type safety
 export type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'anonymous' | 'error' | 'otp-sent';
 
@@ -41,12 +43,6 @@ export interface AuthState {
   isInitialized: boolean;
 }
 
-// Generic API response type
-export interface ApiResponse<T = unknown | null> {
-  result: T | null;
-  errors: string[] | null;
-}
-
 // Request types with better validation
 export interface SendOtpRequest {
   nationalCode: string;
@@ -63,48 +59,35 @@ export interface RefreshTokenRequest {
   refreshToken?: string;
 }
 
-// Response types
-export interface SendOtpResponse {
-  result: {
-    challengeId: string | null;
-    maskedPhoneNumber?: string | null;
-  } | null;
-  errors: string[] | null;
+// Data types for API responses
+export interface SendOtpData {
+  challengeId: string;
+  maskedPhoneNumber?: string;
 }
 
-export interface VerifyOtpResponse {
-  result: {
-    userId: string | null;
-    isSuccess: boolean;
-  } | null;
-  errors: string[] | null;
+export interface VerifyOtpData {
+  userId: string;
 }
 
-export interface SessionResponse {
-  result: {
-    authenticated: boolean;
-  } | null;
-  errors: string[] | null;
+export interface SessionData {
+  authenticated: boolean;
 }
 
-export interface LogoutResponse {
-  result: {
-    isSuccess: boolean;
-    message: string;
-  } | null;
-  errors: string[] | null;
+export interface LogoutData {
+  isSuccess: boolean;
+  message: string;
 }
 
-export interface RefreshResponse {
-  result: {
-    isSuccess: boolean;
-    message: string;
-    accessToken?: string;
-  } | null;
-  errors: string[] | null;
+export interface RefreshData {
+  isSuccess: boolean;
+  message: string;
+  accessToken?: string;
 }
 
-export interface GetMeResponse {
-  result: UserProfile | null;
-  errors: string[] | null;
-}
+// Response types using ApplicationResult
+export type SendOtpResponse = ApplicationResult<SendOtpData>;
+export type VerifyOtpResponse = ApplicationResult<VerifyOtpData>;
+export type SessionResponse = ApplicationResult<SessionData>;
+export type LogoutResponse = ApplicationResult<LogoutData>;
+export type RefreshResponse = ApplicationResult<RefreshData>;
+export type GetMeResponse = ApplicationResult<UserProfile>;

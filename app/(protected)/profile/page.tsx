@@ -13,6 +13,7 @@ import {
   PiPen,
   PiBell,
 } from 'react-icons/pi';
+import { useAuthGuard } from '@/src/hooks/useAuthGuard';
 
 
 function ProfileCard() {
@@ -114,11 +115,11 @@ function MenuItem({
 }
 
 export default function ProfilePage() {
-  const { logout } = useAuth();
+  const { requestLogout } = useAuthGuard();
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await requestLogout();
     } catch (error) {
       console.error('Logout failed:', error);
     }

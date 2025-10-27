@@ -190,7 +190,15 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
 
   // Event handlers
   const handleBack = () => {
-    router.back();
+    // Check if came from bills list page
+    if (document.referrer && document.referrer.includes('/bills') && !document.referrer.includes('/bills/')) {
+      router.back(); // Go back to bills list
+    } else if (document.referrer && !document.referrer.includes('/bills')) {
+      router.back(); // Go back to previous page if it's not a bills page
+    } else {
+      // Default: go to bills list
+      router.push('/bills');
+    }
   };
 
   const handleRefresh = () => {
@@ -529,7 +537,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
           background: #6B7280;
         }
       `}</style>
-      <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900" dir="rtl">
+      <div className="h-full flex flex-col" dir="rtl">
         <PageHeader
           title="صورت حساب"
           titleIcon={<PiReceipt className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}

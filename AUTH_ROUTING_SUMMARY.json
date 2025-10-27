@@ -1,0 +1,310 @@
+{
+  "router": {
+    "mode": "app",
+    "evidence": [
+      "app/(auth)/layout.tsx",
+      "app/(protected)/layout.tsx",
+      "app/api/auth/login/route.ts",
+      "app/api/auth/logout/route.ts"
+    ]
+  },
+  "auth": {
+    "library": "custom",
+    "loginEndpoints": ["/api/auth/login"],
+    "logoutEndpoints": ["/api/auth/logout"],
+    "refreshEndpoints": ["/api/auth/refresh"],
+    "meEndpoints": ["/api/auth/me"],
+    "sessionEndpoints": ["/api/auth/session"],
+    "verifyOtpEndpoints": ["/api/auth/verify-otp"],
+    "tokenStorage": {
+      "access": "cookie",
+      "refresh": "cookie",
+      "cookieFlags": {
+        "httpOnly": true,
+        "secure": true,
+        "sameSite": "strict",
+        "path": "/",
+        "domain": null,
+        "maxAge": 900
+      }
+    },
+    "clientReauth": {
+      "strategy": "none",
+      "queueSingleRefresh": false,
+      "retryPolicy": "none",
+      "multiTabSync": "none"
+    },
+    "rotation": {
+      "enabled": true,
+      "reuseDetection": false,
+      "jti": false,
+      "blacklist": "none"
+    }
+  },
+  "security": {
+    "csrf": "missing",
+    "cors": {
+      "origins": ["*"],
+      "credentials": true
+    },
+    "rateLimiting": "missing",
+    "headers": [
+      "X-Frame-Options",
+      "X-Content-Type-Options",
+      "Referrer-Policy"
+    ],
+    "middleware": {
+      "present": false,
+      "type": "missing"
+    }
+  },
+  "routes": [
+    {
+      "path": "/api/auth/login",
+      "method": ["POST"],
+      "file": "app/api/auth/login/route.ts",
+      "runtime": "node",
+      "protected": false,
+      "purpose": "Send OTP to user's phone"
+    },
+    {
+      "path": "/api/auth/verify-otp",
+      "method": ["POST"],
+      "file": "app/api/auth/verify-otp/route.ts",
+      "runtime": "node",
+      "protected": false,
+      "purpose": "Verify OTP and set tokens in HttpOnly cookies"
+    },
+    {
+      "path": "/api/auth/refresh",
+      "method": ["POST"],
+      "file": "app/api/auth/refresh/route.ts",
+      "runtime": "node",
+      "protected": true,
+      "purpose": "Refresh access token with token rotation"
+    },
+    {
+      "path": "/api/auth/logout",
+      "method": ["POST"],
+      "file": "app/api/auth/logout/route.ts",
+      "runtime": "node",
+      "protected": true,
+      "purpose": "Logout user and clear cookies"
+    },
+    {
+      "path": "/api/auth/session",
+      "method": ["GET"],
+      "file": "app/api/auth/session/route.ts",
+      "runtime": "node",
+      "protected": false,
+      "purpose": "Check authentication status with auto-refresh"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": ["GET"],
+      "file": "app/api/auth/me/route.ts",
+      "runtime": "node",
+      "protected": true,
+      "purpose": "Get current user profile"
+    }
+  ],
+  "caching": {
+    "fetchCache": ["no-store", "revalidate"],
+    "rtkQuery": {
+      "providesTags": true,
+      "invalidatesTags": true,
+      "keepUnusedDataFor": {
+        "session": 300,
+        "profile": 600
+      },
+      "refetchPolicy": {
+        "refetchOnMount": false,
+        "refetchOnFocus": false,
+        "refetchOnReconnect": true
+      }
+    }
+  },
+  "env": {
+    "files": [".env.local", ".env"],
+    "vars": [
+      "NEXT_PUBLIC_API_BASE_URL",
+      "UPSTREAM_API_BASE_URL",
+      "NODE_ENV"
+    ],
+    "config": "next.config.ts"
+  },
+  "problems": [
+    {
+      "severity": "blocking",
+      "title": "Missing middleware for route protection",
+      "locations": ["middleware.ts"],
+      "evidence": "No middleware.ts file exists in project root. Protected routes rely solely on client-side checks in app/(protected)/layout.tsx"
+    },
+    {
+      "severity": "high",
+      "title": "No rate limiting on authentication endpoints",
+      "locations": [
+        "app/api/auth/login/route.ts",
+        "app/api/auth/verify-otp/route.ts"
+      ],
+      "evidence": "No rate limiting implementation detected. Vulnerable to brute force attacks on OTP verification"
+    },
+    {
+      "severity": "high",
+      "title": "No CSRF protection",
+      "locations": ["app/api/**/route.ts"],
+      "evidence": "No CSRF token validation in any API route"
+    },
+    {
+      "severity": "high",
+      "title": "Missing 401 interceptor on client-side RTK Query",
+      "locations": ["src/store/auth/auth.queries.ts"],
+      "evidence": "RTK Query baseQuery has no error handler for 401 responses. No automatic token refresh on client-side API calls"
+    },
+    {
+      "severity": "high",
+      "title": "No token refresh queue (race condition risk)",
+      "locations": ["app/api/auth/refresh/route.ts"],
+      "evidence": "No queue mechanism exists for concurrent refresh requests. Multiple simultaneous requests will trigger race conditions"
+    },
+    {
+      "severity": "high",
+      "title": "No token reuse detection (JTI/blacklist)",
+      "locations": ["app/api/auth/refresh/route.ts"],
+      "evidence": "Refresh token rotation implemented but no JTI tracking or blacklist. Cannot detect if compromised token is being reused"
+    },
+    {
+      "severity": "medium",
+      "title": "Server interceptor has bugs",
+      "locations": ["app/api/generatedClient.ts:80-111"],
+      "evidence": "Refresh endpoint path incorrect (/auth/refresh vs /api/auth/refresh). No queue for concurrent requests. Will crash if refresh token is null"
+    },
+    {
+      "severity": "medium",
+      "title": "No multi-tab sync",
+      "locations": ["src/store/auth"],
+      "evidence": "No BroadcastChannel or storage event listeners. Auth state can desync across browser tabs"
+    },
+    {
+      "severity": "medium",
+      "title": "Session endpoint has complex auto-refresh logic",
+      "locations": ["app/api/auth/session/route.ts:45-76"],
+      "evidence": "Auto-refresh logic in session endpoint is fragile and could cause infinite loops if refresh fails repeatedly"
+    },
+    {
+      "severity": "low",
+      "title": "Missing Content-Security-Policy header",
+      "locations": ["next.config.ts"],
+      "evidence": "CSP header not configured. XSS attack surface increased"
+    },
+    {
+      "severity": "low",
+      "title": "Missing HSTS header",
+      "locations": ["next.config.ts"],
+      "evidence": "Strict-Transport-Security header not configured. Downgrade attacks possible"
+    }
+  ],
+  "recommendations": [
+    {
+      "title": "Implement middleware for route protection",
+      "steps": [
+        "Create middleware.ts in project root",
+        "Add matchers for protected routes",
+        "Check auth cookies and redirect if unauthenticated",
+        "Check if accessing auth routes while authenticated and redirect to dashboard"
+      ],
+      "priority": "blocking"
+    },
+    {
+      "title": "Add rate limiting to authentication endpoints",
+      "steps": [
+        "Install rate limiting library (next-rate-limit or custom)",
+        "Apply 5 attempts per minute to verify-otp endpoint",
+        "Apply rate limiting to login endpoint",
+        "Return 429 status with appropriate error message"
+      ],
+      "priority": "high"
+    },
+    {
+      "title": "Add CSRF protection",
+      "steps": [
+        "Generate CSRF tokens for forms",
+        "Validate tokens on POST requests",
+        "Store tokens in HttpOnly cookies",
+        "Include token in form submissions"
+      ],
+      "priority": "high"
+    },
+    {
+      "title": "Implement client-side 401 interceptor",
+      "steps": [
+        "Add error handling to RTK Query baseQuery",
+        "Implement refresh queue to prevent race conditions",
+        "Retry original request after successful refresh",
+        "Dispatch logout on refresh failure"
+      ],
+      "priority": "high"
+    },
+    {
+      "title": "Add token rotation and reuse detection",
+      "steps": [
+        "Coordinate with backend to add JTI to JWT payload",
+        "Implement blacklist in database/cache",
+        "Store last used JTI per user",
+        "On refresh, check if old refresh token is blacklisted",
+        "Reject refresh requests if token reuse detected"
+      ],
+      "priority": "high"
+    },
+    {
+      "title": "Implement multi-tab sync",
+      "steps": [
+        "Use BroadcastChannel for cross-tab communication",
+        "Listen for auth state changes in all tabs",
+        "Dispatch logout/login events to other tabs",
+        "Handle tab visibility changes"
+      ],
+      "priority": "medium"
+    },
+    {
+      "title": "Add missing security headers",
+      "steps": [
+        "Add Content-Security-Policy header to next.config.ts",
+        "Add Strict-Transport-Security header",
+        "Add Permissions-Policy header",
+        "Test headers with security headers checker"
+      ],
+      "priority": "medium"
+    },
+    {
+      "title": "Fix server interceptor bugs",
+      "steps": [
+        "Fix refresh endpoint path to /api/auth/refresh",
+        "Fix response data path (result.accessToken instead of data.access_token)",
+        "Add null check for refresh token",
+        "Implement queue for concurrent requests"
+      ],
+      "priority": "medium"
+    }
+  ],
+  "strengths": [
+    "HttpOnly cookies for token storage (XSS protection)",
+    "Token rotation implemented",
+    "Proper cookie flags (secure, httpOnly, sameSite)",
+    "BFF pattern for API isolation",
+    "Good separation of concerns",
+    "Security headers partially configured"
+  ],
+  "weaknesses": [
+    "No middleware for route protection",
+    "No rate limiting",
+    "No CSRF protection",
+    "No client-side 401 interceptor",
+    "No token reuse detection",
+    "No multi-tab sync",
+    "Race conditions in refresh logic",
+    "Server interceptor has bugs",
+    "Missing critical security headers"
+  ]
+}
+

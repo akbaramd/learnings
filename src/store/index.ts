@@ -1,6 +1,6 @@
 // src/store/index.ts
 import { configureStore } from '@reduxjs/toolkit';
-import { api } from '@/src/services/apiBase';
+import { api } from '@/src/store/api/baseApi';
 import { authReducer, authApi } from './auth';
 import { notificationsReducer, notificationsApi } from './notifications';
 import { walletsReducer, walletsApi } from './wallets';

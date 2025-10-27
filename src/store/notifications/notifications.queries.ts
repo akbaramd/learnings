@@ -1,5 +1,6 @@
 // src/store/notifications/notifications.queries.ts
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { baseQueryWithReauth } from '@/src/store/api/baseApi';
 import { 
   GetNotificationsPaginatedRequest,
   GetAllNotificationsRequest,
@@ -46,13 +47,7 @@ export const handleNotificationsApiError = (error: unknown): string => {
 // Notifications API slice
 export const notificationsApi = createApi({
   reducerPath: 'notificationsApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: '/api/notifications',
-    prepareHeaders: (headers) => {
-      headers.set('content-type', 'application/json');
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithReauth, // Use centralized baseQueryWithReauth
   tagTypes: ['Notifications', 'UnreadCount'],
   // Add proper caching configuration
   keepUnusedDataFor: 300, // Keep data for 5 minutes
@@ -76,7 +71,7 @@ export const notificationsApi = createApi({
         }
 
         return {
-          url: `/user${searchParams.toString() ? `?${searchParams.toString()}` : ''}`,
+          url: `/notifications/user${searchParams.toString() ? `?${searchParams.toString()}` : ''}`,
           method: 'GET',
         };
       },
@@ -131,7 +126,7 @@ export const notificationsApi = createApi({
         }
 
         return {
-          url: `/user/paginated?${searchParams.toString()}`,
+          url: `/notifications/user/paginated?${searchParams.toString()}`,
           method: 'GET',
         };
       },
@@ -170,7 +165,7 @@ export const notificationsApi = createApi({
     // Get unread count
     getUnreadCount: builder.query<GetUnreadCountResponse, void>({
       query: () => ({
-        url: '/user/unread-count',
+        url: '/notifications/user/unread-count',
         method: 'GET',
       }),
       providesTags: ['UnreadCount'],
@@ -204,7 +199,7 @@ export const notificationsApi = createApi({
     // Get unread count by context
     getUnreadCountByContext: builder.query<GetUnreadCountByContextResponse, void>({
       query: () => ({
-        url: '/user/unread-count/context',
+        url: '/notifications/user/unread-count/context',
         method: 'GET',
       }),
       providesTags: ['UnreadCount'],
@@ -238,7 +233,7 @@ export const notificationsApi = createApi({
     // Get unread count by action
     getUnreadCountByAction: builder.query<GetUnreadCountByActionResponse, void>({
       query: () => ({
-        url: '/user/unread-count/action',
+        url: '/notifications/user/unread-count/action',
         method: 'GET',
       }),
       providesTags: ['UnreadCount'],
@@ -272,7 +267,7 @@ export const notificationsApi = createApi({
     // Mark specific notification as read
     markAsRead: builder.mutation<MarkAsReadResponse, string>({
       query: (notificationId) => ({
-        url: `/${notificationId}/read`,
+        url: `/notifications/${notificationId}/read`,
         method: 'PUT',
       }),
       invalidatesTags: ['Notifications', 'UnreadCount'],
@@ -297,7 +292,7 @@ export const notificationsApi = createApi({
     // Mark all notifications as read
     markAllAsRead: builder.mutation<MarkAllAsReadResponse, void>({
       query: () => ({
-        url: '/user/mark-all-read',
+        url: '/notifications/user/mark-all-read',
         method: 'PUT',
       }),
       invalidatesTags: ['Notifications', 'UnreadCount'],
@@ -327,7 +322,7 @@ export const notificationsApi = createApi({
     // Mark notifications by context as read
     markByContextAsRead: builder.mutation<MarkByContextAsReadResponse, MarkByContextAsReadRequest>({
       query: (request) => ({
-        url: '/user/mark-context-read',
+        url: '/notifications/user/mark-context-read',
         method: 'PUT',
         body: request,
       }),
@@ -356,7 +351,7 @@ export const notificationsApi = createApi({
     // Mark notifications by action as read
     markByActionAsRead: builder.mutation<MarkByActionAsReadResponse, MarkByActionAsReadRequest>({
       query: (request) => ({
-        url: '/user/mark-action-read',
+        url: '/notifications/user/mark-action-read',
         method: 'PUT',
         body: request,
       }),

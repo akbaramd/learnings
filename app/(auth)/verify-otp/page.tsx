@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import Button from '@/src/components/ui/Button';
 import Card from '@/src/components/ui/Card';
 import OtpField from '@/src/components/forms/OtpField';
@@ -14,8 +14,27 @@ type UiStatus = 'idle' | 'typing' | 'valid' | 'invalid';
 // Mock phone number - in real app, this would come from props or context
 const MOCK_PHONE = '09123456789';
 
+/**
+ * Safe redirect URL resolver
+ * Only accepts internal paths starting with / to prevent open redirect attacks
+ */
+function safeResolveReturnUrl(searchParams: URLSearchParams): string {
+  const r = searchParams.get('r') ?? '';
+  // Only internal paths are allowed (prevent open redirect)
+  if (r && r.startsWith('/') && !r.startsWith('//') && !r.startsWith('/http')) {
+    return r;
+  }
+  return '/dashboard';
+}
+
 export default function VerifyOtpPage() {
   const router = useRouter();
+  
+  // Get return URL from query params and sanitize it
+  const redirectTo = useMemo(() => {
+    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+    return safeResolveReturnUrl(searchParams);
+  }, []);
   
   // استفاده مستقیم از RTK Query hooks
   const [sendOtpMutation, { isLoading: isSendingOtp, error: sendError }] = useSendOtpMutation();
@@ -33,23 +52,14 @@ export default function VerifyOtpPage() {
   const [timeLeft, setTimeLeft] = useState(120); // 2 minutes for OTP
   const [canResend, setCanResend] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
-  const { success, error: showError, info } = useToast();
+  const { success, error: showError } = useToast();
+  
+  // Protect against multiple redirects
+  const navigatedRef = useRef(false);
   
   // محاسبه وضعیت
   const isLoading = isSendingOtp || isVerifyingOtp;
   const error = sendError || verifyError;
-  const isAuthenticated = authStatus === 'authenticated';
-
-  // Redirect if authenticated (successful verification)
-  useEffect(() => {
-    if (isAuthenticated) {
-      success('کد تأیید موفق!', 'اکنون می‌توانید وارد شوید.');
-      // Navigate to dashboard/index page
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 1500);
-    }
-  }, [isAuthenticated, success, router]);
 
 
   // Show error from mutations
@@ -139,7 +149,6 @@ export default function VerifyOtpPage() {
     if (!canResend || resendLoading) return;
     
     setResendLoading(true);
-    info('ارسال مجدد کد', 'کد تأیید جدید در حال ارسال است...');
     
     try {
       // استفاده مستقیم از mutation hook
@@ -156,7 +165,8 @@ export default function VerifyOtpPage() {
       setOtp('');
       setStatus('idle');
       setErrorText(null);
-      success('کد ارسال شد', `کد تأیید جدید ارسال شد.`);
+      // Only show success toast for successful resend
+      success('کد جدید ارسال شد', `لطفاً کد جدید را بررسی کنید.`);
       
     } catch (error: unknown) {
       setResendLoading(false);
@@ -165,7 +175,7 @@ export default function VerifyOtpPage() {
         : 'ارسال مجدد کد ناموفق بود.';
       showError('خطا', errorMessage);
     }
-  }, [canResend, resendLoading, info, success, showError, sendOtpMutation]);
+  }, [canResend, resendLoading, success, showError, sendOtpMutation]);
 
   return (
     <div className="min-h-screen flex items-center justify-center  p-4">
@@ -223,16 +233,22 @@ export default function VerifyOtpPage() {
               return;
             }
 
-            info('در حال تأیید کد', 'لطفاً منتظر بمانید تا کد شما تأیید شود...');
-            
             // استفاده مستقیم از mutation hook
             try {
-              await verifyOtpMutation({
-                challengeId: challengeId,
+              const result = await verifyOtpMutation({
+                challengeId: challengeId!,
                 otpCode: otp
               }).unwrap();
               
-              // The useEffect will handle the redirect to dashboard when isAuthenticated becomes true
+              // Redirect immediately on successful verification
+              if (result?.isSuccess && !navigatedRef.current) {
+                navigatedRef.current = true;
+                success('ورود موفق', 'در حال انتقال...');
+                // Use replace to avoid polluting history
+                setTimeout(() => {
+                  router.replace(redirectTo);
+                }, 800); // Small delay for toast visibility
+              }
             } catch (error: unknown) {
               setStatus('invalid');
               const errorMessage = error && typeof error === 'object' && 'data' in error 
@@ -261,7 +277,7 @@ export default function VerifyOtpPage() {
                 setErrorText(err);
               } else {
                 setStatus('valid');
-                info('کد کامل شد', 'همه ارقام وارد شد. روی "تأیید کد" کلیک کنید تا ادامه دهید.');
+                // No toast - UI status change is enough
               }
             }}
                     disabled={isLoading}

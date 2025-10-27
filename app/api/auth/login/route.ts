@@ -1,11 +1,19 @@
 // app/api/auth/login/route.ts (Server-only)
 import { NextRequest, NextResponse } from 'next/server';
-import { createApiForRequest } from '@/src/services/server/generatedClient';
 import { SendOtpResponse } from '@/src/store/auth/auth.types';
+import { ensureCsrfCookie } from '@/src/lib/csrf';
+import { createApiInstance } from '@/app/api/generatedClient';
+
+// Force Node.js runtime for crypto module support
+export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   try {
-    const api = createApiForRequest(req);
+    // Ensure CSRF cookie is set in response
+    const res = NextResponse.next();
+    ensureCsrfCookie(req, res);
+    
+    const api = createApiInstance(req);
     const body = await req.json();
 
     // Add scope parameter for the API call
@@ -21,21 +29,31 @@ export async function POST(req: NextRequest) {
     // فوروارد کردن کوکی‌هایی که بک‌اند ست می‌کند (refresh cookie)
     const setCookie = upstream.headers?.['set-cookie'];
 
-    // Strongly typed response structure
+    // Strongly typed response structure using ApplicationResult
     const response: SendOtpResponse = {
-      result: upstream.data?.data?.challengeId ? {
+      isSuccess: upstream.data?.data?.challengeId ? true : false,
+      message: upstream.data?.message || (upstream.data?.data?.challengeId ? 'OTP sent successfully' : 'Send OTP failed'),
+      errors: upstream.data?.errors || undefined,
+      data: upstream.data?.data?.challengeId ? {
         challengeId: upstream.data.data.challengeId,
-        maskedPhoneNumber: upstream.data.data.maskedPhoneNumber
-      } : null,
-      errors: upstream.data?.errors || ['Send OTP failed']
+        maskedPhoneNumber: upstream.data.data.maskedPhoneNumber || undefined
+      } : undefined
     };
 
-    const res = NextResponse.json(response, { status });
+    const result = NextResponse.json(response, { status });
+    
+    // Apply CSRF cookie if set
+    const csrfCookie = res.headers.get('set-cookie');
+    if (csrfCookie) {
+      result.headers.append('set-cookie', csrfCookie);
+    }
+    
+    // Forward upstream cookies
     if (setCookie) {
-      if (Array.isArray(setCookie)) setCookie.forEach(c => res.headers.append('set-cookie', c));
-      else res.headers.set('set-cookie', setCookie as string);
+      if (Array.isArray(setCookie)) setCookie.forEach(c => result.headers.append('set-cookie', c));
+      else result.headers.set('set-cookie', setCookie as string);
     } 
-    return res;
+    return result;
   } catch (error) {
     console.error('Send OTP BFF error:', {
       name: error instanceof Error ? error.name : 'Unknown',
@@ -45,9 +63,18 @@ export async function POST(req: NextRequest) {
     });
 
     const errorResponse: SendOtpResponse = {
-      result: null,
-      errors: [error instanceof Error ? error.message : String(error), 'Failed to send OTP. Please try again.']
+      isSuccess: false,
+      message: error instanceof Error ? error.message : 'Failed to send OTP. Please try again.',
+      errors: [error instanceof Error ? error.message : String(error)]
     };
-    return NextResponse.json(errorResponse, { status: 400 });
+    const result = NextResponse.json(errorResponse, { status: 400 });
+    // Try to set CSRF cookie even on error
+    const res = NextResponse.next();
+    ensureCsrfCookie(req, res);
+    const csrfCookie = res.headers.get('set-cookie');
+    if (csrfCookie) {
+      result.headers.set('set-cookie', csrfCookie);
+    }
+    return result;
   }
 }

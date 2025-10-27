@@ -1,5 +1,6 @@
 // src/store/wallets/wallets.queries.ts
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { baseQueryWithReauth } from '@/src/store/api/baseApi';
 import {
   CreateDepositRequest,
   CreateDepositResponseWrapper,
@@ -50,13 +51,7 @@ export const handleWalletsApiError = (error: unknown): string => {
 // Wallets API slice
 export const walletsApi = createApi({
   reducerPath: 'walletsApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: '/api/wallets',
-    prepareHeaders: (headers) => {
-      headers.set('content-type', 'application/json');
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithReauth, // Use centralized baseQueryWithReauth
   tagTypes: ['Wallet', 'Transactions', 'Deposits', 'Statistics'],
   // Add proper caching configuration
   keepUnusedDataFor: 300, // Keep data for 5 minutes
@@ -67,7 +62,7 @@ export const walletsApi = createApi({
     // Get wallet
     getWallet: builder.query<GetWalletResponse, void>({
       query: () => ({
-        url: '/balance',
+        url: '/wallets/balance',
         method: 'GET',
       }),
       providesTags: ['Wallet'],
@@ -90,7 +85,7 @@ export const walletsApi = createApi({
     // Create deposit
     createDeposit: builder.mutation<CreateDepositResponseWrapper, CreateDepositRequest>({
       query: (request) => ({
-        url: '/deposit',
+        url: '/wallets/deposit',
         method: 'POST',
         body: request,
       }),
@@ -144,7 +139,7 @@ export const walletsApi = createApi({
     // Pay with wallet
     payWithWallet: builder.mutation<PayWithWalletResponseWrapper, PayWithWalletRequest>({
       query: (request) => ({
-        url: '/pay',
+        url: '/wallets/pay',
         method: 'POST',
         body: request,
       }),
@@ -215,7 +210,7 @@ export const walletsApi = createApi({
         }
 
         return {
-          url: `/transactions?${searchParams.toString()}`,
+          url: `/wallets/transactions?${searchParams.toString()}`,
           method: 'GET',
         };
       },
@@ -270,7 +265,7 @@ export const walletsApi = createApi({
         }
 
         return {
-          url: `/deposits?${searchParams.toString()}`,
+          url: `/wallets/deposits?${searchParams.toString()}`,
           method: 'GET',
         };
       },

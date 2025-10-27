@@ -8,8 +8,9 @@ import {
   PaymentDto,
   RefundDto,
   DiscountValidationItemDto,
-  DiscountValidationDto
+  DiscountValidationDto,
 } from '@/src/services/Api';
+import { ApplicationResult } from '../api/api.types';
 export type DiscountValidation = DiscountValidationDto;
 // Re-export API types
 export type Bill = BillDto;
@@ -85,15 +86,6 @@ export interface IssueBillResponse {
   totalAmount?: number;
 }
 
-/**
- * Base Application Result structure used by all API responses
- */
-export interface ApplicationResult<T = unknown> {
-  isSuccess?: boolean;
-  message?: string | null;
-  errors?: string[] | null;
-  data?: T;
-}
 
 /**
  * Bill Paginated Result Response

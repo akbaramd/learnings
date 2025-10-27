@@ -1,12 +1,19 @@
 // app/api/auth/verify-otp/route.ts (Server-only)
 import { NextRequest, NextResponse } from 'next/server';
-import { createApiForRequest } from '@/src/services/server/generatedClient';
-import { cookies } from 'next/headers';
 import { VerifyOtpResponse } from '@/src/store/auth/auth.types';
+import { ensureCsrfCookie } from '@/src/lib/csrf';
+import { createApiInstance } from '@/app/api/generatedClient';
+
+// Force Node.js runtime for crypto module support
+export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   try {
-    const api = createApiForRequest(req);
+    // Ensure CSRF cookie is set in response
+    const res = NextResponse.next();
+    ensureCsrfCookie(req, res);
+    
+    const api = createApiInstance(req);
     const body = await req.json();
 
     // Add scope parameter for the API call
@@ -22,16 +29,17 @@ export async function POST(req: NextRequest) {
     // فوروارد کردن کوکی‌هایی که بک‌اند ست می‌کند (refresh cookie)
     const setCookie = upstream.headers?.['set-cookie'];
 
-    // Strongly typed response structure
+    // Strongly typed response structure using ApplicationResult
     const response: VerifyOtpResponse = {
-      result: status === 200 && upstream.data?.isSuccess ? {
-        userId: upstream.data.data?.userId || null,
-        isSuccess: true
-      } : null,
-      errors: status !== 200 || !upstream.data?.isSuccess ? upstream.data?.errors || ['Verification failed'] : []
+      isSuccess: status === 200 && upstream.data?.isSuccess || false,
+      message: upstream.data?.message || (status === 200 && upstream.data?.isSuccess ? 'OTP verified successfully' : 'Verification failed'),
+      errors: upstream.data?.errors || undefined,
+      data: status === 200 && upstream.data?.isSuccess ? {
+        userId: upstream.data.data?.userId || ''
+      } : undefined
     };
 
-    const res = NextResponse.json(response, { status });
+    const result = NextResponse.json(response, { status });
     
     // Store tokens in session cookies if verification was successful
     if (status === 200 && upstream.data?.isSuccess && upstream.data?.data) {
@@ -39,7 +47,7 @@ export async function POST(req: NextRequest) {
       
       if (accessToken) {
         // Store access token in httpOnly cookie
-        res.cookies.set('accessToken', accessToken, {
+        result.cookies.set('accessToken', accessToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'strict',
@@ -50,7 +58,7 @@ export async function POST(req: NextRequest) {
       
       if (refreshToken) {
         // Store refresh token in httpOnly cookie
-        res.cookies.set('refreshToken', refreshToken, {
+        result.cookies.set('refreshToken', refreshToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'strict',
@@ -60,11 +68,18 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    if (setCookie) {
-      if (Array.isArray(setCookie)) setCookie.forEach(c => res.headers.append('set-cookie', c));
-      else res.headers.set('set-cookie', setCookie as string);
+    // Apply CSRF cookie if set
+    const csrfCookie = res.headers.get('set-cookie');
+    if (csrfCookie) {
+      result.headers.append('set-cookie', csrfCookie);
     }
-    return res;
+    
+    // Forward upstream cookies
+    if (setCookie) {
+      if (Array.isArray(setCookie)) setCookie.forEach(c => result.headers.append('set-cookie', c));
+      else result.headers.set('set-cookie', setCookie as string);
+    }
+    return result;
   } catch (error) {
     console.error('Verify OTP BFF error:', {
       name: error instanceof Error ? error.name : 'Unknown',
@@ -74,9 +89,18 @@ export async function POST(req: NextRequest) {
     });
 
     const errorResponse: VerifyOtpResponse = {
-      result: null,
-      errors: [error instanceof Error ? error.message : String(error), 'Failed to verify OTP. Please check your code and try again.']
+      isSuccess: false,
+      message: 'Failed to verify OTP. Please check your code and try again.',
+      errors: [error instanceof Error ? error.message : String(error)]
     };
-    return NextResponse.json(errorResponse, { status: 400 });
+    const result = NextResponse.json(errorResponse, { status: 400 });
+    // Try to set CSRF cookie even on error
+    const res = NextResponse.next();
+    ensureCsrfCookie(req, res);
+    const csrfCookie = res.headers.get('set-cookie');
+    if (csrfCookie) {
+      result.headers.set('set-cookie', csrfCookie);
+    }
+    return result;
   }
 }

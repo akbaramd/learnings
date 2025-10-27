@@ -7,7 +7,6 @@ import InputField from '@/src/components/forms/InputField';
 import { useRouter } from 'next/navigation';
 import { useSendOtpMutation, selectChallengeId, selectAuthStatus } from '@/src/store/auth';
 import { useAppSelector } from '@/src/hooks/store';
-import { useAuthGuard } from '@/src/hooks/useAuthGuard';
 /* ---- Iranian National ID (Melli) utilities ---- */
 const Melli = {
   normalize(raw: string): string {
@@ -42,7 +41,6 @@ export default function LoginPage() {
   const [sendOtpMutation, { isLoading, error }] = useSendOtpMutation();
   
   // Check authentication and redirect if already logged in
-  const { isLoading: isCheckingSession } = useAuthGuard('/dashboard');
   
   // دریافت challengeId و auth status از Redux store
   const challengeId = useAppSelector(selectChallengeId);
@@ -53,13 +51,20 @@ export default function LoginPage() {
   const [errorText, setErrorText] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   
+  // Get return URL from query params
+  const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const [returnUrl] = useState<string | null>(() => {
+    const r = params?.get('r');
+    return r || null;
+  });
   
   // Redirect to verify-otp when challengeId is set (OTP sent successfully)
   useEffect(() => {
     if (challengeId && authStatus === 'otp-sent') {
-      router.push('/verify-otp');
+      const redirectTo = returnUrl ? `/verify-otp?r=${encodeURIComponent(returnUrl)}` : '/verify-otp';
+      router.push(redirectTo);
     }
-  }, [challengeId, authStatus, router]);
+  }, [challengeId, authStatus, router, returnUrl]);
 
   // Show error from mutation
   useEffect(() => {
@@ -127,7 +132,7 @@ export default function LoginPage() {
     return () => clearTimeout(t);
   }, [nationalId, touched, explain]);
 
-  const canSubmit = !isLoading && !isCheckingSession && nationalId.length === 10;
+  const canSubmit = !isLoading  && nationalId.length === 10;
 
   // Handlers
   const handleChange = (val: string) => {
@@ -175,19 +180,7 @@ export default function LoginPage() {
     });
   };
 
-  // Show loading while checking authentication
-  if (isCheckingSession) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Card variant="elevated" padding="md" radius="md" className="w-full">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">در حال بررسی وضعیت ورود...</p>
-          </div>
-        </Card>
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen flex items-center justify-center  p-4">

@@ -1,94 +1,58 @@
 // app/api/auth/session/route.ts (Server-only)
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { Api } from '@/src/services/Api';
 import { SessionResponse } from '@/src/store/auth/auth.types';
+import { ensureCsrfCookie } from '@/src/lib/csrf';
+import { createApiInstance } from '@/app/api/generatedClient';
+
+// Force Node.js runtime for crypto module support
+export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
+    // Create initial response for CSRF cookie
+    const res = new NextResponse();
+    ensureCsrfCookie(req, res);
     
-    // Get tokens from cookies
-    const accessToken = cookieStore.get('accessToken')?.value;
-    const refreshToken = cookieStore.get('refreshToken')?.value;
-    
-    // If no tokens, user is not authenticated
-    if (!accessToken && !refreshToken) {
+    // Try to get current user - simple check
+    const api = createApiInstance(req);
+    const upstream = await api.api.getCurrentUser({});
+    const ok = upstream.status === 200 && upstream.data?.isSuccess && upstream.data?.data;
+
+    // If authenticated, return 200
+    if (ok) {
       const response: SessionResponse = {
-        result: { authenticated: false },
-        errors: null
+        isSuccess: true,
+        message: 'User is authenticated',
+        data: { authenticated: true }
       };
-      return NextResponse.json(response, { status: 200 });
-    }
 
-    const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://auth.wa-nezam.org';
-    
-    const api = new Api({
-      baseURL: baseURL,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
-      },
-    });
-
-    // Only check if user can get their profile successfully
-    const upstream = await api.api.getCurrentUser({}); 
-    const status = upstream.status ?? 200;
-
-    if (status === 200 && upstream.data?.isSuccess && upstream.data?.data) {
-      // User is authenticated and can get profile
-      const response: SessionResponse = {
-        result: { authenticated: true },
-        errors: null
-      };
-      return NextResponse.json(response, { status: 200 });
-    } else if (status === 401 && refreshToken) {
-      // Access token expired but refresh token exists - try to refresh
-      try {
-        const refreshApi = new Api({
-          baseURL: baseURL,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${refreshToken}`
-          },
-        });
-        
-        // Set Authorization header with refresh token
-        const refreshUpstream = await refreshApi.api.refreshToken({ refreshToken });
-        
-        if (refreshUpstream.status === 200 && refreshUpstream.data?.isSuccess) {
-          // Refresh successful, try getCurrentUser again with new access token
-          const newAccessToken = refreshUpstream.data.data?.accessToken;
-          if (newAccessToken) {
-            api.instance.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
-            const retryUpstream = await api.api.getCurrentUser({});
-            if (retryUpstream.status === 200 && retryUpstream.data?.isSuccess && retryUpstream.data?.data) {
-              const response: SessionResponse = {
-                result: { authenticated: true },
-                errors: null
-              };
-              return NextResponse.json(response, { status: 200 });
-            }
-          }
-        }
-      } catch (refreshError) {
-        console.error('Token refresh failed:', refreshError);
+      const finalRes = NextResponse.json(response, { status: 200 });
+      finalRes.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      
+      const csrfCookie = res.headers.get('set-cookie');
+      if (csrfCookie) {
+        finalRes.headers.set('set-cookie', csrfCookie);
       }
       
-      // Refresh failed or user still not authenticated
-      const response: SessionResponse = {
-        result: { authenticated: false },
-        errors: null
-      };
-      return NextResponse.json(response, { status: 200 });
-    } else {
-      // User cannot get profile - not authenticated
-      const response: SessionResponse = {
-        result: { authenticated: false },
-        errors: null
-      };
-      return NextResponse.json(response, { status: 200 });
+      return finalRes;
     }
+
+    // If NOT authenticated, return 401
+    const response: SessionResponse = {
+      isSuccess: false,
+      message: 'User is not authenticated',
+      data: { authenticated: false }
+    };
+
+    const finalRes = NextResponse.json(response, { status: 401 });
+    finalRes.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    
+    const csrfCookie = res.headers.get('set-cookie');
+    if (csrfCookie) {
+      finalRes.headers.set('set-cookie', csrfCookie);
+    }
+    
+    return finalRes;
   } catch (error) {
     console.error('Session BFF error:', {
       name: error instanceof Error ? error.name : 'Unknown',
@@ -97,11 +61,23 @@ export async function GET(req: NextRequest) {
       type: typeof error,
     });
     
-    // In case of error, assume not authenticated
+    // In case of error, return 401 (assume not authenticated)
     const errorResponse: SessionResponse = {
-      result: { authenticated: false },
-      errors: [error instanceof Error ? error.message : String(error),'Session check failed. Please try again.']
+      isSuccess: false,
+      message: 'Session check failed',
+      data: { authenticated: false }
     };
-    return NextResponse.json(errorResponse, { status: 200 });
+    
+    const errorRes = new NextResponse();
+    ensureCsrfCookie(req, errorRes);
+    const finalRes = NextResponse.json(errorResponse, { status: 401 });
+    finalRes.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    
+    const csrfCookie = errorRes.headers.get('set-cookie');
+    if (csrfCookie) {
+      finalRes.headers.set('set-cookie', csrfCookie);
+    }
+    
+    return finalRes;
   }
 }

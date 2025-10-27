@@ -1,18 +1,2 @@
-// src/services/apiBase.ts
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-
-export const api = createApi({
-  reducerPath: 'api',
-  baseQuery: fetchBaseQuery({
-    baseUrl: '/api', // فقط BFF - کلاینت فقط به Next.js API Routes می‌زند
-    credentials: 'include', // کوکی‌های httpOnly سشن شما
-    prepareHeaders: (headers) => {
-      // در BFF pattern، توکن‌ها در کوکی‌های httpOnly ذخیره می‌شوند
-      
-      
-      return headers;
-    },
-  }),
-  tagTypes: ['Auth', 'Users', 'Facilities', 'Tours', 'Settings'],
-  endpoints: () => ({}),
-});
+// src/services/apiBase.ts - Re-export the reauth-enabled base API
+export { api, baseQueryWithReauth } from '@/src/store/api/baseApi';

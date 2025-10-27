@@ -15,15 +15,12 @@ import {
   type Bill,
 } from '@/src/store/bills';
 import {
-  PiMagnifyingGlass,
   PiReceipt,
   PiCheckCircle,
   PiClock,
   PiXCircle,
   PiWarning,
   PiArrowClockwise,
-  PiArrowLeft,
-  PiHouse,
 } from 'react-icons/pi';
 
 // Utility functions
@@ -61,29 +58,87 @@ function formatDateFa(date: Date | string | null): string {
 }
 
 function getStatusIcon(status: string) {
-  switch (status?.toLowerCase()) {
-    case 'paid':
-    case 'completed':
+  switch (status) {
+    case 'FullyPaid':
       return <PiCheckCircle className="h-5 w-5 text-green-500" />;
-    case 'unpaid':
-    case 'pending':
-      return <PiClock className="h-5 w-5 text-yellow-500" />;
-    case 'cancelled':
+    case 'PartiallyPaid':
+      return <PiClock className="h-5 w-5 text-amber-500" />;
+    case 'Issued':
+    case 'Draft':
+      return <PiClock className="h-5 w-5 text-blue-500" />;
+    case 'Overdue':
+      return <PiWarning className="h-5 w-5 text-red-500" />;
+    case 'Cancelled':
+    case 'Refunded':
       return <PiXCircle className="h-5 w-5 text-red-500" />;
     default:
       return <PiWarning className="h-5 w-5 text-gray-500" />;
   }
 }
 
+function getStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    'Draft': 'پیش‌نویس',
+    'Issued': 'صادر شده',
+    'PartiallyPaid': 'پرداخت جزئی',
+    'FullyPaid': 'پرداخت کامل',
+    'Overdue': 'پس‌افتاده',
+    'Cancelled': 'لغو شده',
+    'Refunded': 'مسترد شده'
+  };
+  return labels[status] || status || 'نامشخص';
+}
+
 function getStatusBadgeClass(status: string) {
   const badgeMap: Record<string, string> = {
-    paid: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    completed: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    unpaid: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    cancelled: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+    'FullyPaid': 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
+    'PartiallyPaid': 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
+    'Issued': 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
+    'Draft': 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300',
+    'Overdue': 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
+    'Cancelled': 'bg-gray-100 text-gray-600 dark:bg-gray-900/50 dark:text-gray-500',
+    'Refunded': 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300',
   };
-  return badgeMap[status?.toLowerCase() || ''] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+  return badgeMap[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300';
+}
+
+function getBillCardClass(bill: Bill) {
+  const baseClass = "bg-white dark:bg-gray-800 rounded-lg overflow-hidden border transition-all duration-300 cursor-pointer";
+  
+  const status = bill.status || '';
+  const isFullyPaid = status === 'FullyPaid';
+  const isPartialPaid = status === 'PartiallyPaid';
+  const isIssued = status === 'Issued' || status === 'Draft';
+  const isOverdue = status === 'Overdue';
+  const isCancelled = status === 'Cancelled' || status === 'Refunded';
+  
+  if (isCancelled) {
+    // لغو شده → خاکستری و کمرنگ
+    return `${baseClass} border-gray-300 dark:border-gray-600 opacity-60 grayscale hover:opacity-80`;
+  }
+  
+  if (isFullyPaid) {
+    // پرداخت کامل → سبز کمرنگ
+    return `${baseClass} border-green-200 dark:border-green-800 opacity-80 hover:opacity-100 hover:border-green-300`;
+  }
+  
+  if (isOverdue) {
+    // پس‌افتاده → قرمز با تاکید
+    return `${baseClass} border-red-300 dark:border-red-700 shadow-md ring-2 ring-red-200 dark:ring-red-900/50 hover:shadow-lg hover:scale-[1.01]`;
+  }
+  
+  if (isPartialPaid) {
+    // پرداخت جزئی → زرد با تاکید متوسط
+    return `${baseClass} border-amber-300 dark:border-amber-600 shadow-md hover:shadow-lg hover:scale-[1.01]`;
+  }
+  
+  if (isIssued) {
+    // صادر شده (منتظر پرداخت) → آبی با تاکید بالا
+    return `${baseClass} border-blue-300 dark:border-blue-600 shadow-lg ring-2 ring-blue-200 dark:ring-blue-900/50 hover:shadow-xl hover:scale-[1.01]`;
+  }
+  
+  // حالت پیش‌فرض
+  return `${baseClass} border-gray-200 dark:border-gray-700 hover:shadow-md`;
 }
 
 export default function BillsPage() {
@@ -122,23 +177,18 @@ export default function BillsPage() {
     fetchBills();
   }, [currentPage, statusFilter, getUserBills]);
 
-  const handleSearch = () => {
-    if (!trackingCode.trim()) {
-      error('لطفاً کد پیگیری را وارد کنید', 'کد پیگیری الزامی است');
-      return;
-    }
+  // Filter bills based on search query
+  const filteredBills = bills?.filter(bill => {
+    if (!trackingCode.trim()) return true;
+    
+    const searchQuery = trackingCode.toLowerCase().trim();
+    const billNumber = (bill.billNumber || '').toLowerCase();
+    const referenceId = (bill.referenceId || '').toLowerCase();
+    
+    return billNumber.includes(searchQuery) || referenceId.includes(searchQuery);
+  }) || [];
 
-    // For search, use 'Bill' as default billType
-    router.push(`/bills/${encodeURIComponent(trackingCode.trim())}?billType=Bill`);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
-
-  const handleBillClick = (bill: Bill, e?: React.MouseEvent) => {
+  const handleBillClick = (bill: Bill) => {
     console.log('🖱️ Bill clicked:', {
       billId: bill.id,
       referenceId: bill.referenceId,
@@ -213,12 +263,19 @@ export default function BillsPage() {
           background: #6B7280;
         }
       `}</style>
-      <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900" dir="rtl">
+      <div className="h-full flex flex-col" dir="rtl">
         <PageHeader
           title="صورت حساب‌ها"
           titleIcon={<PiReceipt className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
           showBackButton
-          onBack={() => router.push('/')}
+          onBack={() => {
+            // Check if came from dashboard
+            if (document.referrer && document.referrer.includes('/dashboard')) {
+              router.back();
+            } else {
+              router.push('/dashboard');
+            }
+          }}
           rightActions={[
             {
               icon: <PiArrowClockwise className="h-4 w-4" />,
@@ -235,18 +292,18 @@ export default function BillsPage() {
             <InputField
               value={trackingCode}
               onChange={(e) => setTrackingCode(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="جستجوی کد پیگیری..."
-              autoFocus
+              placeholder="جستجوی کد پیگیری یا شماره صورت حساب..."
               className="flex-1"
             />
-            <Button
-              onClick={handleSearch}
-              disabled={!trackingCode.trim()}
-              variant="secondary"
-            >
-              <PiMagnifyingGlass className="h-4 w-4" />
-            </Button>
+            {trackingCode.trim() && (
+              <Button
+                onClick={() => setTrackingCode('')}
+                variant="secondary"
+                title="پاک کردن جستجو"
+              >
+                ✕
+              </Button>
+            )}
           </div>
         </div>
 
@@ -261,23 +318,30 @@ export default function BillsPage() {
               همه
             </Button>
             <Button
-              variant={statusFilter === 'unpaid' ? 'primary' : 'secondary'}
+              variant={statusFilter === 'Issued' ? 'primary' : 'secondary'}
               size="sm"
-              onClick={() => setStatusFilter('unpaid')}
+              onClick={() => setStatusFilter('Issued')}
             >
-              پرداخت نشده
+              صادر شده
             </Button>
             <Button
-              variant={statusFilter === 'paid' ? 'primary' : 'secondary'}
+              variant={statusFilter === 'PartiallyPaid' ? 'primary' : 'secondary'}
               size="sm"
-              onClick={() => setStatusFilter('paid')}
+              onClick={() => setStatusFilter('PartiallyPaid')}
             >
-              پرداخت شده
+              پرداخت جزئی
             </Button>
             <Button
-              variant={statusFilter === 'cancelled' ? 'primary' : 'secondary'}
+              variant={statusFilter === 'FullyPaid' ? 'primary' : 'secondary'}
               size="sm"
-              onClick={() => setStatusFilter('cancelled')}
+              onClick={() => setStatusFilter('FullyPaid')}
+            >
+              پرداخت کامل
+            </Button>
+            <Button
+              variant={statusFilter === 'Cancelled' ? 'primary' : 'secondary'}
+              size="sm"
+              onClick={() => setStatusFilter('Cancelled')}
             >
               لغو شده
             </Button>
@@ -293,14 +357,39 @@ export default function BillsPage() {
                 <span className="mr-2 text-gray-500">در حال بارگذاری...</span>
               </div>
             ) : bills && bills.length > 0 ? (
-              <div className="space-y-3">
-                {bills.map((bill) => (
+              <>
+                {/* Search results info */}
+                {trackingCode.trim() && (
+                  <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-blue-700 dark:text-blue-300">
+                        {filteredBills.length > 0 
+                          ? `نتایج جستجو: ${filteredBills.length} مورد یافت شد`
+                          : 'نتیجه‌ای یافت نشد'
+                        }
+                      </span>
+                      {trackingCode.trim() && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setTrackingCode('')}
+                          className="text-xs"
+                        >
+                          پاک کردن جستجو
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="space-y-3">
+                  {filteredBills.map((bill) => (
                   <div
                     key={bill.id}
-                    className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={(e) => {
+                    className={getBillCardClass(bill)}
+                    onClick={() => {
                       console.log('🖱️ Div clicked:', bill.id);
-                      handleBillClick(bill, e);
+                      handleBillClick(bill);
                     }}
                   >
                     {/* Amount and Status Row */}
@@ -318,14 +407,14 @@ export default function BillsPage() {
                         </div>
                         </div>
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(bill.status || '')}`}>
-                          {bill.statusText || bill.status || 'نامشخص'}
+                          {getStatusLabel(bill.status || '')}
                         </span>
                       </div>
                     
                     </div>
                     
                     {/* Payment Info Row */}
-                    <div className="px-4 pb-2">
+                    <div className="px-4 pb-4">
                       <div className="grid grid-cols-3 gap-2 text-center">
                         <div className="border-l border-gray-200 dark:border-gray-700">
                           <div className="text-xs text-gray-500 dark:text-gray-400">کل مبلغ</div>
@@ -364,24 +453,28 @@ export default function BillsPage() {
                       </div>
                     )}
                   </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </>
             ) : (
               <div className="text-center py-12">
                 <PiReceipt className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                  صورت حسابی یافت نشد
+                  {trackingCode.trim() ? 'نتیجه‌ای یافت نشد' : 'صورت حسابی یافت نشد'}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                  هیچ صورت حسابی با فیلترهای انتخابی پیدا نشد
+                  {trackingCode.trim() 
+                    ? 'لطفاً کد پیگیری یا شماره صورت حساب دیگری را جستجو کنید'
+                    : 'هیچ صورت حسابی با فیلترهای انتخابی پیدا نشد'
+                  }
                 </p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Pagination */}
-        {pagination && pagination.totalPages > 1 && (
+        {/* Pagination - Hide when searching since search filters locally */}
+        {pagination && pagination.totalPages > 1 && !trackingCode.trim() && (
           <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
             <div className="flex justify-center items-center gap-2">
               <Button

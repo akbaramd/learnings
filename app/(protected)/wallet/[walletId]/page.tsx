@@ -100,7 +100,12 @@ export default function WalletPage({ params }: WalletPageProps) {
   };
 
   const handleBack = () => {
-    router.back();
+    // Check if came from dashboard or wallet pages
+    if (document.referrer && (document.referrer.includes('/dashboard') || document.referrer.includes('/wallet'))) {
+      router.back();
+    } else {
+      router.push('/dashboard');
+    }
   };
 
   const handleTransactions = () => {
@@ -144,7 +149,7 @@ export default function WalletPage({ params }: WalletPageProps) {
           background: #6B7280;
         }
       `}</style>
-      <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900" dir="rtl">
+      <div className="h-full flex flex-col" dir="rtl">
         <PageHeader
           title="مدیریت کیف پول"
           titleIcon={<PiMoney className="h-5 w-5" />}

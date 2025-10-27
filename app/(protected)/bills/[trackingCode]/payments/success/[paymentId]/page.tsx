@@ -112,7 +112,13 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
 
   // Event handlers
   const handleBack = () => {
-    router.push('/dashboard');
+    // If came from bill detail page, go back there
+    if (document.referrer && document.referrer.includes('/bills/') && !document.referrer.includes('/payments/')) {
+      router.back();
+    } else {
+      // Otherwise go to bills list
+      router.push('/bills');
+    }
   };
 
   const handleDashboard = () => {
@@ -246,7 +252,7 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
           background: #6B7280;
         }
       `}</style>
-      <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900" dir="rtl">
+      <div className="h-full flex flex-col" dir="rtl">
         <PageHeader
           title="رسید پرداخت"
           titleIcon={<PiCheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />}

@@ -68,7 +68,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     <div
       className={`flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 ${className}`}
     >
-      <div className={`px-4 py-3 ${contentClassName}`}>
+      <div className={`px-4 py-2 ${contentClassName}`}>
         <div className="flex items-center gap-3">
           {allLeftActions.length > 0 && (
             <PageHeaderActions

@@ -13,8 +13,10 @@ export async function POST(req: NextRequest) {
     
     if (!accessToken) {
       const errorResponse: LogoutResponse = {
-        result: null,
-        errors: ['No access token found']
+        isSuccess: false,
+        message: 'No access token found',
+        errors: ['No access token found'],
+        data: { isSuccess: false, message: 'No access token found' }
       };
       return NextResponse.json(errorResponse, { status: 401 });
     }
@@ -28,7 +30,7 @@ export async function POST(req: NextRequest) {
       requestBody = {};
     }
 
-    const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://auth.wa-nezam.org';
+    const baseURL = process.env.UPSTREAM_API_BASE_URL || 'https://auth.wa-nezam.org';
     
     console.log('Logout API call details:', {
       baseURL,
@@ -67,13 +69,15 @@ export async function POST(req: NextRequest) {
       status = 200;
     }
 
-    // Strongly typed response structure
+    // Strongly typed response structure using ApplicationResult
     const response: LogoutResponse = {
-      result: status === 200 && upstream.data?.isSuccess ? {
-        isSuccess: true,
-        message: upstream.data.message || 'Logged out successfully'
-      } : null,
-      errors: status !== 200 || !upstream.data?.isSuccess ? upstream.data?.errors || ['Logout failed'] : null
+      isSuccess: status === 200 && upstream.data?.isSuccess || false,
+      message: upstream.data?.message || 'Logged out successfully',
+      errors: upstream.data?.errors || undefined,
+      data: {
+        isSuccess: status === 200 && upstream.data?.isSuccess || false,
+        message: upstream.data?.message || 'Logged out successfully'
+      }
     };
 
     // پاک‌سازی کوکی‌ها - فقط در صورت موفقیت logout
@@ -113,8 +117,10 @@ export async function POST(req: NextRequest) {
     });
     
     const errorResponse: LogoutResponse = {
-      result: null,
-      errors: [error instanceof Error ? error.message : String(error),'Failed to logout. Please try again.']
+      isSuccess: false,
+      message: 'Failed to logout. Please try again.',
+      errors: [error instanceof Error ? error.message : String(error)],
+      data: { isSuccess: false, message: 'Logout failed' }
     };
     return NextResponse.json(errorResponse, { status: 400 });
   }

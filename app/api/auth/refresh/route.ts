@@ -3,10 +3,28 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { Api } from '@/src/services/Api';
 import { RefreshResponse } from '@/src/store/auth/auth.types';
+import { ensureCsrfCookie, verifyCsrfFromRequest } from '@/src/lib/csrf';
 
 export async function POST(req: NextRequest) {
   try {
-    const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://auth.wa-nezam.org';
+    // Ensure CSRF protection
+    const csrfRes = new NextResponse();
+    ensureCsrfCookie(req, csrfRes);
+    
+    // Verify CSRF token
+    const body = await req.json().catch(() => ({}));
+    const isValid = verifyCsrfFromRequest(req, body.csrfToken);
+    
+    if (!isValid) {
+      const errorResponse: RefreshResponse = {
+        isSuccess: false,
+        message: 'Invalid CSRF token',
+        errors: ['Invalid CSRF token']
+      };
+      return NextResponse.json(errorResponse, { status: 403 });
+    }
+    
+    const baseURL = process.env.UPSTREAM_API_BASE_URL || 'https://auth.wa-nezam.org';
     
     const api = new Api({
       baseURL: baseURL,
@@ -18,17 +36,16 @@ export async function POST(req: NextRequest) {
     
     // Get refresh token from cookies
     const refreshToken = cookieStore.get('refreshToken')?.value;
-    
+ 
     if (!refreshToken) {
       const errorResponse: RefreshResponse = {
-        result: null,
+        isSuccess: false,
+        message: 'No refresh token found',
         errors: ['No refresh token found']
       };
       return NextResponse.json(errorResponse, { status: 401 });
     }
 
-    // Set Authorization header with refresh token
-    api.instance.defaults.headers.common['Authorization'] = `Bearer ${refreshToken}`;
 
     // فراخوانی متد refreshToken upstream
     const upstream = await api.api.refreshToken({ refreshToken }); 
@@ -37,17 +54,20 @@ export async function POST(req: NextRequest) {
     // فوروارد کردن هر Set-Cookie جدید (در صورت rotation)
     const setCookie = upstream.headers?.['set-cookie'];
 
-    // Strongly typed response structure
+    // Strongly typed response structure using ApplicationResult
     const response: RefreshResponse = {
-      result: status === 200 && upstream.data?.isSuccess ? {
+      isSuccess: status === 200 && upstream.data?.isSuccess || false,
+      message: upstream.data?.message || 'Token refreshed successfully',
+      errors: upstream.data?.errors || undefined,
+      data: status === 200 && upstream.data?.isSuccess ? {
         isSuccess: true,
         message: upstream.data.message || 'Token refreshed successfully',
         accessToken: upstream.data.data?.accessToken || undefined
-      } : null,
-      errors: status !== 200 || !upstream.data?.isSuccess ? upstream.data?.errors || ['Token refresh failed'] : []
+      } : undefined
     };
 
-    const res = NextResponse.json(response, { status });
+    const finalRes = NextResponse.json(response, { status });
+    finalRes.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     
     // Update tokens in cookies if refresh was successful
     if (status === 200 && upstream.data?.isSuccess && upstream.data?.data) {
@@ -55,7 +75,7 @@ export async function POST(req: NextRequest) {
       
       if (accessToken) {
         // Update access token in httpOnly cookie
-        res.cookies.set('accessToken', accessToken, {
+        finalRes.cookies.set('accessToken', accessToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'strict',
@@ -66,7 +86,7 @@ export async function POST(req: NextRequest) {
       
       if (newRefreshToken) {
         // Update refresh token in httpOnly cookie (token rotation)
-        res.cookies.set('refreshToken', newRefreshToken, {
+        finalRes.cookies.set('refreshToken', newRefreshToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'strict',
@@ -77,11 +97,11 @@ export async function POST(req: NextRequest) {
     }
     
     if (setCookie) {
-      if (Array.isArray(setCookie)) setCookie.forEach(c => res.headers.append('set-cookie', c));
-      else res.headers.set('set-cookie', setCookie as string);
+      if (Array.isArray(setCookie)) setCookie.forEach(c => finalRes.headers.append('set-cookie', c));
+      else finalRes.headers.set('set-cookie', setCookie as string);
     }
     
-    return res;
+    return finalRes;
   } catch (error) {
     console.error('Refresh BFF error:', {
       name: error instanceof Error ? error.name : 'Unknown',
@@ -91,9 +111,10 @@ export async function POST(req: NextRequest) {
     });
     
     const errorResponse: RefreshResponse = {
-      result: null,
-      errors: [error instanceof Error ? error.message : String(error),'Failed to refresh token. Please try again.']
+      isSuccess: false,
+      message: 'Failed to refresh token. Please try again.',
+      errors: [error instanceof Error ? error.message : String(error)]
     };
-    return NextResponse.json(errorResponse, { status: 400 });
+    return NextResponse.json(errorResponse, { status: 401 });
   }
 }

@@ -29,9 +29,9 @@ const CARD_VARIANTS = {
 
 const PADDING_CLASSES = {
   none: '',
-  sm: 'p-3',
-  md: 'p-6',
-  lg: 'p-8',
+  sm: 'p-2',
+  md: 'p-4',
+  lg: 'p-6',
 };
 
 const RADIUS_CLASSES = {

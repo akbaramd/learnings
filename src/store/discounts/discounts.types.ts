@@ -5,8 +5,9 @@ import {
   DiscountCodeSnapshotDto,
   BillDiscountSnapshotDto,
   DiscountValidationItemDto,
-  DiscountValidationDto
+  DiscountValidationDto,
 } from '@/src/services/Api';
+import { ApplicationResult } from '../api/api.types';
 
 // Re-export API types
 export type DiscountCodeInfo = DiscountCodeSnapshotDto;
@@ -38,15 +39,6 @@ export interface ValidateDiscountCodeResponse extends DiscountValidationDto {
   isFixedAmountDiscount?: boolean;
 }
 
-/**
- * Base Application Result structure
- */
-export interface ApplicationResult<T = unknown> {
-  isSuccess?: boolean;
-  message?: string | null;
-  errors?: string[] | null;
-  data?: T;
-}
 
 /**
  * Validate discount code response wrapper
