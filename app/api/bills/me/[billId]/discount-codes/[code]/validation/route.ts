@@ -10,11 +10,11 @@ import { AxiosError } from 'axios';
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { billId: string; code: string } }
+  { params }: { params: Promise<{ billId: string; code: string }> }
 ) {
   try {
     const api = createApiInstance(req);
-    const { billId, code } = params;
+    const { billId, code } = await params;
     const searchParams = req.nextUrl.searchParams;
 
     if (!billId) {

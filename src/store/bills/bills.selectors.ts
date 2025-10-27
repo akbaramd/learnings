@@ -17,15 +17,7 @@ export const selectCurrentBill = createSelector(
   (billState) => billState.currentBill
 );
 
-export const selectBillStatus = createSelector(
-  [selectBillState],
-  (billState) => billState.billStatus
-);
 
-export const selectBillStatistics = createSelector(
-  [selectBillState],
-  (billState) => billState.statistics
-);
 
 export const selectBillPagination = createSelector(
   [selectBillState],
@@ -56,7 +48,7 @@ export const selectBillCount = createSelector(
 
 export const selectBillsByStatus = createSelector(
   [selectBills, (state: RootState, status: BillStatus) => status],
-  (bills, status) => bills.filter(bill => bill.billStatus === status)
+  (bills, status) => bills.filter(bill => bill.status === status)
 );
 
 export const selectBillsByType = createSelector(
@@ -85,7 +77,7 @@ export const selectBillsByFilters = createSelector(
       if (filters.billType && bill.billType !== filters.billType) {
         return false;
       }
-      if (filters.billStatus && bill.billStatus !== filters.billStatus) {
+      if (filters.billStatus && bill.status !== filters.billStatus) {
         return false;
       }
       if (filters.fromDate && bill.createdAt) {
@@ -98,10 +90,10 @@ export const selectBillsByFilters = createSelector(
         const toDate = new Date(filters.toDate);
         if (billDate > toDate) return false;
       }
-      if (filters.minAmount && bill.billTotalAmount && bill.billTotalAmount < filters.minAmount) {
+      if (filters.minAmount && bill.totalAmountRials && bill.totalAmountRials < filters.minAmount) {
         return false;
       }
-      if (filters.maxAmount && bill.billTotalAmount && bill.billTotalAmount > filters.maxAmount) {
+      if (filters.maxAmount && bill.totalAmountRials && bill.totalAmountRials > filters.maxAmount) {
         return false;
       }
       return true;
@@ -136,34 +128,27 @@ export const selectBillByNumber = createSelector(
 // Bill status specific selectors
 export const selectPaidBills = createSelector(
   [selectBills],
-  (bills) => bills.filter(bill => bill.billStatus === 'paid')
+  (bills) => bills.filter(bill => bill.isPaid)
 );
 
 export const selectUnpaidBills = createSelector(
   [selectBills],
-  (bills) => bills.filter(bill => bill.billStatus === 'issued' || bill.billStatus === 'draft')
+  (bills) => bills.filter(bill => !bill.isPaid && !bill.isPartiallyPaid)
 );
 
 export const selectPartiallyPaidBills = createSelector(
   [selectBills],
-  (bills) => bills.filter(bill => bill.billStatus === 'partially_paid')
+  (bills) => bills.filter(bill => bill.isPartiallyPaid)
 );
 
 export const selectOverdueBills = createSelector(
   [selectBills],
-  (bills) => bills.filter(bill => {
-    if (bill.billStatus !== 'issued' && bill.billStatus !== 'partially_paid') return false;
-    if (!bill.billDueDate) return false;
-    
-    const dueDate = new Date(bill.billDueDate);
-    const now = new Date();
-    return dueDate < now;
-  })
+  (bills) => bills.filter(bill => bill.isOverdue)
 );
 
 export const selectCancelledBills = createSelector(
   [selectBills],
-  (bills) => bills.filter(bill => bill.billStatus === 'cancelled')
+  (bills) => bills.filter(bill => bill.isCancelled)
 );
 
 // Pagination selectors
@@ -182,50 +167,50 @@ export const selectHasPreviousBillPage = createSelector(
   (pagination) => pagination.pageNumber > 1
 );
 
-// Statistics selectors
+// Statistics selectors (computed from bills)
 export const selectTotalBillAmount = createSelector(
-  [selectBillStatistics],
-  (statistics) => statistics?.totalBillAmount || 0
+  [selectBills],
+  (bills) => bills.reduce((total, bill) => total + (bill.totalAmountRials || 0), 0)
 );
 
 export const selectTotalPaidAmount = createSelector(
-  [selectBillStatistics],
-  (statistics) => statistics?.totalPaidAmount || 0
+  [selectBills],
+  (bills) => bills.reduce((total, bill) => total + (bill.paidAmountRials || 0), 0)
 );
 
 export const selectTotalRemainingAmount = createSelector(
-  [selectBillStatistics],
-  (statistics) => statistics?.totalRemainingAmount || 0
+  [selectBills],
+  (bills) => bills.reduce((total, bill) => total + (bill.remainingAmountRials || 0), 0)
 );
 
 export const selectTotalBillCount = createSelector(
-  [selectBillStatistics],
-  (statistics) => statistics?.totalBills || 0
+  [selectBills],
+  (bills) => bills.length
 );
 
 export const selectPaidBillCount = createSelector(
-  [selectBillStatistics],
-  (statistics) => statistics?.paidBills || 0
+  [selectPaidBills],
+  (bills) => bills.length
 );
 
 export const selectUnpaidBillCount = createSelector(
-  [selectBillStatistics],
-  (statistics) => statistics?.unpaidBills || 0
+  [selectUnpaidBills],
+  (bills) => bills.length
 );
 
 export const selectPartiallyPaidBillCount = createSelector(
-  [selectBillStatistics],
-  (statistics) => statistics?.partiallyPaidBills || 0
+  [selectPartiallyPaidBills],
+  (bills) => bills.length
 );
 
 export const selectOverdueBillCount = createSelector(
-  [selectBillStatistics],
-  (statistics) => statistics?.overdueBills || 0
+  [selectOverdueBills],
+  (bills) => bills.length
 );
 
 export const selectCancelledBillCount = createSelector(
-  [selectBillStatistics],
-  (statistics) => statistics?.cancelledBills || 0
+  [selectCancelledBills],
+  (bills) => bills.length
 );
 
 // Combined selectors for convenience
@@ -240,13 +225,13 @@ export const selectBillSummary = createSelector(
 );
 
 export const selectBillActivity = createSelector(
-  [selectBills, selectBillStatistics],
-  (bills, statistics) => ({
+  [selectBills, selectPaidBills, selectUnpaidBills, selectOverdueBills],
+  (bills, paidBills, unpaidBills, overdueBills) => ({
     recentBills: bills.slice(0, 5),
-    totalBills: statistics?.totalBills || 0,
-    paidBills: statistics?.paidBills || 0,
-    unpaidBills: statistics?.unpaidBills || 0,
-    overdueBills: statistics?.overdueBills || 0,
+    totalBills: bills.length,
+    paidBills: paidBills.length,
+    unpaidBills: unpaidBills.length,
+    overdueBills: overdueBills.length,
   })
 );
 
@@ -277,7 +262,7 @@ export const selectBillStatusBreakdown = createSelector(
   (bills) => {
     const breakdown: Record<string, number> = {};
     bills.forEach(bill => {
-      const status = bill.billStatus || 'unknown';
+      const status = bill.status || 'unknown';
       breakdown[status] = (breakdown[status] || 0) + 1;
     });
     return breakdown;
@@ -310,60 +295,53 @@ export const selectCurrentBillNumber = createSelector(
 
 export const selectCurrentBillStatus = createSelector(
   [selectCurrentBill],
-  (currentBill) => currentBill?.billStatus || null
+  (currentBill) => currentBill?.status || null
 );
 
 export const selectCurrentBillAmount = createSelector(
   [selectCurrentBill],
-  (currentBill) => currentBill?.billTotalAmount || 0
+  (currentBill) => currentBill?.totalAmountRials || 0
 );
 
 export const selectCurrentBillPaidAmount = createSelector(
   [selectCurrentBill],
-  (currentBill) => currentBill?.billPaidAmount || 0
+  (currentBill) => currentBill?.paidAmountRials || 0
 );
 
 export const selectCurrentBillRemainingAmount = createSelector(
   [selectCurrentBill],
-  (currentBill) => currentBill?.billRemainingAmount || 0
+  (currentBill) => currentBill?.remainingAmountRials || 0
 );
 
 export const selectCurrentBillIsFullyPaid = createSelector(
   [selectCurrentBill],
-  (currentBill) => currentBill?.isBillFullyPaid || false
+  (currentBill) => currentBill?.isPaid || false
 );
 
 export const selectCurrentBillDueDate = createSelector(
   [selectCurrentBill],
-  (currentBill) => currentBill?.billDueDate || null
+  (currentBill) => currentBill?.dueDate || null
 );
 
 export const selectCurrentBillIsOverdue = createSelector(
   [selectCurrentBill],
-  (currentBill) => {
-    if (!currentBill?.billDueDate) return false;
-    if (currentBill.isBillFullyPaid) return false;
-    
-    const dueDate = new Date(currentBill.billDueDate);
-    const now = new Date();
-    return dueDate < now;
-  }
+  (currentBill) => currentBill?.isOverdue || false
 );
 
 // Bill status specific selectors
 export const selectBillPaymentHistory = createSelector(
-  [selectBillStatus],
-  (billStatus) => billStatus?.paymentHistory || []
+  [selectCurrentBill],
+  (currentBill) => []
 );
 
 export const selectBillRefundHistory = createSelector(
-  [selectBillStatus],
-  (billStatus) => billStatus?.refundHistory || []
+  [selectCurrentBill],
+  (currentBill) => []
 );
 
 export const selectBillItems = createSelector(
-  [selectBillStatus],
-  (billStatus) => billStatus?.billItems || []
+  [selectCurrentBill],
+  (currentBill) => []
 );
 
 export const selectBillPaymentCount = createSelector(
@@ -386,8 +364,8 @@ export const selectTotalBillAmountByStatus = createSelector(
   [selectBills, (state: RootState, status: BillStatus) => status],
   (bills, status) => {
     return bills
-      .filter(bill => bill.billStatus === status)
-      .reduce((total, bill) => total + (bill.billTotalAmount || 0), 0);
+      .filter(bill => bill.status === status)
+      .reduce((total, bill) => total + (bill.totalAmountRials || 0), 0);
   }
 );
 
@@ -395,8 +373,8 @@ export const selectTotalPaidAmountByStatus = createSelector(
   [selectBills, (state: RootState, status: BillStatus) => status],
   (bills, status) => {
     return bills
-      .filter(bill => bill.billStatus === status)
-      .reduce((total, bill) => total + (bill.billPaidAmount || 0), 0);
+      .filter(bill => bill.status === status)
+      .reduce((total, bill) => total + (bill.paidAmountRials || 0), 0);
   }
 );
 
@@ -404,21 +382,21 @@ export const selectTotalRemainingAmountByStatus = createSelector(
   [selectBills, (state: RootState, status: BillStatus) => status],
   (bills, status) => {
     return bills
-      .filter(bill => bill.billStatus === status)
-      .reduce((total, bill) => total + (bill.billRemainingAmount || 0), 0);
+      .filter(bill => bill.status === status)
+      .reduce((total, bill) => total + (bill.remainingAmountRials || 0), 0);
   }
 );
 
 // Dashboard specific selectors
 export const selectBillDashboardData = createSelector(
-  [selectBills, selectBillStatistics, selectOverdueBills],
-  (bills, statistics, overdueBills) => ({
-    totalBills: statistics?.totalBills || bills.length,
-    unpaidBills: statistics?.unpaidBills || 0,
-    overdueBills: statistics?.overdueBills || overdueBills.length,
-    totalAmount: statistics?.totalBillAmount || 0,
-    paidAmount: statistics?.totalPaidAmount || 0,
-    remainingAmount: statistics?.totalRemainingAmount || 0,
+  [selectBills, selectUnpaidBills, selectOverdueBills, selectTotalBillAmount, selectTotalPaidAmount, selectTotalRemainingAmount],
+  (bills, unpaidBills, overdueBills, totalAmount, paidAmount, remainingAmount) => ({
+    totalBills: bills.length,
+    unpaidBills: unpaidBills.length,
+    overdueBills: overdueBills.length,
+    totalAmount,
+    paidAmount,
+    remainingAmount,
     recentBills: bills.slice(0, 5),
   })
 );

@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
         totalCount: upstream.data.data.totalCount || 0,
         pageNumber: upstream.data.data.pageNumber || pageNumber,
         pageSize: upstream.data.data.pageSize || pageSize,
-        totalPages: upstream.data.data.totalPages || 1,
+        totalPages: Math.ceil((upstream.data.data.totalCount || 0) / (upstream.data.data.pageSize || pageSize)) || 1,
       } : null,
       errors: status !== 200 || !upstream.data?.isSuccess ? upstream.data?.errors || ['Failed to get paginated notifications'] : null
     };

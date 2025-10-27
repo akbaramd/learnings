@@ -3,12 +3,14 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import {
   ValidateDiscountCodeRequest,
   ValidateDiscountCodeResponseWrapper,
+  ValidateDiscountCodeResponse,
 } from './discounts.types';
 import {
   setCurrentValidation,
   setAppliedDiscountCode,
   setError,
   setLoading,
+  clearError,
 } from './discounts.slice';
 
 // Error handling utility
@@ -52,24 +54,29 @@ export const discountsApi = createApi({
       }),
       invalidatesTags: ['DiscountValidation'],
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
-        dispatch(setLoading(true));
         try {
+          dispatch(setLoading(true));
+          dispatch(clearError());
+
           const { data } = await queryFulfilled;
-          if (data.result) {
-            dispatch(setCurrentValidation(data.result));
+
+          // Handle ApplicationResult response
+          if (data?.data) {
+            dispatch(setCurrentValidation(data.data as ValidateDiscountCodeResponse));
             
             // Set applied discount code if validation is successful
-            if (data.result.isValid && data.result.discountCode?.code) {
-              dispatch(setAppliedDiscountCode(data.result.discountCode.code));
+            if (data.data.isValid && data.data.discountCode?.code) {
+              dispatch(setAppliedDiscountCode(data.data.discountCode.code));
             } else {
               dispatch(setAppliedDiscountCode(null));
             }
-          } else if (data.errors) {
-            dispatch(setError(data.errors[0] || 'Failed to validate discount code'));
+          } else if (data?.errors && data.errors.length > 0) {
+            dispatch(setError(data.errors[0]));
             dispatch(setAppliedDiscountCode(null));
           }
         } catch (error) {
-          dispatch(setError(handleDiscountsApiError(error)));
+          const errorMessage = handleDiscountsApiError(error);
+          dispatch(setError(errorMessage));
           dispatch(setAppliedDiscountCode(null));
         } finally {
           dispatch(setLoading(false));

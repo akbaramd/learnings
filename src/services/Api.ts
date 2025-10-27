@@ -440,7 +440,6 @@ export interface BillDto {
   dueDate?: string | null;
   /** @format date-time */
   fullyPaidDate?: string | null;
-  trackingCode?: string | null;
   description?: string | null;
   metadata?: Record<string, string>;
   isPaid?: boolean;
@@ -5097,10 +5096,6 @@ export class Api<
     validateDiscountCodeForUser: (
       billId: string,
       code: string,
-      query: {
-        /** @format uuid */
-        externalUserId: string;
-      },
       data: any,
       params: RequestParams = {},
     ) =>

@@ -190,15 +190,7 @@ export const selectOriginalTotalAmount = createSelector(
   (bill) => bill?.originalTotalAmountRials || 0
 );
 
-export const selectBillDiscountAmount = createSelector(
-  [selectBillWithDiscount],
-  (bill) => bill?.discountAmountRials || 0
-);
 
-export const selectBillNewTotalAmount = createSelector(
-  [selectBillWithDiscount],
-  (bill) => bill?.newTotalAmountRials || 0
-);
 
 export const selectBillPaidAmount = createSelector(
   [selectBillWithDiscount],

@@ -138,8 +138,8 @@ export default function CreateDepositPage({ params }: CreateDepositPageProps) {
         description: formData.description || undefined
       });
       
-      // Navigate back to deposits page
-      router.push(`/wallet/${currentWalletId}/deposits`);
+      // Navigate to bills list page
+      router.push('/bills');
     } catch (error) {
       console.error('Failed to create deposit:', error);
       setError('خطا در ایجاد واریز جدید');

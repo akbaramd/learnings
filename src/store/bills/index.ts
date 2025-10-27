@@ -19,9 +19,11 @@ export * from './bills.selectors';
 export type {
   Bill,
   BillItem,
-  BillPayment,
-  BillRefund,
   BillDetail,
+  Payment,
+  Refund,
+  DiscountValidation,
+  BillFilters,
   BillPaginatedResult,
   CancelBillRequest,
   CancelBillResponse,
@@ -37,10 +39,6 @@ export {
   updateBill,
   removeBill,
   setCurrentBill,
-  setBillStatus,
-  addBillPayment,
-  addBillRefund,
-  setStatistics,
   setBillPagination,
   setLoading,
   setError,
@@ -56,25 +54,16 @@ export {
 
 // Re-export commonly used hooks
 export {
-  useCreateBillMutation,
   useGetUserBillsQuery,
-  useGetBillPaymentStatusQuery,
-  useGetBillPaymentStatusByNumberQuery,
-  useGetBillPaymentStatusByTrackingCodeQuery,
   useIssueBillMutation,
   useCancelBillMutation,
   useLazyGetUserBillsQuery,
-  useLazyGetBillPaymentStatusQuery,
-  useLazyGetBillPaymentStatusByNumberQuery,
-  useLazyGetBillPaymentStatusByTrackingCodeQuery,
 } from './bills.queries';
 
 // Re-export commonly used selectors
 export {
   selectBills,
   selectCurrentBill,
-  selectBillStatus,
-  selectBillStatistics,
   selectBillPagination,
   selectBillIsLoading,
   selectBillError,

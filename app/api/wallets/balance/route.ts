@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     const api = createApiInstance(req);
 
     // Call the upstream API to get wallet balance
-    const upstream = await api.api.getWalletBalance();
+    const upstream = await api.api.getUserWalletBalance();
     const status = upstream.status ?? 200;
 
     // Map backend response to frontend Wallet type

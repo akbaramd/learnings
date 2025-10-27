@@ -27,17 +27,10 @@ export async function GET(req: NextRequest) {
         totalCount: upstream.data.data.totalCount || 0,
         pageNumber: upstream.data.data.pageNumber || 1,
         pageSize: upstream.data.data.pageSize || 10,
-        totalPages: upstream.data.data.totalPages || 1,
+        totalPages: Math.ceil((upstream.data.data.items?.length || 0) / (upstream.data.data.pageSize || 10)) || 1,
       } : null,
       errors: status !== 200 || !upstream.data?.isSuccess ? upstream.data?.errors || ['Failed to get notifications'] : null
     };
-
-    const res = NextResponse.json(response, { status });
-    
-    // Cache-Control for sensitive data
-    res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-    
-    return res;
   } catch (error) {
     console.error('Get all notifications BFF error:', {
       name: error instanceof Error ? error.name : 'Unknown',

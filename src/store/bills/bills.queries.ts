@@ -1,14 +1,27 @@
 // src/store/bills/bills.queries.ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import type { RootState } from '../types';
 import {
   GetBillsRequest,
   IssueBillRequest,
   CancelBillRequest,
-  GetBillsResponseWrapper,
-  GetBillStatusResponseWrapper,
+  Bill,
+  BillDetail,
+  BillPaginatedResult,
+  GetUserBillsResponse,
+  GetBillDetailResponse,
   IssueBillResponseWrapper,
-  CancelBillResponseWrapper,
+  CancelBillResponseWrapper
 } from './bills.types';
+import {
+  setBills,
+  setCurrentBill,
+  setBillPagination,
+  setLoading,
+  setError,
+  clearError,
+  clearCurrentBill,
+} from './bills.slice';
 
 // Error handling utility
 export const handleBillsApiError = (error: unknown): string => {
@@ -47,8 +60,8 @@ export const billsApi = createApi({
   refetchOnFocus: false, // Don't refetch on window focus
   refetchOnReconnect: true, // Refetch when reconnecting
   endpoints: (builder) => ({
-    // Get user bills - Returns BillDtoPaginatedResultApplicationResult
-    getUserBills: builder.query<GetBillsResponseWrapper, GetBillsRequest>({
+    // Get user bills - Returns GetUserBillsResponse
+    getUserBills: builder.query<GetUserBillsResponse, GetBillsRequest>({
       query: (request) => {
         const searchParams = new URLSearchParams();
         
@@ -87,28 +100,84 @@ export const billsApi = createApi({
       },
       providesTags: ['Bills'],
       keepUnusedDataFor: 300,
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          dispatch(setLoading(true));
+          dispatch(clearError());
+
+          const { data } = await queryFulfilled;
+
+          if (data?.data && Array.isArray(data.data.items)) {
+            dispatch(setBills(data.data.items));
+            dispatch(setBillPagination({
+              pageNumber: data.data.pageNumber || 1,
+              pageSize: data.data.pageSize || 20,
+              totalPages: data.data.totalPages || 1,
+            }));
+          }
+        } catch (error) {
+          const errorMessage = handleBillsApiError(error);
+          dispatch(setError(errorMessage));
+        } finally {
+          dispatch(setLoading(false));
+        }
+      },
     }),
 
-    // Get bill details by ID - Returns BillDetailDtoApplicationResult
-    getBillDetailsById: builder.query<GetBillStatusResponseWrapper, string>({
+    // Get bill details by ID - Returns GetBillDetailResponse
+    getBillDetailsById: builder.query<GetBillDetailResponse, string>({
       query: (billId) => ({
         url: `/${billId}`,
         method: 'GET',
       }),
       providesTags: (result, error, billId) => [{ type: 'BillStatus', id: billId }],
+      async onQueryStarted(billId, { dispatch, queryFulfilled }) {
+        try {
+          dispatch(setLoading(true));
+          dispatch(clearError());
+
+          const { data } = await queryFulfilled;
+
+          if (data?.data) {
+            dispatch(setCurrentBill(data.data as any));
+          }
+        } catch (error) {
+          const errorMessage = handleBillsApiError(error);
+          dispatch(setError(errorMessage));
+        } finally {
+          dispatch(setLoading(false));
+        }
+      },
     }),
 
-    // Get bill details by number - Returns BillDetailDtoApplicationResult
-    getBillDetailsByNumber: builder.query<GetBillStatusResponseWrapper, string>({
+    // Get bill details by number - Returns GetBillDetailResponse
+    getBillDetailsByNumber: builder.query<GetBillDetailResponse, string>({
       query: (billNumber) => ({
         url: `/by-number/${billNumber}`,
         method: 'GET',
       }),
       providesTags: (result, error, billNumber) => [{ type: 'BillStatus', id: billNumber }],
+      async onQueryStarted(billNumber, { dispatch, queryFulfilled }) {
+        try {
+          dispatch(setLoading(true));
+          dispatch(clearError());
+
+          const { data } = await queryFulfilled;
+
+          if (data?.data) {
+            dispatch(setCurrentBill(data.data as any));
+          }
+        } catch (error) {
+          const errorMessage = handleBillsApiError(error);
+          dispatch(setError(errorMessage));
+        } finally {
+          dispatch(setLoading(false));
+        }
+      },
     }),
 
-    // Get bill details by tracking code - Returns BillDetailDtoApplicationResult
-    getBillDetailsByTrackingCode: builder.query<GetBillStatusResponseWrapper, { trackingCode: string; billType?: string }>({
+    // Get bill details by tracking code - Returns GetBillDetailResponse
+    getBillDetailsByTrackingCode: builder.query<GetBillDetailResponse, { trackingCode: string; billType?: string }>({
       query: ({ trackingCode, billType }) => {
         const searchParams = new URLSearchParams();
         if (billType) {
@@ -120,9 +189,26 @@ export const billsApi = createApi({
         };
       },
       providesTags: (result, error, { trackingCode }) => [{ type: 'BillStatus', id: trackingCode }],
+      async onQueryStarted({ trackingCode }, { dispatch, queryFulfilled }) {
+        try {
+          dispatch(setLoading(true));
+          dispatch(clearError());
+
+          const { data } = await queryFulfilled;
+
+          if (data?.data) {
+            dispatch(setCurrentBill(data.data as any));
+          }
+        } catch (error) {
+          const errorMessage = handleBillsApiError(error);
+          dispatch(setError(errorMessage));
+        } finally {
+          dispatch(setLoading(false));
+        }
+      },
     }),
 
-    // Issue bill - Returns IssueBillResponseApplicationResult
+    // Issue bill - Returns IssueBillResponseWrapper
     issueBill: builder.mutation<IssueBillResponseWrapper, { billId: string; request?: IssueBillRequest }>({
       query: ({ billId, request = {} }) => ({
         url: `/${billId}/issue`,
@@ -133,9 +219,27 @@ export const billsApi = createApi({
         'Bills',
         { type: 'BillStatus', id: billId },
       ],
+      async onQueryStarted({ billId }, { dispatch, queryFulfilled }) {
+        try {
+          dispatch(setLoading(true));
+          dispatch(clearError());
+
+          const { data } = await queryFulfilled;
+
+          if (data?.data) {
+            // Update the bill status in the current bill if it matches
+            dispatch(setCurrentBill(data.data as any));
+          }
+        } catch (error) {
+          const errorMessage = handleBillsApiError(error);
+          dispatch(setError(errorMessage));
+        } finally {
+          dispatch(setLoading(false));
+        }
+      },
     }),
 
-    // Cancel bill - Returns CancelBillResponseApplicationResult
+    // Cancel bill - Returns CancelBillResponseWrapper
     cancelBill: builder.mutation<CancelBillResponseWrapper, { billId: string; request: CancelBillRequest }>({
       query: ({ billId, request }) => ({
         url: `/${billId}/cancel`,
@@ -146,6 +250,24 @@ export const billsApi = createApi({
         'Bills',
         { type: 'BillStatus', id: billId },
       ],
+      async onQueryStarted({ billId }, { dispatch, queryFulfilled }) {
+        try {
+          dispatch(setLoading(true));
+          dispatch(clearError());
+
+          const { data } = await queryFulfilled;
+
+          if (data?.data) {
+            // Update the bill status in the current bill if it matches
+            dispatch(setCurrentBill(data.data as any));
+          }
+        } catch (error) {
+          const errorMessage = handleBillsApiError(error);
+          dispatch(setError(errorMessage));
+        } finally {
+          dispatch(setLoading(false));
+        }
+      },
     }),
   }),
 });

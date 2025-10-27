@@ -4,8 +4,10 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { 
-  useLazyGetBillPaymentStatusByTrackingCodeQuery,
+  useLazyGetBillDetailsByTrackingCodeQuery,
   selectBillIsLoading,
+  BillDetail,
+  BillItem,
 } from '@/src/store/bills';
 import { Button } from '@/src/components/ui/Button';
 import { PageHeader } from '@/src/components/ui/PageHeader';
@@ -57,27 +59,15 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
   const searchParams = useSearchParams();
   const [trackingCodeFromParams, setTrackingCodeFromParams] = useState<string>('');
   const [paymentIdFromParams, setPaymentIdFromParams] = useState<string>('');
-  const [billType, setBillType] = useState<string | null>(null);
-  const [billData, setBillData] = useState<{
-    billId?: string;
-    billNumber?: string;
-    billPaidAmount?: number;
-    billStatusText?: string;
-    billItems?: Array<{
-      itemDescription?: string;
-      itemName?: string;
-      quantity?: number;
-      unitPrice?: number;
-      totalPrice?: number;
-    }>;
-  } | null>(null);
+  const [billTypeFromParams, setBillTypeFromParams] = useState<string | null>(null);
+  const [billData, setBillData] = useState<BillDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Redux selectors
   const isLoadingBill = useSelector(selectBillIsLoading);
 
   // RTK Query for bill data
-  const [getBillPaymentStatusByTrackingCode] = useLazyGetBillPaymentStatusByTrackingCodeQuery();
+  const [getBillDetailsByTrackingCode] = useLazyGetBillDetailsByTrackingCodeQuery();
 
   // Get tracking code and payment ID from params
   useEffect(() => {
@@ -92,25 +82,22 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
   // Get billType from query params
   useEffect(() => {
     const billTypeParam = searchParams.get('billType');
-    if (billTypeParam) {
-      setBillType(billTypeParam);
-    }
+    setBillTypeFromParams(billTypeParam || null);
   }, [searchParams]);
 
   // Fetch bill data when tracking code is available
   useEffect(() => {
-    if (trackingCodeFromParams) {
+    if (trackingCodeFromParams && billTypeFromParams) {
       const fetchBillData = async () => {
         setIsLoading(true);
         try {
-          const result = await getBillPaymentStatusByTrackingCode({
+          const result = await getBillDetailsByTrackingCode({
             trackingCode: trackingCodeFromParams,
-            billType: billType ?? undefined,
-            includeBillItems: true
+            billType: billTypeFromParams
           }).unwrap();
           
-          if (result.result) {
-            setBillData(result.result);
+          if (result.data) {
+            setBillData(result.data);
           }
         } catch (error) {
           console.error('Error fetching bill data:', error);
@@ -121,7 +108,7 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
       
       fetchBillData();
     }
-  }, [trackingCodeFromParams, billType, getBillPaymentStatusByTrackingCode]);
+  }, [trackingCodeFromParams, billTypeFromParams, getBillDetailsByTrackingCode]);
 
   // Event handlers
   const handleBack = () => {
@@ -161,11 +148,11 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
             <p><strong>شماره پرداخت:</strong> ${paymentIdFromParams}</p>
             <p><strong>کد پیگیری:</strong> ${trackingCodeFromParams}</p>
             <p><strong>شماره فاکتور:</strong> ${billData?.billNumber || 'نامشخص'}</p>
-            <p><strong>مبلغ پرداخت:</strong> <span class="amount">${formatCurrencyFa(billData?.billPaidAmount || 0)} ریال</span></p>
+            <p><strong>مبلغ پرداخت:</strong> <span class="amount">${formatCurrencyFa(billData?.paidAmountRials || 0)} ریال</span></p>
             <p><strong>تاریخ پرداخت:</strong> ${formatDateFa(new Date())}</p>
-            <p><strong>وضعیت:</strong> ${billData?.billStatusText || 'پرداخت شده'}</p>
+            <p><strong>وضعیت:</strong> ${billData?.statusText || billData?.status || 'پرداخت شده'}</p>
           </div>
-          ${billData?.billItems && billData.billItems.length > 0 ? `
+                ${billData?.items && billData.items.length > 0 ? `
           <div class="bill-details">
             <h3>جزئیات فاکتور:</h3>
             <table>
@@ -178,12 +165,12 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
                 </tr>
               </thead>
               <tbody>
-                ${billData.billItems.map((item) => `
+                ${billData.items.map((item) => `
                   <tr>
-                    <td>${item.itemDescription || item.itemName || 'واریز کیف پول'}</td>
+                    <td>${item.description || item.title || 'واریز کیف پول'}</td>
                     <td>${item.quantity || 1}</td>
-                    <td>${formatCurrencyFa(item.unitPrice || 0)} ریال</td>
-                    <td>${formatCurrencyFa(item.totalPrice || 0)} ریال</td>
+                    <td>${formatCurrencyFa(item.unitPriceRials || 0)} ریال</td>
+                    <td>${formatCurrencyFa(item.lineTotalRials || 0)} ریال</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -311,7 +298,7 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-500 dark:text-gray-400">مبلغ پرداخت:</span>
                     <span className="text-lg font-bold text-green-600 dark:text-green-400">
-                      {formatCurrencyFa(billData?.billPaidAmount || 0)} ریال
+                      {formatCurrencyFa(billData?.paidAmountRials || 0)} ریال
                     </span>
                   </div>
 
@@ -325,7 +312,7 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-500 dark:text-gray-400">وضعیت:</span>
                     <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                      {billData?.billStatusText || 'پرداخت شده'}
+                      {billData?.statusText || billData?.status || 'پرداخت شده'}
                     </span>
                   </div>
                 </div>
@@ -333,24 +320,24 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
             </div>
 
             {/* Bill Items Summary */}
-            {billData?.billItems && billData.billItems.length > 0 && (
+            {billData?.items && billData.items.length > 0 && (
               <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                   خلاصه فاکتور
                 </h3>
                 <div className="space-y-3">
-                  {billData.billItems.map((item, index: number) => (
+                  {billData.items.map((item: BillItem, index: number) => (
                     <div key={index} className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
                       <div className="flex-1">
                         <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {item.itemDescription || item.itemName || 'واریز کیف پول'}
+                          {item.description || item.title || 'واریز کیف پول'}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          تعداد: {item.quantity || 1} × {formatCurrencyFa(item.unitPrice || 0)} ریال
+                          تعداد: {item.quantity || 1} × {formatCurrencyFa(item.unitPriceRials || 0)} ریال
                         </p>
                       </div>
                       <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        {formatCurrencyFa(item.totalPrice || 0)} ریال
+                        {formatCurrencyFa(item.lineTotalRials || 0)} ریال
                       </span>
                     </div>
                   ))}

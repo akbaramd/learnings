@@ -8,15 +8,20 @@ import { AxiosError } from 'axios';
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { billNumber: string } }
+  { params }: { params: Promise<{ billNumber: string }> }
 ) {
   try {
     const api = createApiInstance(req);
-    const { billNumber } = params;
+    const { billNumber } = await params;
 
     if (!billNumber) {
       return NextResponse.json(
-        { error: 'Bill number is required' },
+        {
+          isSuccess: false,
+          message: 'Bill number is required',
+          errors: ['Bill number is required'],
+          data: null,
+        },
         { status: 400 }
       );
     }
@@ -32,6 +37,50 @@ export async function GET(
       stack: error instanceof Error ? error.stack : undefined,
       type: typeof error,
     });
-    return handleApiError(error as AxiosError, req);
+    
+    // Handle AxiosError with response
+    if (error instanceof AxiosError && error.response) {
+      const errorData = error.response.data;
+      const errorMessage = typeof errorData === 'object' 
+        ? errorData?.message || error.message 
+        : error.response.statusText || error.message;
+      const errorArray = typeof errorData === 'object' && Array.isArray(errorData?.errors)
+        ? errorData.errors
+        : [errorMessage];
+
+      return NextResponse.json(
+        {
+          isSuccess: false,
+          message: errorMessage,
+          errors: errorArray,
+          data: null,
+        },
+        { status: error.response.status }
+      );
+    }
+
+    // Handle AxiosError without response (network error)
+    if (error instanceof AxiosError) {
+      return NextResponse.json(
+        {
+          isSuccess: false,
+          message: error.message || 'Network error',
+          errors: [error.message || 'Network error'],
+          data: null,
+        },
+        { status: 503 }
+      );
+    }
+    
+    // Handle generic errors
+    return NextResponse.json(
+      {
+        isSuccess: false,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
+        data: null,
+      },
+      { status: 500 }
+    );
   }
 }

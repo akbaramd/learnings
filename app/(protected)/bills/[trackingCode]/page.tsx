@@ -2,14 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { 
   BillItem, 
-  useLazyGetBillPaymentStatusByTrackingCodeQuery,
+  useLazyGetBillDetailsByTrackingCodeQuery,
   selectBillIsLoading,
-  setBillStatus,
-  setCurrentBill,
-  Bill,
+  BillDetail,
 } from '@/src/store/bills';
 import {
   useValidateDiscountCodeMutation,
@@ -78,9 +76,9 @@ interface BillDetailPageProps {
 export default function BillDetailPage({ params }: BillDetailPageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const dispatch = useDispatch();
   
   const [trackingCodeFromParams, setTrackingCodeFromParams] = useState<string>('');
+  const [billTypeFromParams, setBillTypeFromParams] = useState<string>('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'online' | 'wallet' | null>(null);
   const [discountCodeInput, setDiscountCodeInput] = useState('');
   const [isDiscountValidating, setIsDiscountValidating] = useState(false);
@@ -100,48 +98,42 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
   const [createPayment] = useCreatePaymentMutation();
   const [payWithWallet] = usePayWithWalletMutation();
 
-  // Get tracking code from params
+  // Get tracking code and bill type from params
   useEffect(() => {
-    const getTrackingCode = async () => {
+    const getParams = async () => {
       const resolvedParams = await params;
       setTrackingCodeFromParams(resolvedParams.trackingCode);
     };
-    getTrackingCode();
-  }, [params]);
+    getParams();
+    
+    const billTypeParam = searchParams.get('billType');
+    setBillTypeFromParams(billTypeParam || '');
+  }, [params, searchParams]);
 
   // RTK Query for bill data - using lazy query
-  const [getBillPaymentStatusByTrackingCode, { 
-    data: billData, 
+  const [getBillDetailsByTrackingCode, { 
+    data: billResponse, 
     error: queryError,
     isLoading: queryLoading,
-  }] = useLazyGetBillPaymentStatusByTrackingCodeQuery();
+  }] = useLazyGetBillDetailsByTrackingCodeQuery();
 
   // Load bill data when tracking code is available
   useEffect(() => {
-    if (trackingCodeFromParams) {
-      getBillPaymentStatusByTrackingCode({
+    if (trackingCodeFromParams && billTypeFromParams) {
+      getBillDetailsByTrackingCode({
         trackingCode: trackingCodeFromParams,
-        includeBillItems: true
+        billType: billTypeFromParams
       });
     }
-  }, [trackingCodeFromParams, getBillPaymentStatusByTrackingCode]);
+  }, [trackingCodeFromParams, billTypeFromParams, getBillDetailsByTrackingCode]);
 
-  // Update Redux state when data changes
-  useEffect(() => {
-    if (billData?.result) {
-      dispatch(setBillStatus(billData.result));
-      dispatch(setCurrentBill(billData.result as unknown as Bill)); // Type assertion for compatibility
-    }
-  }, [billData, dispatch]);
-
-  // Computed values - use Redux state first, then query data
-  const bill =  billData?.result || null;
-  console.log('bill', bill);
-  const billItems = bill?.billItems || [];
+  // Get bill detail from response
+  const bill: BillDetail | null = billResponse?.data || null;
+  const billItems = bill?.items || [];
   
-  const totalAmount = billItems.reduce((sum: number, item: BillItem) => sum + (item.totalPrice || 0), 0);
+  const totalAmount = bill?.totalAmountRials || 0;
 
-  const paidAmount = bill?.billPaidAmount || 0;
+  const paidAmount = bill?.paidAmountRials || 0;
 
   // Calculate discount amount
   const discountAmount = appliedDiscount?.discountAmountRials || 0;
@@ -152,14 +144,14 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
 
   const paymentAmount = remainingAmount;
 
-  const isBillFullyPaid = remainingAmount < 0;
+  // Check if bill is fully paid using multiple indicators
+  const isBillFullyPaid = bill?.isPaid || remainingAmount <= 0 || bill?.status?.toLowerCase() === 'paid' || bill?.status?.toLowerCase() === 'completed';
 
   const isWalletPaymentAvailable = selectedPaymentMethod === 'wallet';
   const isPaymentMethodSelected = selectedPaymentMethod !== null;
   
   // Check if this is a WalletDeposit bill
-  const billType = searchParams.get('billType');
-  const isWalletDeposit = billType === 'WalletDeposit';
+  const isWalletDeposit = billTypeFromParams === 'WalletDeposit';
   const showWalletPayment = !isWalletDeposit;
 
   const hasSufficientBalance = (() => {
@@ -202,10 +194,10 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
   };
 
   const handleRefresh = () => {
-    if (trackingCodeFromParams) {
-      getBillPaymentStatusByTrackingCode({
+    if (trackingCodeFromParams && billTypeFromParams) {
+      getBillDetailsByTrackingCode({
         trackingCode: trackingCodeFromParams,
-        includeBillItems: true
+        billType: billTypeFromParams
       });
     }
   };
@@ -219,7 +211,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
   };
 
   const handleDiscountValidation = async () => {
-    if (!discountCodeInput.trim() || !bill?.billId) return;
+    if (!discountCodeInput.trim() || !bill?.id) return;
     
     setIsDiscountValidating(true);
     setDiscountError('');
@@ -227,16 +219,16 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
     
     try {
       const result = await validateDiscountCode({
-        billId: bill.billId,
+        billId: bill.id!,
         discountCode: discountCodeInput.trim(),
       }).unwrap();
       
-      if (result.result?.isValid) {
-        setAppliedDiscount(result.result);
+      if (result.data?.isValid) {
+        setAppliedDiscount(result.data);
         setDiscountSuccess('کد تخفیف اعمال شد');
-        success('کد تخفیف اعمال شد', `تخفیف ${formatCurrencyFa(result.result.discountAmountRials || 0)} ریال اعمال شد`);
+        success('کد تخفیف اعمال شد', `تخفیف ${formatCurrencyFa(result.data.discountAmountRials || 0)} ریال اعمال شد`);
       } else {
-        setDiscountError(result.result?.errors?.[0] || 'کد تخفیف نامعتبر است');
+        setDiscountError(result.data?.errors?.[0] || result.errors?.[0] || 'کد تخفیف نامعتبر است');
         setAppliedDiscount(null);
       }
     } catch (error) {
@@ -250,7 +242,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
   };
 
   const processPayment = async () => {
-    if (!bill?.billId || !selectedPaymentMethod) return;
+    if (!bill?.id || !selectedPaymentMethod) return;
     
     setIsProcessingPayment(true);
     
@@ -258,9 +250,9 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
       if (selectedPaymentMethod === 'wallet') {
         // Pay with wallet
         const walletResult = await payWithWallet({
-          billId: bill.billId,
+          billId: bill.id!,
           amountRials: paymentAmount,
-          description: `پرداخت فاکتور ${bill.billNumber || bill.billId}`,
+          description: `پرداخت فاکتور ${bill.billNumber || bill.id}`,
         }).unwrap();
         
         if (walletResult.result) {
@@ -280,15 +272,15 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
       } else {
         // Create online payment
         const paymentResult = await createPayment({
-          billId: bill.billId,
+          billId: bill.id!,
           amountRials: Math.max(0, totalAmount - paidAmount), // Original amount without discount
           paymentMethod: 'online',
           paymentGateway: "Parsian", // Will be selected by backend
           callbackUrl: `${window.location.origin}/bills/${trackingCodeFromParams}/payments/success/{paymentId}?billType=${isWalletDeposit ? 'WalletDeposit' : 'Bill'}`,
-          description: `پرداخت فاکتور ${bill.billNumber || bill.billId}`,
+          description: `پرداخت فاکتور ${bill.billNumber || bill.id}`,
           expiryDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
           autoIssueBill: paymentAmount > 0,
-          discountCode: appliedDiscount?.discountCode?.code,
+          discountCode: appliedDiscount?.discountCode?.code || undefined,
           allowOverDiscount: paymentAmount === 0,
           skipPaymentIfZero: paymentAmount > 0,
         }).unwrap();
@@ -360,7 +352,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
           </div>
           <div class="bill-info">
             <p>تاریخ: ${formatDateFa(new Date())}</p>
-            <p>وضعیت: ${bill?.billStatusText}</p>
+            <p>وضعیت: ${bill?.statusText || bill?.status}</p>
             <p>شماره فاکتور: ${bill?.billNumber || 'نامشخص'}</p>
           </div>
           <table class="items-table">
@@ -375,10 +367,10 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
             <tbody>
               ${billItems.map((item: BillItem) => `
                 <tr>
-                  <td>${item.itemDescription || item.itemName || 'واریز کیف پول'}</td>
+                  <td>${item.description || item.title || 'واریز کیف پول'}</td>
                   <td>${item.quantity || 1}</td>
-                  <td>${formatCurrencyFa(item.unitPrice || 0)} ریال</td>
-                  <td>${formatCurrencyFa(item.totalPrice || 0)} ریال</td>
+                  <td>${formatCurrencyFa(item.unitPriceRials || 0)} ریال</td>
+                  <td>${formatCurrencyFa(item.lineTotalRials || 0)} ریال</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -412,7 +404,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
   useEffect(() => {
     setDiscountError('');
     setDiscountSuccess('');
-  }, [bill?.billId]);
+  }, [bill?.id]);
 
   // Handle API errors
   useEffect(() => {
@@ -561,15 +553,15 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              {getStatusIcon(bill.billStatus || '')}
+              {getStatusIcon(bill.status || '')}
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  مشخصات فاکتور
+                  {isBillFullyPaid ? 'صورت حساب‌ها' : 'مشخصات فاکتور'}
                 </h2>
                 </div>
                 </div>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeClass(bill.billStatus || '')}`}>
-              {bill.billStatusText}
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeClass(bill.status || '')}`}>
+              {bill.statusText || bill.status}
             </span>
               </div>
               
@@ -584,14 +576,14 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
             <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
               <span className="text-sm text-gray-500 dark:text-gray-400">کد پیگیری:</span>
               <span className="text-sm font-medium text-gray-900 dark:text-gray-100 font-mono">
-                {trackingCodeFromParams}
+                {bill.trackingCode || trackingCodeFromParams}
               </span>
             </div>
 
             <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
               <span className="text-sm text-gray-500 dark:text-gray-400">مجموع مبلغ:</span>
               <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                {formatCurrencyFa(totalAmount)} ریال
+                {formatCurrencyFa(bill.totalAmountRials || 0)} ریال
               </span>
             </div>
             
@@ -631,7 +623,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
               </div>
             )}
             
-            {remainingAmount < 0 && (
+            {isBillFullyPaid && (
               <div className="flex justify-between items-center py-2">
                 <span className="text-sm text-gray-500 dark:text-gray-400">وضعیت:</span>
                 <span className="text-sm font-bold text-green-600 dark:text-green-400">
@@ -641,6 +633,32 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
             )}
           </div>
                 </div>
+                
+                {/* Fully Paid Message */}
+                {isBillFullyPaid && (
+                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <PiCheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <h3 className="text-sm font-medium text-green-900 dark:text-green-100 mb-1">
+                          فاکتور پرداخت شده
+                        </h3>
+                        <p className="text-sm text-green-800 dark:text-green-200 mb-3">
+                          این فاکتور به طور کامل پرداخت شده است. می‌توانید رسید خود را چاپ یا ذخیره کنید.
+                        </p>
+                        <Button
+                          onClick={() => router.push('/bills')}
+                          variant="primary"
+                          size="sm"
+                          className="w-full"
+                          leftIcon={<PiReceipt className="h-4 w-4" />}
+                        >
+                          برو به صورت حساب‌ها
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
         {/* Bill Items */}
         {billItems.length > 0 && (
@@ -665,7 +683,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
                         <div className="flex items-center gap-2">
                           <PiReceipt className="h-4 w-4 text-gray-400 flex-shrink-0" />
                           <span className="text-gray-900 dark:text-gray-100 font-medium whitespace-nowrap">
-                            {item.itemDescription || item.itemName || 'واریز کیف پول'}
+                            {item.description || item.title || 'واریز کیف پول'}
                           </span>
                         </div>
                       </td>
@@ -673,10 +691,10 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
                         {item.quantity || 1}
                       </td>
                       <td className="text-left py-3 px-4 text-gray-900 dark:text-gray-100 w-1/6">
-                        {formatCurrencyFa(item.unitPrice || 0)} ریال
+                        {formatCurrencyFa(item.unitPriceRials || 0)} ریال
                       </td>
                       <td className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100 w-1/6">
-                        {formatCurrencyFa(item.totalPrice || 0)} ریال
+                        {formatCurrencyFa(item.lineTotalRials || 0)} ریال
                       </td>
                     </tr>
                   ))}
@@ -687,7 +705,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
             )}
 
         {/* Discount Code Section */}
-        {(remainingAmount >= 0 && !isBillFullyPaid) && (
+        {!isBillFullyPaid && (
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
               کد تخفیف
@@ -741,7 +759,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
         )}
 
         {/* Payment Method Selection */}
-        {(remainingAmount >= 0 && !isBillFullyPaid) && (
+        {!isBillFullyPaid && (
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
               روش پرداخت
@@ -815,7 +833,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
         {/* Fixed Action Buttons at Bottom */}
         <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
           <div className="flex gap-3">
-            {(remainingAmount >= 0 && !isBillFullyPaid) && (
+            {!isBillFullyPaid && (
               <Button
                 onClick={processPayment}
                 disabled={isInsufficientBalance || !isPaymentMethodSelected || isProcessingPayment}

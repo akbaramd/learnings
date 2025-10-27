@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Call the upstream API to get wallet transactions
-    const upstream = await api.api.getWalletTransactions({
+    const upstream = await api.api.listUserWalletTransactions({
       pageNumber: queryParams.pageNumber,
       pageSize: queryParams.pageSize,
       transactionType: queryParams.type,
