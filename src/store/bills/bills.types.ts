@@ -69,7 +69,7 @@ export interface IssueBillResponseData {
 }
 
 export interface CancelBillResponseData {
-  billId?: string;
+  billId?: string; 
   status?: string | null;
   cancellationReason?: string | null;
 }

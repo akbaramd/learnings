@@ -5,7 +5,7 @@ import { MarkByContextAsReadResponse, MarkByContextAsReadRequest } from '@/src/s
 import { AxiosError } from 'axios';
   
 export async function PUT(req: NextRequest) {
-  try {
+  try { 
     const api = createApiInstance(req);
 
     // Parse request body
