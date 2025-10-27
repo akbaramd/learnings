@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     if (searchParams.get('toDate')) {
       queryParams.toDate = searchParams.get('toDate') || undefined;
     }
-
+ 
     // Call the upstream API to get wallet deposits
     const upstream = await api.api.listUserWalletDeposits({
       page: queryParams.pageNumber,
