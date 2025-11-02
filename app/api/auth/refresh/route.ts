@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { Api } from '@/src/services/Api';
 import { RefreshResponse } from '@/src/store/auth/auth.types';
 import { ensureCsrfCookie, verifyCsrfFromRequest } from '@/src/lib/csrf';
+import { getServerEnvSync } from '@/src/config/env';
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,10 +25,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(errorResponse, { status: 403 });
     }
     
-    const baseURL = process.env.UPSTREAM_API_BASE_URL || 'https://auth.wa-nezam.org';
-    
     const api = new Api({
-      baseURL: baseURL,
+      baseURL: getServerEnvSync().UPSTREAM_API_BASE_URL,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -49,28 +48,32 @@ export async function POST(req: NextRequest) {
 
     // فراخوانی متد refreshToken upstream
     const upstream = await api.api.refreshToken({ refreshToken }); 
-    const status = upstream.status ?? 200;
+    const upstreamStatus = upstream.status ?? 200;
+    const upstreamIsSuccess = upstream.data?.isSuccess ?? false;
 
     // فوروارد کردن هر Set-Cookie جدید (در صورت rotation)
     const setCookie = upstream.headers?.['set-cookie'];
 
     // Strongly typed response structure using ApplicationResult
     const response: RefreshResponse = {
-      isSuccess: status === 200 && upstream.data?.isSuccess || false,
-      message: upstream.data?.message || 'Token refreshed successfully',
+      isSuccess: upstreamIsSuccess,
+      message: upstream.data?.message || (upstreamIsSuccess ? 'Token refreshed successfully' : 'Token refresh failed'),
       errors: upstream.data?.errors || undefined,
-      data: status === 200 && upstream.data?.isSuccess ? {
+      data: upstreamIsSuccess && upstream.data?.data ? {
         isSuccess: true,
         message: upstream.data.message || 'Token refreshed successfully',
         accessToken: upstream.data.data?.accessToken || undefined
       } : undefined
     };
 
-    const finalRes = NextResponse.json(response, { status });
+    // Return 401 if refresh failed (so client knows to stop retrying)
+    // Return 200 only if refresh was actually successful
+    const finalStatus = upstreamIsSuccess ? 200 : 401;
+    const finalRes = NextResponse.json(response, { status: finalStatus });
     finalRes.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     
-    // Update tokens in cookies if refresh was successful
-    if (status === 200 && upstream.data?.isSuccess && upstream.data?.data) {
+    // Update tokens in cookies ONLY if refresh was successful
+    if (upstreamIsSuccess && upstream.data?.data) {
       const { accessToken, refreshToken: newRefreshToken } = upstream.data.data;
       
       if (accessToken) {
@@ -94,6 +97,31 @@ export async function POST(req: NextRequest) {
           maxAge: 7 * 24 * 60 * 60 // 7 days
         });
       }
+    } else {
+      // Clear tokens if refresh failed (token binding validation failed, expired, etc.)
+      console.log('Refresh token failed, clearing auth cookies:', {
+        upstreamStatus,
+        upstreamIsSuccess,
+        message: upstream.data?.message,
+        errors: upstream.data?.errors,
+      });
+      
+      // Clear access and refresh tokens
+      finalRes.cookies.set('accessToken', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/',
+        maxAge: 0
+      });
+      
+      finalRes.cookies.set('refreshToken', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/',
+        maxAge: 0
+      });
     }
     
     if (setCookie) {

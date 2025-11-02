@@ -11,6 +11,7 @@ import { Tour } from '@/src/components/tours/TourCard';
 import { useGetToursPaginatedQuery } from '@/src/store/tours/tours.queries';
 import { selectWallet, selectWalletLastFetched } from '@/src/store/wallets';
 import { useLazyWallets } from '@/src/hooks/useLazyWallets';
+import { buildImageUrl } from '@/src/config/env';
 import { useState, useEffect } from 'react';
 
 /* =========================
@@ -170,7 +171,7 @@ function useToursList(): { tours: Tour[]; isLoading: boolean; isError: boolean }
       id: t.id || '',
       title: t.title || 'بدون عنوان',
       description: t.title ?? '',
-      photos: t.photos?.map((p) => (p.url ? `https://auth.wa-nezam.org${p.url}` : '')) ?? [],
+      photos: t.photos?.map((p) => (p.url ? buildImageUrl(p.url) : '')) ?? [],
       isRegistrationOpen: t.isRegistrationOpen ?? false,
       difficultyLevel: 1,
       price: t.pricing?.[0]?.effectivePriceRials ?? t.lowestPriceRials ?? 0,

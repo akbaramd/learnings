@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLazyWallets } from '@/src/hooks/useLazyWallets';
 import { selectWallet, selectWalletLastFetched } from '@/src/store/wallets';
 import { useSelector } from 'react-redux';
-import { PageHeader } from '@/src/components/ui/PageHeader';
+import { useWalletPageHeader } from './WalletPageHeaderContext';
 import {
   PiMoney,
   PiClock,
@@ -64,9 +64,59 @@ export default function WalletPage({ params }: WalletPageProps) {
   const lastFetched = useSelector(selectWalletLastFetched);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { setHeaderState } = useWalletPageHeader();
 
   // Handle case where walletId might be undefined
   const currentWalletId = walletId || wallet?.id || 'default';
+  const lastHeaderStateRef = useRef<string>('');
+
+  const handleRefresh = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await refreshWalletData(currentWalletId);
+    } catch (error) {
+      console.error('Failed to refresh wallet data:', error);
+      setError('خطا در بروزرسانی اطلاعات کیف پول');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentWalletId, refreshWalletData]);
+
+  const handleBack = useCallback(() => {
+    // Check if came from dashboard or wallet pages
+    if (document.referrer && (document.referrer.includes('/dashboard') || document.referrer.includes('/wallet'))) {
+      router.back();
+    } else {
+      router.push('/dashboard');
+    }
+  }, [router]);
+
+  // Set page header - only update when necessary
+  useEffect(() => {
+    const headerKey = `${currentWalletId}-${isLoading}`;
+    if (lastHeaderStateRef.current === headerKey) {
+      return; // Skip if same state
+    }
+    
+    lastHeaderStateRef.current = headerKey;
+    setHeaderState({
+      title: 'مدیریت کیف پول',
+      titleIcon: <PiMoney className="h-5 w-5" />,
+      subtitle: `${currentWalletId.slice(0, 8)}...`,
+      showBackButton: true,
+      onBack: handleBack,
+      rightActions: [
+        {
+          icon: <PiArrowClockwise className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />,
+          onClick: handleRefresh,
+          label: 'بروزرسانی',
+          disabled: isLoading,
+          'aria-label': 'بروزرسانی',
+        },
+      ],
+    });
+  }, [currentWalletId, isLoading, setHeaderState, handleBack, handleRefresh]);
 
   // Fetch wallet data on component mount
   useEffect(() => {
@@ -86,34 +136,16 @@ export default function WalletPage({ params }: WalletPageProps) {
     loadWalletData();
   }, [fetchWallet]);
 
-  const handleRefresh = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await refreshWalletData(currentWalletId);
-    } catch (error) {
-      console.error('Failed to refresh wallet data:', error);
-      setError('خطا در بروزرسانی اطلاعات کیف پول');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleBack = () => {
-    // Check if came from dashboard or wallet pages
-    if (document.referrer && (document.referrer.includes('/dashboard') || document.referrer.includes('/wallet'))) {
-      router.back();
-    } else {
-      router.push('/dashboard');
-    }
-  };
-
   const handleTransactions = () => {
-    router.push(`/wallet/${currentWalletId}/transactions`);
+    if (currentWalletId) {
+      router.push(`/wallet/${currentWalletId}/transactions`);
+    }
   };
 
   const handleDeposits = () => {
-    router.push(`/wallet/${currentWalletId}/deposits`);
+    if (currentWalletId) {
+      router.push(`/wallet/${currentWalletId}/deposits`);
+    }
   };
 
   return (
@@ -149,26 +181,9 @@ export default function WalletPage({ params }: WalletPageProps) {
           background: #6B7280;
         }
       `}</style>
-      <div className="h-full flex flex-col" dir="rtl">
-        <PageHeader
-          title="مدیریت کیف پول"
-          titleIcon={<PiMoney className="h-5 w-5" />}
-          subtitle={`${currentWalletId.slice(0, 8)}...`}
-          showBackButton
-          onBack={handleBack}
-          rightActions={[
-            {
-              icon: <PiArrowClockwise className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />,
-              onClick: handleRefresh,
-              label: 'بروزرسانی',
-              disabled: isLoading,
-              'aria-label': 'بروزرسانی',
-            },
-          ]}
-        />
-
+      <div className="h-full w-full flex flex-col" dir="rtl">
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 overflow-y-auto custom-scrollbar w-full">
           <div className="p-4 space-y-4">
             {/* Error Message */}
             {error && (
@@ -222,8 +237,9 @@ export default function WalletPage({ params }: WalletPageProps) {
             <div className="grid grid-cols-2 gap-3">
               {/* Transactions Button */}
               <button
+                type="button"
                 onClick={handleTransactions}
-                className="group relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all duration-300 overflow-hidden"
+                className="group relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative flex items-center gap-3">
@@ -239,8 +255,9 @@ export default function WalletPage({ params }: WalletPageProps) {
 
               {/* Deposits Button */}
               <button
+                type="button"
                 onClick={handleDeposits}
-                className="group relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:border-emerald-400 dark:hover:border-emerald-500 hover:shadow-md transition-all duration-300 overflow-hidden"
+                className="group relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:border-emerald-400 dark:hover:border-emerald-500 hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-900/20 dark:to-emerald-800/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative flex items-center gap-3">

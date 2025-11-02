@@ -7,6 +7,7 @@ import { Button } from '@/src/components/ui/Button';
 import { useToast } from '@/src/hooks/useToast';
 import { useGetTourDetailQuery, useStartReservationMutation } from '@/src/store/tours/tours.queries';
 import { CapacityDetailDto } from '@/src/services/Api';
+import { buildImageUrl } from '@/src/config/env';
 import Image from 'next/image';
 import {
   PiMapPinDuotone,
@@ -169,7 +170,7 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
   }
 
   const coverPhoto = tour.photos?.[0]?.url 
-    ? `https://auth.wa-nezam.org${tour.photos[0].url}` 
+    ? buildImageUrl(tour.photos[0].url) 
     : null;
 
   return (

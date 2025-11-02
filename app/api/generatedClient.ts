@@ -6,13 +6,14 @@ import nodeHttp from 'node:http';
 import nodeHttps from 'node:https';
 import { Api } from '@/src/services/Api';
 import { cookies } from 'next/headers';
+import { getServerEnvSync } from '@/src/config/env';
 
-const UPSTREAM = process.env.UPSTREAM_API_BASE_URL 
-  ?? 'https://auth.wa-nezam.org';
+// Get UPSTREAM lazily to avoid errors during build
+const getUpstream = () => getServerEnvSync().UPSTREAM_API_BASE_URL;
 
 export function createApiForRequest(req: NextRequest) {
   const http = axios.create({
-    baseURL: UPSTREAM,
+    baseURL: getUpstream(),
     withCredentials: true,
     timeout: 20000,
     httpAgent: new nodeHttp.Agent({ keepAlive: true, maxSockets: 50 }),

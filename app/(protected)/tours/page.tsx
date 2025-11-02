@@ -7,6 +7,7 @@ import { PageHeader } from '@/src/components/ui/PageHeader';
 import { TourCard, TourCardSkeleton, Tour } from '@/src/components/tours/TourCard';
 import { useGetToursPaginatedQuery } from '@/src/store/tours/tours.queries';
 import { selectToursItems, selectToursPagination, selectToursIsLoading, selectToursError } from '@/src/store/tours';
+import { buildImageUrl } from '@/src/config/env';
 import {
   PiArrowRight,
   PiArrowLeft,
@@ -49,7 +50,7 @@ export default function ToursPage() {
       id: t.id || '',
       title: t.title || 'بدون عنوان',
       description: t.title ?? '',
-      photos: t.photos?.map((p) => (p.url ? `https://auth.wa-nezam.org${p.url}` : '')) ?? [],
+      photos: t.photos?.map((p) => (p.url ? buildImageUrl(p.url) : '')) ?? [],
       isRegistrationOpen: t.isRegistrationOpen ?? false,
       difficultyLevel: 1,
       price: t.pricing?.[0]?.effectivePriceRials ?? t.lowestPriceRials ?? 0,

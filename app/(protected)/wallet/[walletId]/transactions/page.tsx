@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLazyWallets } from '@/src/hooks/useLazyWallets';
 import { selectWalletTransactions } from '@/src/store/wallets';
 import { useSelector } from 'react-redux';
-import { Button } from '@/src/components/ui/Button';
+import { useWalletPageHeader } from '../WalletPageHeaderContext';
 import {
   PiArrowLeft,
   PiReceipt,
@@ -147,9 +147,54 @@ export default function TransactionsPage({ params }: TransactionsPageProps) {
   const transactions = useSelector(selectWalletTransactions);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { setHeaderState } = useWalletPageHeader();
 
   // Handle case where walletId might be undefined
   const currentWalletId = walletId || 'default';
+  const lastHeaderStateRef = useRef<string>('');
+
+  const handleRefresh = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await fetchTransactions({ pageNumber: 1, pageSize: 50, walletId: currentWalletId });
+    } catch (error) {
+      console.error('Failed to refresh transactions:', error);
+      setError('خطا در بروزرسانی لیست تراکنش‌ها');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentWalletId, fetchTransactions]);
+
+  const handleBack = useCallback(() => {
+    router.push(`/wallet/${currentWalletId}`);
+  }, [router, currentWalletId]);
+
+  // Set page header - only update when necessary
+  useEffect(() => {
+    const headerKey = `${currentWalletId}-${isLoading}`;
+    if (lastHeaderStateRef.current === headerKey) {
+      return; // Skip if same state
+    }
+    
+    lastHeaderStateRef.current = headerKey;
+    setHeaderState({
+      title: 'تراکنش‌ها',
+      titleIcon: <PiReceipt className="h-5 w-5" />,
+      subtitle: `${currentWalletId.slice(0, 8)}...`,
+      showBackButton: true,
+      onBack: handleBack,
+      rightActions: [
+        {
+          icon: <PiArrowClockwise className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />,
+          onClick: handleRefresh,
+          label: 'بروزرسانی',
+          disabled: isLoading,
+          'aria-label': 'بروزرسانی',
+        },
+      ],
+    });
+  }, [currentWalletId, isLoading, setHeaderState, handleBack, handleRefresh]);
 
   // Fetch transactions on component mount
   useEffect(() => {
@@ -168,23 +213,6 @@ export default function TransactionsPage({ params }: TransactionsPageProps) {
 
     loadTransactions();
   }, [fetchTransactions, currentWalletId]);
-
-  const handleRefresh = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await fetchTransactions({ pageNumber: 1, pageSize: 50, walletId: currentWalletId });
-    } catch (error) {
-      console.error('Failed to refresh transactions:', error);
-      setError('خطا در بروزرسانی لیست تراکنش‌ها');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleBack = () => {
-    router.push(`/wallet/${currentWalletId}`);
-  };
 
   return (
     <>
@@ -220,40 +248,6 @@ export default function TransactionsPage({ params }: TransactionsPageProps) {
         }
       `}</style>
       <div className="h-full flex flex-col" dir="rtl">
-        {/* Breadcrumb Header */}
-        <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBack}
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
-              >
-                <PiArrowLeft className="h-4 w-4" />
-              </Button>
-              <div className="flex items-center gap-2">
-                <PiReceipt className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">تراکنش‌ها</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
-                  {currentWalletId.slice(0, 8)}...
-                </span>
-              </div>
-              <div className="flex-1"></div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={isLoading}
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="بروزرسانی"
-              >
-                <PiArrowClockwise className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
-          </div>
-        </div>
-
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <div className="p-4 space-y-4">

@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLazyWallets } from '@/src/hooks/useLazyWallets';
 import { selectWalletDeposits } from '@/src/store/wallets';
 import { useSelector } from 'react-redux';
 import { Button } from '@/src/components/ui/Button';
 import { useToast } from '@/src/hooks/useToast';
+import { useWalletPageHeader } from '../WalletPageHeaderContext';
 import {
   PiArrowLeft,
   PiPlusCircle,
@@ -156,9 +157,54 @@ export default function DepositsPage({ params }: DepositsPageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { setHeaderState } = useWalletPageHeader();
 
   // Handle case where walletId might be undefined
   const currentWalletId = walletId || 'default';
+  const lastHeaderStateRef = useRef<string>('');
+
+  const handleRefresh = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await fetchDeposits({ pageNumber: 1, pageSize: 10, walletId: currentWalletId });
+    } catch (error) {
+      console.error('Failed to refresh deposits:', error);
+      setError('خطا در بروزرسانی لیست واریزها');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentWalletId, fetchDeposits]);
+
+  const handleBack = useCallback(() => {
+    router.push(`/wallet/${currentWalletId}`);
+  }, [router, currentWalletId]);
+
+  // Set page header - only update when necessary
+  useEffect(() => {
+    const headerKey = `${currentWalletId}-${isLoading}`;
+    if (lastHeaderStateRef.current === headerKey) {
+      return; // Skip if same state
+    }
+    
+    lastHeaderStateRef.current = headerKey;
+    setHeaderState({
+      title: 'واریزها',
+      titleIcon: <PiReceipt className="h-5 w-5" />,
+      subtitle: `${currentWalletId.slice(0, 8)}...`,
+      showBackButton: true,
+      onBack: handleBack,
+      rightActions: [
+        {
+          icon: <PiArrowClockwise className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />,
+          onClick: handleRefresh,
+          label: 'بروزرسانی',
+          disabled: isLoading,
+          'aria-label': 'بروزرسانی',
+        },
+      ],
+    });
+  }, [currentWalletId, isLoading, setHeaderState, handleBack, handleRefresh]);
 
   // Fetch deposits on component mount
   useEffect(() => {
@@ -191,23 +237,6 @@ export default function DepositsPage({ params }: DepositsPageProps) {
 
     return () => clearInterval(intervalId);
   }, [deposits, fetchDeposits, currentWalletId]);
-
-  const handleRefresh = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await fetchDeposits({ pageNumber: 1, pageSize: 10, walletId: currentWalletId });
-    } catch (error) {
-      console.error('Failed to refresh deposits:', error);
-      setError('خطا در بروزرسانی لیست واریزها');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleBack = () => {
-    router.push(`/wallet/${currentWalletId}`);
-  };
 
   const handleCreateDeposit = () => {
     router.push(`/wallet/${currentWalletId}/deposits/create`);
@@ -247,40 +276,6 @@ export default function DepositsPage({ params }: DepositsPageProps) {
         }
       `}</style>
       <div className="h-full flex flex-col" dir="rtl">
-        {/* Breadcrumb Header */}
-        <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBack}
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
-              >
-                <PiArrowLeft className="h-4 w-4" />
-              </Button>
-              <div className="flex items-center gap-2">
-                <PiReceipt className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">واریزها</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
-                  {currentWalletId.slice(0, 8)}...
-                </span>
-              </div>
-              <div className="flex-1"></div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={isLoading}
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="بروزرسانی"
-              >
-                <PiArrowClockwise className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
-          </div>
-        </div>
-
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <div className="p-4 space-y-4">

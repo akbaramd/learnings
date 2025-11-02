@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { LogoutResponse } from '@/src/store/auth/auth.types';
 import { cookies } from 'next/headers';
 import { Api } from '@/src/services/Api';
+import { getServerEnvSync } from '@/src/config/env';
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,10 +31,9 @@ export async function POST(req: NextRequest) {
       requestBody = {};
     }
 
-    const baseURL = process.env.UPSTREAM_API_BASE_URL || 'https://auth.wa-nezam.org';
-    
+    const upstreamBaseUrl = getServerEnvSync().UPSTREAM_API_BASE_URL;
     console.log('Logout API call details:', {
-      baseURL,
+      baseURL: upstreamBaseUrl,
       hasAccessToken: !!accessToken,
       tokenLength: accessToken?.length,
       refreshToken: requestBody.refreshToken || 'null'
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     
     try {
       upstream = await new Api({
-        baseURL: baseURL,
+        baseURL: upstreamBaseUrl,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
       console.error('Upstream logout API failed:', {
         name: apiError instanceof Error ? apiError.name : 'Unknown',
         message: apiError instanceof Error ? apiError.message : String(apiError),
-        baseURL,
+        baseURL: upstreamBaseUrl,
       });
       
       // If upstream API fails, still proceed with local logout

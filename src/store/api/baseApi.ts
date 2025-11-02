@@ -64,11 +64,35 @@ export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, unkno
     try {
       const resp = await refreshPromise;
 
+      // Check HTTP status first
       if (resp?.ok) {
-        // Refresh successful - retry the original request
-        return await rawBaseQuery(args, api, extraOptions);
+        // Parse response body to check isSuccess field
+        let refreshData;
+        try {
+          refreshData = await resp.json();
+        } catch {
+          // If JSON parsing fails, treat as failure
+          console.warn('Failed to parse refresh token response');
+          api.dispatch(setAnonymous());
+          return { error: { status: 401, data: { errors: ['Session expired. Please login again.'] } } };
+        }
+
+        // Check if refresh was actually successful (not just HTTP 200)
+        const isRefreshSuccessful = refreshData?.isSuccess === true && 
+                                     refreshData?.data?.isSuccess === true;
+
+        if (isRefreshSuccessful) {
+          // Refresh successful - retry the original request
+          return await rawBaseQuery(args, api, extraOptions);
+        }
+
+        // Refresh returned 200 but isSuccess is false (e.g., token binding validation failed)
+        console.warn('Refresh token failed:', refreshData?.message || 'Unknown error', refreshData?.errors);
+        api.dispatch(setAnonymous());
+        return { error: { status: 401, data: { errors: [refreshData?.message || 'Session expired. Please login again.'] } } };
       }
 
+      // HTTP status is not OK (401, 403, etc.) - refresh failed
       // Refresh failed - only update state, NO broadcast, NO redirect
       // Let useAuthGuard handle cross-tab sync and UI redirect
       api.dispatch(setAnonymous());
