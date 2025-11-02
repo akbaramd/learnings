@@ -187,7 +187,7 @@ export default function WalletPage({ params }: WalletPageProps) {
           <div className="p-4 space-y-4">
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-4">
                 <div className="flex items-center gap-2 text-red-800 dark:text-red-200">
                   <span className="text-sm font-medium">{error}</span>
                 </div>
@@ -195,7 +195,7 @@ export default function WalletPage({ params }: WalletPageProps) {
             )}
 
             {/* Wallet Balance Card - Modern Design */}
-            <div className="relative bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 rounded-2xl p-6 text-white shadow-lg overflow-hidden">
+            <div className="relative bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 rounded-lg p-6 text-white shadow-lg overflow-hidden">
               {/* Decorative Background Elements */}
               <div className="absolute top-0 left-0 w-32 h-32 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl" />
               <div className="absolute bottom-0 right-0 w-40 h-40 bg-white/10 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl" />
@@ -203,7 +203,7 @@ export default function WalletPage({ params }: WalletPageProps) {
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-white/20 backdrop-blur-sm rounded-xl">
+                    <div className="p-2.5 bg-white/20 backdrop-blur-sm rounded-lg">
                       <PiMoney className="h-6 w-6" />
                     </div>
                     <div>
@@ -239,7 +239,7 @@ export default function WalletPage({ params }: WalletPageProps) {
               <button
                 type="button"
                 onClick={handleTransactions}
-                className="group relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer"
+                className="group relative bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative flex items-center gap-3">
@@ -257,7 +257,7 @@ export default function WalletPage({ params }: WalletPageProps) {
               <button
                 type="button"
                 onClick={handleDeposits}
-                className="group relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:border-emerald-400 dark:hover:border-emerald-500 hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer"
+                className="group relative bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-emerald-400 dark:hover:border-emerald-500 hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-900/20 dark:to-emerald-800/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative flex items-center gap-3">
@@ -273,7 +273,7 @@ export default function WalletPage({ params }: WalletPageProps) {
             </div>
 
             {/* Wallet Information - Card Design */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
               <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
                 <div className="w-1 h-5 bg-emerald-500 rounded-full" />
                 اطلاعات کیف پول
