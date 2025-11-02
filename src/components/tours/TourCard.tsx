@@ -2,16 +2,16 @@
 
 import React from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import Button from '../ui/Button';
 
 /* ===================== Types ===================== */
 
 export type Tour = {
   id: string;
   title: string;
-  description?: string;
   photos: string[];
   isRegistrationOpen: boolean;
-  difficultyLevel?: 1 | 2 | 3 | 4 | 5;
   price?: number;                 // ریال
   registrationStart?: string;     // ISO
   registrationEnd?: string;       // ISO
@@ -19,11 +19,12 @@ export type Tour = {
   tourEnd?: string;               // ISO
   maxCapacity?: number;
   remainingCapacity?: number;
+  reservationId?: string | null;  // Reservation ID if user has reservation
+  reservationStatus?: string | null; // Reservation status if user has reservation
 };
 
 type TourCardProps = {
   tour: Tour;
-  onClick?: (id: string) => void;
   className?: string;
   /** اگر true باشد حالت لودینگ اسکلتی رندر می‌شود */
   loading?: boolean;
@@ -60,26 +61,6 @@ const durationFa = (start?: string, end?: string) => {
   return `${faDigits(days)} روزه`;
 };
 
-const diffColor = (lvl?: number) => {
-  switch (lvl) {
-    case 1: return 'bg-green-500';
-    case 2: return 'bg-blue-500';
-    case 3: return 'bg-yellow-500';
-    case 4: return 'bg-orange-500';
-    case 5: return 'bg-red-500';
-    default: return 'bg-gray-500';
-  }
-};
-const diffText = (lvl?: number) => {
-  switch (lvl) {
-    case 1: return 'آسان';
-    case 2: return 'متوسط';
-    case 3: return 'متوسط-سخت';
-    case 4: return 'سخت';
-    case 5: return 'خیلی سخت';
-    default: return 'نامشخص';
-  }
-};
 
 const availDot = (max?: number, left?: number) => {
   if (!max) return 'bg-gray-400';
@@ -162,39 +143,81 @@ export function TourCardSkeleton({ className, dir }: { className?: string; dir?:
   );
 }
 
+/* ===================== Reservation Status Helpers ===================== */
+
+const getReservationStatusBadge = (status: string | null | undefined) => {
+  switch (status) {
+    case 'Confirmed':
+      return {
+        text: 'تأیید شده',
+        className: 'bg-green-600',
+      };
+    case 'Pending':
+      return {
+        text: 'در انتظار',
+        className: 'bg-yellow-500',
+      };
+    case 'Draft':
+      return {
+        text: 'پیش‌نویس',
+        className: 'bg-blue-500',
+      };
+    case 'OnHold':
+      return {
+        text: 'در انتظار پرداخت',
+        className: 'bg-orange-500',
+      };
+    case 'Expired':
+      return {
+        text: 'منقضی شده',
+        className: 'bg-red-500',
+      };
+    default:
+      return {
+        text: 'رزرو شده',
+        className: 'bg-gray-500',
+      };
+  }
+};
+
 /* ===================== TourCard ===================== */
 
 export function TourCard({
   tour,
-  onClick,
   className,
   loading,
   dir,
 }: TourCardProps) {
+  const router = useRouter();
+  
   if (loading) {
     return <TourCardSkeleton className={className} dir={dir} />;
   }
 
   const cover = tour.photos?.[0] ?? '';
-  const handleKey = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onClick?.(tour.id);
+  const hasReservation = !!tour.reservationId;
+  const reservationBadge = hasReservation && tour.reservationStatus 
+    ? getReservationStatusBadge(tour.reservationStatus)
+    : null;
+
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (hasReservation && tour.reservationId) {
+      // Navigate to reservation page if reservation exists
+      router.push(`/tours/reservations/${tour.reservationId}`);
+    } else {
+      // Navigate to tour detail page if no reservation
+      router.push(`/tours/${tour.id}`);
     }
   };
 
   return (
     <article
       dir={dir}
-      role="button"
-      tabIndex={0}
-      onClick={() => onClick?.(tour.id)}
-      onKeyDown={handleKey}
-      aria-label={tour.title}
       className={[
-        'group w-full text-right rounded-lg border border-neutral-200 dark:border-neutral-700',
+        'group w-full h-full flex flex-col text-right rounded-lg border border-neutral-200 dark:border-neutral-700',
         'bg-white dark:bg-neutral-800 hover:shadow-lg hover:border-emerald-300/40 dark:hover:border-emerald-400/40',
-        'transition-all duration-300 overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500',
+        'transition-all duration-300 overflow-hidden',
         className || '',
       ].join(' ')}
     >
@@ -208,7 +231,7 @@ export function TourCard({
         {/* Gentle gradient overlay for visual polish (not for text) */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
 
-        {/* Status badge */}
+        {/* Registration Status Badge */}
         <div className="absolute top-2 right-2">
           <span
             className={[
@@ -220,25 +243,26 @@ export function TourCard({
           </span>
         </div>
 
-        {/* Difficulty */}
-        {tour.difficultyLevel ? (
-          <div className="absolute top-2 left-2">
-            <span
-              className={[
-                'px-2 py-1 text-xs font-medium rounded-full text-white shadow',
-                diffColor(tour.difficultyLevel),
-              ].join(' ')}
-            >
-              {diffText(tour.difficultyLevel)}
-            </span>
+        {/* Reservation Status at bottom of image */}
+        {hasReservation && reservationBadge && (
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent p-3">
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${reservationBadge.className}`} />
+              <span className="text-xs font-semibold text-white">
+                وضعیت رزرو: {reservationBadge.text}
+              </span>
+            </div>
+            <p className="text-xs text-white/90 mt-1">
+              این تور قبلاً توسط شما رزرو شده است
+            </p>
           </div>
-        ) : null}
+        )}
       </div>
 
       {/* Body */}
-      <div className="p-3">
+      <div className="p-3 flex-1 flex flex-col">
         {/* Title + Price */}
-        <div className="mb-2 flex items-start justify-between gap-2">
+        <div className="mb-4 flex items-start justify-between gap-2">
           <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 leading-snug line-clamp-2">
             {tour.title}
           </h3>
@@ -249,13 +273,7 @@ export function TourCard({
           </div>
         </div>
 
-        {/* Description (optional) */}
-        {tour.description ? (
-          <p className="text-xs text-neutral-600 dark:text-neutral-300 line-clamp-2 mb-3">
-            {tour.description}
-          </p>
-        ) : null}
-
+            
         {/* Meta list (compact & scannable) */}
         <div className="space-y-2 text-xs text-neutral-700 dark:text-neutral-300">
           <div className="flex items-center gap-1.5">
@@ -318,6 +336,17 @@ export function TourCard({
             ) : null}
           </div>
         </div>
+
+        {/* Action Button */}
+        <Button
+          onClick={handleButtonClick}
+          variant={hasReservation ? 'primary' : 'ghost'}
+          className={[
+            'mt-4  w-full '
+          ].join(' ')}
+        >
+          {hasReservation ? 'جزئیات رزرو' : 'جزئیات و ثبت نام'}
+        </Button>
       </div>
     </article>
   );

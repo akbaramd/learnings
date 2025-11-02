@@ -7,7 +7,7 @@ import { InputField } from '@/src/components/forms/InputField';
 import { Button } from '@/src/components/ui/Button';
 import { PageHeader } from '@/src/components/ui/PageHeader';
 import { useToast } from '@/src/hooks/useToast';
-import { 
+import {
   useLazyGetUserBillsQuery,
   selectBillIsLoading,
   selectBills,
@@ -38,12 +38,12 @@ function formatCurrencyFa(amount: number): string {
 
 function formatDateFa(date: Date | string | null): string {
   if (!date) return 'نامشخص';
-  
+
   try {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-    
+
     if (isNaN(dateObj.getTime())) return 'نامشخص';
-    
+
     return new Intl.DateTimeFormat('fa-IR', {
       year: 'numeric',
       month: 'long',
@@ -104,39 +104,39 @@ function getStatusBadgeClass(status: string) {
 
 function getBillCardClass(bill: Bill) {
   const baseClass = "bg-white dark:bg-gray-800 rounded-lg overflow-hidden border transition-all duration-300 cursor-pointer";
-  
+
   const status = bill.status || '';
   const isFullyPaid = status === 'FullyPaid';
   const isPartialPaid = status === 'PartiallyPaid';
   const isIssued = status === 'Issued' || status === 'Draft';
   const isOverdue = status === 'Overdue';
   const isCancelled = status === 'Cancelled' || status === 'Refunded';
-  
+
   if (isCancelled) {
     // لغو شده → خاکستری و کمرنگ
     return `${baseClass} border-gray-300 dark:border-gray-600 opacity-60 grayscale hover:opacity-80`;
   }
-  
+
   if (isFullyPaid) {
     // پرداخت کامل → سبز کمرنگ
     return `${baseClass} border-green-200 dark:border-green-800 opacity-80 hover:opacity-100 hover:border-green-300`;
   }
-  
+
   if (isOverdue) {
     // پس‌افتاده → قرمز با تاکید
     return `${baseClass} border-red-300 dark:border-red-700 shadow-md ring-2 ring-red-200 dark:ring-red-900/50 hover:shadow-lg hover:scale-[1.01]`;
   }
-  
+
   if (isPartialPaid) {
     // پرداخت جزئی → زرد با تاکید متوسط
     return `${baseClass} border-amber-300 dark:border-amber-600 shadow-md hover:shadow-lg hover:scale-[1.01]`;
   }
-  
+
   if (isIssued) {
     // صادر شده (منتظر پرداخت) → آبی با تاکید بالا
     return `${baseClass} border-blue-300 dark:border-blue-600 shadow-lg ring-2 ring-blue-200 dark:ring-blue-900/50 hover:shadow-xl hover:scale-[1.01]`;
   }
-  
+
   // حالت پیش‌فرض
   return `${baseClass} border-gray-200 dark:border-gray-700 hover:shadow-md`;
 }
@@ -144,7 +144,7 @@ function getBillCardClass(bill: Bill) {
 export default function BillsPage() {
   const router = useRouter();
   const { error } = useToast();
-  
+
   // State
   const [trackingCode, setTrackingCode] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -155,7 +155,7 @@ export default function BillsPage() {
   const bills = useSelector(selectBills);
   const pagination = useSelector(selectBillPaginationInfo);
   const isLoading = useSelector(selectBillIsLoading);
-  
+
   const [getUserBills] = useLazyGetUserBillsQuery();
 
   // Fetch bills on mount and when filters change
@@ -167,6 +167,7 @@ export default function BillsPage() {
           pageSize,
           status: statusFilter !== 'all' ? statusFilter : undefined,
           sortBy: 'issuedate',
+            searchTerm:trackingCode,
           sortDirection: 'desc',
         });
       } catch (err) {
@@ -175,40 +176,31 @@ export default function BillsPage() {
     };
 
     fetchBills();
-  }, [currentPage, statusFilter, getUserBills]);
+  }, [currentPage, statusFilter, getUserBills, trackingCode]);
 
-  // Filter bills based on search query
-  const filteredBills = bills?.filter(bill => {
-    if (!trackingCode.trim()) return true;
-    
-    const searchQuery = trackingCode.toLowerCase().trim();
-    const billNumber = (bill.billNumber || '').toLowerCase();
-    const referenceId = (bill.referenceId || '').toLowerCase();
-    
-    return billNumber.includes(searchQuery) || referenceId.includes(searchQuery);
-  }) || [];
+
 
   const handleBillClick = (bill: Bill) => {
     console.log('🖱️ Bill clicked:', {
       billId: bill.id,
       referenceId: bill.referenceId,
-      billType: bill.billType,
+      billType: bill.referenceType,
       hasReferenceId: !!bill.referenceId
     });
-    
+
     // Use referenceId if available, otherwise use trackingCode
-    const trackingCode = bill.referenceId;
-    
+    const trackingCode = bill.referenceTrackingCode;
+
     if (!trackingCode) {
       console.error('❌ No tracking code or reference ID found for bill:', bill);
       error('خطا', 'کد پیگیری یافت نشد');
       return;
     }
 
-    const billType = bill.billType || 'Bill';
+    const billType = bill.referenceType || 'Bill';
     const url = `/bills/${encodeURIComponent(trackingCode)}?billType=${billType}`;
     console.log('🧭 Navigating to:', url);
-    
+
     router.push(url);
   };
 
@@ -362,12 +354,7 @@ export default function BillsPage() {
                 {trackingCode.trim() && (
                   <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-blue-700 dark:text-blue-300">
-                        {filteredBills.length > 0 
-                          ? `نتایج جستجو: ${filteredBills.length} مورد یافت شد`
-                          : 'نتیجه‌ای یافت نشد'
-                        }
-                      </span>
+
                       {trackingCode.trim() && (
                         <Button
                           variant="ghost"
@@ -381,9 +368,9 @@ export default function BillsPage() {
                     </div>
                   </div>
                 )}
-                
+
                 <div className="space-y-3">
-                  {filteredBills.map((bill) => (
+                  {bills.map((bill) => (
                   <div
                     key={bill.id}
                     className={getBillCardClass(bill)}
@@ -410,9 +397,9 @@ export default function BillsPage() {
                           {getStatusLabel(bill.status || '')}
                         </span>
                       </div>
-                    
+
                     </div>
-                    
+
                     {/* Payment Info Row */}
                     <div className="px-4 pb-4">
                       <div className="grid grid-cols-3 gap-2 text-center">
@@ -438,20 +425,31 @@ export default function BillsPage() {
                     </div>
 
                     {/* Tracking Code Row */}
-                    {bill.referenceId && (
+                    {bill.referenceTrackingCode && (
                       <div className="px-4 pb-3">
                         <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-md border border-dashed border-emerald-200 dark:border-emerald-600">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <div className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">کد پیگیری:</div>
                               <div className="font-mono text-xs font-semibold text-emerald-800 dark:text-emerald-200">
-                                {bill.referenceId}
+                                {bill.referenceTrackingCode}
                               </div>
                             </div>
                           </div>
                         </div>
                       </div>
                     )}
+
+                      {/* Tracking Code Row */}
+                      {bill.status === "Issued" && (
+                          <div className="px-4 pb-3">
+                              <Button className={"w-full"} onClick={()=>{
+                                 router.push(`/bills/${bill.referenceTrackingCode}?billType=${bill.referenceType}`);
+                              }}>
+                                    پرداخت
+                              </Button>
+                          </div>
+                      )}
                   </div>
                   ))}
                 </div>
@@ -463,7 +461,7 @@ export default function BillsPage() {
                   {trackingCode.trim() ? 'نتیجه‌ای یافت نشد' : 'صورت حسابی یافت نشد'}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                  {trackingCode.trim() 
+                  {trackingCode.trim()
                     ? 'لطفاً کد پیگیری یا شماره صورت حساب دیگری را جستجو کنید'
                     : 'هیچ صورت حسابی با فیلترهای انتخابی پیدا نشد'
                   }
@@ -485,7 +483,7 @@ export default function BillsPage() {
               >
                 قبلی
               </Button>
-              
+
               <div className="flex gap-1">
                 {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
                   <Button
@@ -499,7 +497,7 @@ export default function BillsPage() {
                   </Button>
                 ))}
               </div>
-              
+
               <Button
                 variant="secondary"
                 size="sm"

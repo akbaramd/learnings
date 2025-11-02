@@ -38,13 +38,13 @@ export function TourSection({ title, seeAllHref, dir = 'auto', tours, className 
         dir={dir}
         loop={false}
         disableDrag={false}
-        itemClassName="rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900"
+        itemClassName="rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 h-full"
         peekPaddingClass="pe-4"
         showDots
       >
         {tours.map((t) => (
-          <div key={t.id} className="p-0">
-            <TourCard tour={t} />
+          <div key={t.id} className="p-0 h-full flex">
+            <TourCard tour={t} className="w-full h-full" />
           </div>
         ))}
       </PeekSlider>

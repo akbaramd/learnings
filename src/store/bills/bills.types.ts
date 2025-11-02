@@ -28,8 +28,7 @@ export interface GetBillsRequest {
   billType?: string;
   billStatus?: string;
   status?: string;
-  onlyOverdue?: boolean;
-  onlyUnpaid?: boolean;
+  searchTerm?: string;
   sortBy?: string;
   sortDirection?: string;
 }

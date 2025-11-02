@@ -137,11 +137,19 @@ export interface GetDepositsResponse {
   deposits: WalletDeposit[];
 }
 
-// Generic API response wrapper
-export interface ApiResponse<T = unknown> {
-  result: T | null;
-  errors: string[] | null;
+// Deposit details (single)
+export interface WalletDepositDetails {
+  id: string;
+  walletId: string;
+  externalUserId?: string;
+  trackingCode?: string;
+  amount: number;
+  currency?: string;
+  status: DepositStatus;
+  requestedAt: string;
+  completedAt?: string;
 }
+
 
 // Specific response types for each endpoint
 export interface GetWalletResponse {
@@ -169,11 +177,17 @@ export interface GetDepositsResponseWrapper {
   errors: string[] | null;
 }
 
+export interface GetDepositDetailsResponseWrapper {
+  result: WalletDepositDetails | null;
+  errors: string[] | null;
+}
+
 // Wallet state for Redux store
 export interface WalletState {
   wallet: Wallet | null;
   transactions: WalletTransaction[];
   deposits: WalletDeposit[];
+  selectedDeposit?: WalletDepositDetails | null;
   statistics: WalletStatistics | null;
   pagination: {
     transactions: {
@@ -201,12 +215,14 @@ export type TransactionType =
   | 'Refund'
   | 'Transfer';
 
-export type DepositStatus = 
-  | 'Pending'
-  | 'Processing'
+export type DepositStatus =
+  | 'Requested'
+  | 'AwaitingBill'
+  | 'AwaitingPayment'
   | 'Completed'
   | 'Failed'
-  | 'Cancelled';
+  | 'Cancelled'
+  | 'Expired';
 
 // Filter options for transactions and deposits
 export interface TransactionFilters {

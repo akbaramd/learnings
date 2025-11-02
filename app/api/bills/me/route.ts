@@ -19,8 +19,7 @@ export async function GET(req: NextRequest) {
         pageSize: parseInt(searchParams.get('pageSize') || '20'),
         status: searchParams.get('status') || undefined,
         billType: searchParams.get('billType') || undefined,
-        onlyOverdue: searchParams.get('onlyOverdue') === 'true',
-        onlyUnpaid: searchParams.get('onlyUnpaid') === 'true',
+        searchTerm: searchParams.get('searchTerm')|| '',
         sortBy: searchParams.get('sortBy') || 'IssueDate',
         sortDirection: searchParams.get('sortDirection') || 'desc',
       }

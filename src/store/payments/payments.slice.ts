@@ -7,6 +7,7 @@ import {
   PayWithWalletResponse,
   PaymentStatus
 } from './payments.types';
+import {PaymentDetailDto} from "@/src/services/Api";
 
 // Type guards for runtime validation
 const isValidPayment = (payment: unknown): payment is CreatePaymentResponse => {
@@ -66,7 +67,7 @@ const paymentsSlice = createSlice({
   initialState,
   reducers: {
     // Payment actions
-    setCurrentPayment: (state, action: PayloadAction<CreatePaymentResponse | null>) => {
+    setCurrentPayment: (state, action: PayloadAction<PaymentDetailDto | null>) => {
       if (action.payload === null || isValidPayment(action.payload)) {
         state.currentPayment = action.payload;
         state.error = null;
@@ -157,29 +158,6 @@ const paymentsSlice = createSlice({
       }
     },
 
-    // Wallet payment specific actions
-    setWalletPayment: (state, action: PayloadAction<PayWithWalletResponse | null>) => {
-      if (action.payload === null || isValidWalletPayment(action.payload)) {
-        // Convert wallet payment to regular payment format for consistency
-        if (action.payload) {
-          state.currentPayment = {
-            paymentId: action.payload.paymentId,
-            billId: action.payload.billId,
-            amount: action.payload.amount,
-            status: action.payload.status,
-            createdAt: action.payload.createdAt,
-            billStatus: action.payload.billStatus,
-            billTotalAmount: action.payload.billTotalAmount,
-            paymentMessage: action.payload.message,
-          };
-        } else {
-          state.currentPayment = null;
-        }
-        state.error = null;
-      } else {
-        state.error = 'Invalid wallet payment data received';
-      }
-    },
   },
 });
 
@@ -196,7 +174,6 @@ export const {
   clearError,
   resetPaymentsState,
   updatePaymentStatusOptimistically,
-  setWalletPayment,
 } = paymentsSlice.actions;
 
 // Export reducer

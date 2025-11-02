@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "node server.js",
     "lint": "next lint",
-    "api:gen": "swagger-typescript-api generate -p https://auth.wa-nezam.org/swagger/v1/swagger.json -o ./src/services --axios"
+    "api:gen": "swagger-typescript-api generate -p https://auth.wa-nezam.org/swagger/v1/swagger.json -o ./src/services --axios",
+    "api:gen:local": "swagger-typescript-api generate -p https://auth.wa-nezam.org/swagger/v1/swagger.json -o ./src/services --axios"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
@@ -15,6 +16,7 @@
     "axios": "^1.12.2",
     "critters": "^0.0.23",
     "embla-carousel-react": "^8.6.0",
+    "jalaali-js": "^1.2.8",
     "next": "16.0.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
@@ -26,6 +28,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/jalaali-js": "^1.2.0",
     "@types/node": "^20",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19",

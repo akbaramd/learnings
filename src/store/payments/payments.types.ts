@@ -2,6 +2,8 @@
 // Payment-related types for frontend
 
 // Payment API Types
+import {PaymentDetailDto} from "@/src/services/Api";
+
 export interface CreatePaymentRequest {
   billId?: string;
   amountRials?: number;
@@ -66,6 +68,10 @@ export interface PaymentGatewayInfo {
 export interface GetPaymentGatewaysResponse {
   gateways: PaymentGatewayInfo[];
 }
+export interface GetPaymentDetailWrapper {
+    result: PaymentDetailDto | undefined;
+    errors: string[] | null;
+}
 
 export interface GetPaymentGatewaysResponseWrapper {
   result: GetPaymentGatewaysResponse | null;
@@ -108,7 +114,7 @@ export type PaymentStatus =
 
 // Payment State Types
 export interface PaymentState {
-  currentPayment: CreatePaymentResponse | null;
+  currentPayment: PaymentDetailDto | null;
   paymentGateways: PaymentGatewayInfo[];
   isLoading: boolean;
   error: string | null;

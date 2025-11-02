@@ -10,6 +10,7 @@ import {
   GetTransactionsResponseWrapper,
   GetDepositsRequest,
   GetDepositsResponseWrapper,
+  GetDepositDetailsResponseWrapper,
   GetWalletResponse,
   WalletTransaction,
   WalletDeposit,
@@ -24,8 +25,11 @@ import {
   setTransactionPagination,
   setDepositPagination,
   setError,
+  setLoading,
   setLastFetched,
   updateBalanceOptimistically,
+  setSelectedDeposit,
+  clearSelectedDeposit,
 } from './wallets.slice';
 
 // Error handling utility
@@ -292,6 +296,31 @@ export const walletsApi = createApi({
         }
       },
     }),
+
+    // Get deposit details by id
+    getDepositDetails: builder.query<GetDepositDetailsResponseWrapper, string>({
+      query: (depositId) => ({
+        url: `/wallets/deposits/${depositId}`,
+        method: 'GET',
+      }),
+      providesTags: ['Deposits'],
+      async onQueryStarted(_id, { dispatch, queryFulfilled }) {
+        dispatch(setLoading(true));
+        dispatch(clearSelectedDeposit());
+        try {
+          const { data } = await queryFulfilled;
+          if (data?.result) {
+            dispatch(setSelectedDeposit(data.result));
+            dispatch(setError(null));
+          }
+        } catch (error: unknown) {
+          const errorMessage = handleWalletsApiError(error);
+          dispatch(setError(errorMessage));
+        } finally {
+          dispatch(setLoading(false));
+        }
+      },
+    }),
   }),
 });
 
@@ -302,10 +331,12 @@ export const {
   usePayWithWalletMutation,
   useGetTransactionsQuery,
   useGetDepositsQuery,
+  useGetDepositDetailsQuery,
   // Lazy query hooks
   useLazyGetWalletQuery,
   useLazyGetTransactionsQuery,
   useLazyGetDepositsQuery,
+  useLazyGetDepositDetailsQuery,
 } = walletsApi;
 
 // Export the API slice

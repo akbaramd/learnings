@@ -55,6 +55,6 @@ export async function GET(
       stack: error instanceof Error ? error.stack : undefined,
       type: typeof error,
     });
-    return handleApiError(error as AxiosError, req);
+    return handleApiError(error as AxiosError);
   }
 }

@@ -49,6 +49,6 @@ export async function POST(req: NextRequest) {
       type: typeof error,
     });
 
-    return handleApiError(error as AxiosError, req);
+    return handleApiError(error as AxiosError);
   }
 }

@@ -1,20 +1,13 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
-import { 
-  useLazyGetBillDetailsByTrackingCodeQuery,
-  selectBillIsLoading,
-  BillDetail,
-  BillItem,
-} from '@/src/store/bills';
+import { useLazyGetPaymentDetailQuery, selectPaymentsLoading } from '@/src/store/payments';
 import { Button } from '@/src/components/ui/Button';
 import { PageHeader } from '@/src/components/ui/PageHeader';
-import {
-  PiCheckCircle,
-  PiReceipt,
-} from 'react-icons/pi';
+import { PiCheckCircle, PiReceipt, PiArrowLeft } from 'react-icons/pi';
+import { PaymentDetailDto } from '@/src/services/Api';
 
 // Utility functions
 function formatCurrencyFa(amount: number): string {
@@ -31,12 +24,12 @@ function formatCurrencyFa(amount: number): string {
 
 function formatDateFa(date: Date | string | null): string {
   if (!date) return 'نامشخص';
-  
+
   try {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-    
+
     if (isNaN(dateObj.getTime())) return 'نامشخص';
-    
+
     return new Intl.DateTimeFormat('fa-IR', {
       year: 'numeric',
       month: 'long',
@@ -56,18 +49,16 @@ interface PaymentSuccessPageProps {
 
 export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [trackingCodeFromParams, setTrackingCodeFromParams] = useState<string>('');
   const [paymentIdFromParams, setPaymentIdFromParams] = useState<string>('');
-  const [billTypeFromParams, setBillTypeFromParams] = useState<string | null>(null);
-  const [billData, setBillData] = useState<BillDetail | null>(null);
+  const [paymentData, setPaymentData] = useState<PaymentDetailDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Redux selectors
-  const isLoadingBill = useSelector(selectBillIsLoading);
+  const isLoadingPayment = useSelector(selectPaymentsLoading);
 
-  // RTK Query for bill data
-  const [getBillDetailsByTrackingCode] = useLazyGetBillDetailsByTrackingCodeQuery();
+  // RTK Query for payment detail
+  const [getPaymentDetail] = useLazyGetPaymentDetailQuery();
 
   // Get tracking code and payment ID from params
   useEffect(() => {
@@ -79,36 +70,23 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
     getParams();
   }, [params]);
 
-  // Get billType from query params
-  useEffect(() => {
-    const billTypeParam = searchParams.get('billType');
-    setBillTypeFromParams(billTypeParam || null);
-  }, [searchParams]);
 
-  // Fetch bill data when tracking code is available
+  // Fetch payment detail (no need to load full bill here)
   useEffect(() => {
-    if (trackingCodeFromParams && billTypeFromParams) {
-      const fetchBillData = async () => {
-        setIsLoading(true);
-        try {
-          const result = await getBillDetailsByTrackingCode({
-            trackingCode: trackingCodeFromParams,
-            billType: billTypeFromParams
-          }).unwrap();
-          
-          if (result.data) {
-            setBillData(result.data);
-          }
-        } catch (error) {
-          console.error('Error fetching bill data:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      
-      fetchBillData();
-    }
-  }, [trackingCodeFromParams, billTypeFromParams, getBillDetailsByTrackingCode]);
+    const fetchPayment = async () => {
+      if (!paymentIdFromParams) return;
+      setIsLoading(true);
+      try {
+        const response = await getPaymentDetail(paymentIdFromParams).unwrap();
+        setPaymentData(response?.result || null);
+      } catch (error) {
+        console.error('Error fetching payment detail:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPayment();
+  }, [paymentIdFromParams, getPaymentDetail]);
 
   // Event handlers
   const handleBack = () => {
@@ -153,51 +131,59 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
           <div class="payment-info">
             <p><strong>شماره پرداخت:</strong> ${paymentIdFromParams}</p>
             <p><strong>کد پیگیری:</strong> ${trackingCodeFromParams}</p>
-            <p><strong>شماره فاکتور:</strong> ${billData?.billNumber || 'نامشخص'}</p>
-            <p><strong>مبلغ پرداخت:</strong> <span class="amount">${formatCurrencyFa(billData?.paidAmountRials || 0)} ریال</span></p>
+            <p><strong>شماره فاکتور:</strong> ${paymentData?.bill?.billNumber || 'نامشخص'}</p>
+            <p><strong>مبلغ پرداخت:</strong> <span class="amount">${formatCurrencyFa(paymentData?.amountRials || 0)} ریال</span></p>
             <p><strong>تاریخ پرداخت:</strong> ${formatDateFa(new Date())}</p>
-            <p><strong>وضعیت:</strong> ${billData?.statusText || billData?.status || 'پرداخت شده'}</p>
+            <p><strong>وضعیت:</strong> ${paymentData?.statusText || paymentData?.status || 'پرداخت شده'}</p>
           </div>
-                ${billData?.items && billData.items.length > 0 ? `
-          <div class="bill-details">
-            <h3>جزئیات فاکتور:</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>شرح</th>
-                  <th>تعداد</th>
-                  <th>قیمت واحد</th>
-                  <th>مجموع</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${billData.items.map((item) => `
-                  <tr>
-                    <td>${item.description || item.title || 'واریز کیف پول'}</td>
-                    <td>${item.quantity || 1}</td>
-                    <td>${formatCurrencyFa(item.unitPriceRials || 0)} ریال</td>
-                    <td>${formatCurrencyFa(item.lineTotalRials || 0)} ریال</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-          ` : ''}
+          
         </body>
       </html>
     `;
 
     printWindow.document.write(printContent);
     printWindow.document.close();
-    
+
     setTimeout(() => {
       printWindow.print();
       printWindow.close();
     }, 500);
   };
 
+  // Navigate to reference page based on referenceType
+  const handleNavigateToReference = () => {
+    const bill = paymentData?.bill;
+    if (!bill?.referenceType || !bill?.referenceId) return;
+
+    const referenceType = bill.referenceType;
+    const referenceId = bill.referenceId;
+
+    if (referenceType === 'WalletDeposit') {
+      router.push(`/wallet/default/deposits/${referenceId}`);
+    } else if (referenceType === 'TourReservation') {
+      router.push(`/tours/reservations/${referenceId}`);
+    }
+  };
+
+  // Check if we can navigate to reference
+  const canNavigateToReference = () => {
+    const bill = paymentData?.bill;
+    return !!(bill?.referenceType && bill?.referenceId && 
+              (bill.referenceType === 'WalletDeposit' || bill.referenceType === 'TourReservation'));
+  };
+
+  const getReferenceButtonText = () => {
+    const bill = paymentData?.bill;
+    if (bill?.referenceType === 'WalletDeposit') {
+      return 'مشاهده واریز';
+    } else if (bill?.referenceType === 'TourReservation') {
+      return 'مشاهده رزرو';
+    }
+    return 'مشاهده جزئیات';
+  };
+
   // Loading state
-  if (isLoading || isLoadingBill) {
+  if (isLoading || isLoadingPayment) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <PageHeader
@@ -268,16 +254,16 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
               <div className="flex justify-center mb-4">
                 <PiCheckCircle className="h-16 w-16 text-green-500" />
               </div>
-              
+
               <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                 پرداخت موفق
               </h1>
-              
+
               <p className="text-gray-600 dark:text-gray-400 mb-6">
                 پرداخت شما با موفقیت انجام شد
               </p>
 
-              {/* Payment Details */}
+            {/* Payment Details */}
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
@@ -286,25 +272,25 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
                       {paymentIdFromParams}
                     </span>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-500 dark:text-gray-400">کد پیگیری:</span>
                     <span className="text-sm font-medium text-gray-900 dark:text-gray-100 font-mono">
                       {trackingCodeFromParams}
                     </span>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-500 dark:text-gray-400">شماره فاکتور:</span>
                     <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {billData?.billNumber || 'نامشخص'}
+                      {paymentData?.bill?.billNumber || 'نامشخص'}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-500 dark:text-gray-400">مبلغ پرداخت:</span>
                     <span className="text-lg font-bold text-green-600 dark:text-green-400">
-                      {formatCurrencyFa(billData?.paidAmountRials || 0)} ریال
+                      {formatCurrencyFa(paymentData?.amountRials || 0)} ریال
                     </span>
                   </div>
 
@@ -318,38 +304,14 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-500 dark:text-gray-400">وضعیت:</span>
                     <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                      {billData?.statusText || billData?.status || 'پرداخت شده'}
+                      {paymentData?.statusText || paymentData?.status || 'پرداخت شده'}
                     </span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Bill Items Summary */}
-            {billData?.items && billData.items.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                  خلاصه فاکتور
-                </h3>
-                <div className="space-y-3">
-                  {billData.items.map((item: BillItem, index: number) => (
-                    <div key={index} className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {item.description || item.title || 'واریز کیف پول'}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          تعداد: {item.quantity || 1} × {formatCurrencyFa(item.unitPriceRials || 0)} ریال
-                        </p>
-                      </div>
-                      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        {formatCurrencyFa(item.lineTotalRials || 0)} ریال
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+       
 
             {/* Additional Info */}
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
@@ -370,9 +332,21 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
         </div>
 
         {/* Fixed Action Buttons at Bottom */}
-        <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+        <div className="flex-shrink-0 sticky bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent dark:from-gray-900 dark:via-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)] z-10">
           <div className="flex gap-3">
+            {canNavigateToReference() && (
+              <Button
+                variant="primary"
+                onClick={handleNavigateToReference}
+                leftIcon={<PiArrowLeft className="h-5 w-5" />}
+                className="flex-1 py-3 text-base font-medium"
+              >
+                {getReferenceButtonText()}
+              </Button>
+            )}
+            
             <Button
+              variant={canNavigateToReference() ? "secondary" : "primary"}
               onClick={handleDashboard}
               className="flex-1 py-3 text-base font-medium"
             >
@@ -383,9 +357,8 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
               variant="ghost"
               onClick={printReceipt}
               leftIcon={<PiReceipt className="h-4 w-4" />}
-              className="flex-1 py-3 text-base font-medium"
+              className={canNavigateToReference() ? "flex-1 py-3 text-base font-medium" : "hidden"}
             >
-          
               چاپ فاکتور
             </Button>
           </div>

@@ -84,7 +84,7 @@ catch (error) {
     type: typeof error,
   });
   
-  return handleApiError(error as AxiosError, req);
+  return handleApiError(error as AxiosError);
 }
 ```
 
@@ -328,7 +328,7 @@ export async function GET(
       type: typeof error,
     });
     
-    return handleApiError(error as AxiosError, req);
+    return handleApiError(error as AxiosError);
   }
 }
 ```

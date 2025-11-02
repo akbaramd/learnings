@@ -64,7 +64,9 @@ function getStatusInfo(status: string, statusText?: string) {
         bgColor: 'bg-green-100 dark:bg-green-900/30',
         borderColor: 'border-green-200 dark:border-green-800'
       };
-    case 'pending':
+    case 'Requested':
+    case 'AwaitingBill':
+    case 'AwaitingPayment':
       return {
         icon: PiClock,
         text: displayText,
@@ -72,13 +74,22 @@ function getStatusInfo(status: string, statusText?: string) {
         bgColor: 'bg-yellow-100 dark:bg-yellow-900/30',
         borderColor: 'border-yellow-200 dark:border-yellow-800'
       };
-    case 'failed':
+    case 'Failed':
       return {
         icon: PiXCircle,
         text: displayText,
         color: 'text-red-600 dark:text-red-400',
         bgColor: 'bg-red-100 dark:bg-red-900/30',
         borderColor: 'border-red-200 dark:border-red-800'
+      };
+    case 'Cancelled':
+    case 'Expired':
+      return {
+        icon: PiXCircle,
+        text: displayText,
+        color: 'text-gray-600 dark:text-gray-300',
+        bgColor: 'bg-gray-100 dark:bg-gray-900/30',
+        borderColor: 'border-gray-200 dark:border-gray-700'
       };
     default:
       return {
@@ -95,10 +106,18 @@ function getDefaultStatusText(status: string) {
   switch (status) {
     case 'Completed':
       return 'تکمیل شده';
-    case 'Pending':
-      return 'در انتظار';
-    case 'failed':
+    case 'Requested':
+      return 'درخواست ثبت شد';
+    case 'AwaitingBill':
+      return 'در انتظار صدور صورت‌حساب';
+    case 'AwaitingPayment':
+      return 'در انتظار پرداخت';
+    case 'Failed':
       return 'ناموفق';
+    case 'Cancelled':
+      return 'لغو شده';
+    case 'Expired':
+      return 'منقضی شده';
     default:
       return 'نامشخص';
   }
@@ -158,6 +177,20 @@ export default function DepositsPage({ params }: DepositsPageProps) {
 
     loadDeposits();
   }, [fetchDeposits, currentWalletId]);
+
+  // Auto-refresh every 3 seconds if any deposit is in a waiting state
+  useEffect(() => {
+    const hasWaiting = Array.isArray(deposits) && deposits.some((d) =>
+      d.status === 'Requested' || d.status === 'AwaitingBill' || d.status === 'AwaitingPayment'
+    );
+    if (!hasWaiting) return;
+
+    const intervalId = setInterval(() => {
+      fetchDeposits({ pageNumber: 1, pageSize: 10, walletId: currentWalletId }).catch(() => void 0);
+    }, 3000);
+
+    return () => clearInterval(intervalId);
+  }, [deposits, fetchDeposits, currentWalletId]);
 
   const handleRefresh = async () => {
     setIsLoading(true);
@@ -284,7 +317,11 @@ export default function DepositsPage({ params }: DepositsPageProps) {
                       const statusInfo = getStatusInfo(deposit.status, deposit.statusText);
                       
                       return (
-                         <div key={deposit.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                         <div
+                           key={deposit.id}
+                           className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                           onClick={() => router.push(`/wallet/${currentWalletId}/deposits/${encodeURIComponent(deposit.id)}`)}
+                         >
                            {/* Amount and Status Row */}
                            <div className="flex items-center justify-between mb-2">
                              <div className="text-lg font-semibold text-green-600 dark:text-green-400">
@@ -310,7 +347,7 @@ export default function DepositsPage({ params }: DepositsPageProps) {
                                  </div>
                                </div>
                                <button
-                                 onClick={() => copyToClipboard(deposit.trackingCode || '', toast)}
+                                 onClick={(e) => { e.stopPropagation(); copyToClipboard(deposit.trackingCode || '', toast); }}
                                  className="p-1.5 rounded-md text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-200 hover:bg-green-100 dark:hover:bg-green-800/30 transition-colors"
                                  title="کپی کد پیگیری"
                                >
@@ -318,34 +355,44 @@ export default function DepositsPage({ params }: DepositsPageProps) {
                                </button>
                              </div>
                              
-                             {/* View Bill Button for Pending Deposits */}
-                             {deposit.status === 'Pending' && deposit.trackingCode && (
-                               <div className="mt-2 pt-2 border-t border-green-200 dark:border-green-600">
-                                 <div className="text-xs text-green-700 dark:text-green-300 mb-1">
-                                   برای مشاهده وضعیت پرداخت:
-                                 </div>
-                                 <Button
-                                   onClick={() => {
-                                     if (deposit.trackingCode && deposit.trackingCode.trim() !== '') {
-                                       router.push(`/bills/${encodeURIComponent(deposit.trackingCode)}?billType=WalletDeposit`);
-                                     } else {
-                                       toast({
-                                         title: 'خطا',
-                                         description: 'کد پیگیری موجود نیست',
-                                         variant: 'error',
-                                         duration: 3000
-                                       });
-                                     }
-                                   }}
-                                   variant="secondary"
-                                   size="sm"
-                                   className="w-full text-xs"
-                                   leftIcon={<PiReceipt className="h-3.5 w-3.5" />}
-                                 >
-                                   مشاهده صورت حساب
-                                 </Button>
-                               </div>
-                             )}
+                            {/* AwaitingBill guidance */}
+                            {deposit.status === 'AwaitingBill' && (
+                              <div className="mt-2 pt-2 border-t border-green-200 dark:border-green-600">
+                                <div className="text-xs text-green-700 dark:text-green-300">
+                                  در انتظار صدور صورت‌حساب... لیست به‌صورت خودکار به‌روزرسانی می‌شود.
+                                </div>
+                              </div>
+                            )}
+
+                            {/* View Bill Button when awaiting payment */}
+                            {deposit.status === 'AwaitingPayment' && deposit.trackingCode && (
+                              <div className="mt-2 pt-2 border-t border-green-200 dark:border-green-600">
+                                <div className="text-xs text-green-700 dark:text-green-300 mb-1">
+                                  برای مشاهده و پرداخت صورت‌حساب:
+                                </div>
+                                <Button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (deposit.trackingCode && deposit.trackingCode.trim() !== '') {
+                                      router.push(`/bills/${encodeURIComponent(deposit.trackingCode)}?billType=WalletDeposit`);
+                                    } else {
+                                      toast({
+                                        title: 'خطا',
+                                        description: 'کد پیگیری موجود نیست',
+                                        variant: 'error',
+                                        duration: 3000
+                                      });
+                                    }
+                                  }}
+                                  variant="secondary"
+                                  size="sm"
+                                  className="w-full text-xs"
+                                  leftIcon={<PiReceipt className="h-3.5 w-3.5" />}
+                                >
+                                  مشاهده صورت‌حساب
+                                </Button>
+                              </div>
+                            )}
                            </div>
                          </div>
                       );

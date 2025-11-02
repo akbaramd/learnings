@@ -3,17 +3,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createApiInstance, handleApiError } from '@/app/api/generatedClient';
 import { MarkAsReadResponse } from '@/src/store/notifications/notifications.types';
 import { AxiosError } from 'axios';
+import {GetPaymentDetailWrapper} from "@/src/store/payments";
 
-export async function PUT(
+export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ notificationId: string }> }
+  { params }: { params: Promise<{ paymentId: string }> }
 ) {
   try {
     const api = createApiInstance(req);
     const resolvedParams = await params;
-    
+
     // Validate notificationId parameter
-    if (!resolvedParams.notificationId || typeof resolvedParams.notificationId !== 'string') {
+    if (!resolvedParams.paymentId || typeof resolvedParams.paymentId !== 'string') {
       const errorResponse: MarkAsReadResponse = {
         result: null,
         errors: ['Invalid notification ID']
@@ -22,12 +23,13 @@ export async function PUT(
     }
 
     // Call the upstream API
-    const upstream = await api.api.markAsRead(resolvedParams.notificationId, {});
+    const upstream = await api.api.getPaymentDetail(resolvedParams.paymentId, {});
+
     const status = upstream.status ?? 200;
 
     // Strongly typed response structure
-    const response: MarkAsReadResponse = {
-      result: status === 200 ? { success: true } : null,
+    const response: GetPaymentDetailWrapper = {
+      result: upstream?.data?.data,
       errors: status !== 200 ? ['Failed to mark notification as read'] : null
     };
 

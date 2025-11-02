@@ -40,7 +40,7 @@ export const selectPaymentBillId = createSelector(
 
 export const selectPaymentAmount = createSelector(
   [selectCurrentPayment],
-  (payment) => payment?.amount || 0
+  (payment) => payment?.amountRials || 0
 );
 
 export const selectPaymentStatus = createSelector(
@@ -50,58 +50,26 @@ export const selectPaymentStatus = createSelector(
 
 export const selectPaymentMethod = createSelector(
   [selectCurrentPayment],
-  (payment) => payment?.paymentMethod || null
+  (payment) => payment?.method || null
 );
 
 export const selectPaymentGateway = createSelector(
   [selectCurrentPayment],
-  (payment) => payment?.paymentGateway || null
+  (payment) => payment?.gateway || null
 );
 
-export const selectGatewayRedirectUrl = createSelector(
-  [selectCurrentPayment],
-  (payment) => payment?.gatewayRedirectUrl || null
-);
-
-export const selectRequiresRedirect = createSelector(
-  [selectCurrentPayment],
-  (payment) => payment?.requiresRedirect || false
-);
 
 export const selectIsFreePayment = createSelector(
   [selectCurrentPayment],
   (payment) => payment?.isFreePayment || false
 );
 
-export const selectPaymentSkipped = createSelector(
-  [selectCurrentPayment],
-  (payment) => payment?.paymentSkipped || false
-);
 
 export const selectAppliedDiscountCode = createSelector(
   [selectCurrentPayment],
   (payment) => payment?.appliedDiscountCode || null
 );
 
-export const selectAppliedDiscountAmount = createSelector(
-  [selectCurrentPayment],
-  (payment) => payment?.appliedDiscountAmount || 0
-);
-
-export const selectOriginalBillAmount = createSelector(
-  [selectCurrentPayment],
-  (payment) => payment?.originalBillAmount || 0
-);
-
-export const selectFinalBillAmount = createSelector(
-  [selectCurrentPayment],
-  (payment) => payment?.finalBillAmount || 0
-);
-
-export const selectPaymentMessage = createSelector(
-  [selectCurrentPayment],
-  (payment) => payment?.paymentMessage || null
-);
 
 // Computed selectors for payment gateways
 export const selectActivePaymentGateways = createSelector(
@@ -171,49 +139,7 @@ export const selectIsPaymentRefunded = createSelector(
   (status) => status === 'refunded'
 );
 
-// Payment flow selectors
-export const selectCanProceedToPayment = createSelector(
-  [selectCurrentPayment, selectPaymentGateways],
-  (payment, gateways) => {
-    if (!payment) return false;
-    if (payment.isFreePayment || payment.paymentSkipped) return true;
-    if (!payment.paymentMethod) return false;
-    return gateways.some(gateway => 
-      gateway.isActive && 
-      gateway.supportedMethods.includes(payment.paymentMethod!)
-    );
-  }
-);
 
-export const selectNeedsRedirect = createSelector(
-  [selectRequiresRedirect, selectGatewayRedirectUrl],
-  (requiresRedirect, redirectUrl) => requiresRedirect && !!redirectUrl
-);
-
-export const selectPaymentSummary = createSelector(
-  [selectCurrentPayment],
-  (payment) => {
-    if (!payment) return null;
-    
-    return {
-      paymentId: payment.paymentId,
-      billId: payment.billId,
-      amount: payment.amount,
-      status: payment.status,
-      method: payment.paymentMethod,
-      gateway: payment.paymentGateway,
-      requiresRedirect: payment.requiresRedirect,
-      redirectUrl: payment.gatewayRedirectUrl,
-      isFree: payment.isFreePayment,
-      skipped: payment.paymentSkipped,
-      discountCode: payment.appliedDiscountCode,
-      discountAmount: payment.appliedDiscountAmount,
-      originalAmount: payment.originalBillAmount,
-      finalAmount: payment.finalBillAmount,
-      message: payment.paymentMessage,
-    };
-  }
-);
 
 // Error handling selectors
 export const selectHasPaymentError = createSelector(

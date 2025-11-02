@@ -194,7 +194,7 @@ export const selectDepositById = createSelector(
 
 export const selectPendingDeposits = createSelector(
   [selectWalletDeposits],
-  (deposits) => deposits.filter(deposit => deposit.status === 'Pending')
+  (deposits) => deposits.filter(deposit => deposit.status === 'AwaitingBill')
 );
 
 export const selectCompletedDeposits = createSelector(

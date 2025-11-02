@@ -38,6 +38,7 @@ export async function GET(req: NextRequest) {
       fromDate: queryParams.fromDate || undefined,
       toDate: queryParams.toDate || undefined,
     });
+    console.log('upstream', upstream);
     const status = upstream.status ?? 200;
 
     // Map backend response to frontend GetDepositsResponse type
@@ -76,6 +77,6 @@ export async function GET(req: NextRequest) {
       type: typeof error,
     });
 
-    return handleApiError(error as AxiosError, req);
+    return handleApiError(error as AxiosError);
   }
 }

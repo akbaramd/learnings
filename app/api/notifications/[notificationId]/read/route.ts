@@ -45,6 +45,6 @@ export async function PUT(
       type: typeof error,
     });
     
-    return handleApiError(error as AxiosError, req);
+    return handleApiError(error as AxiosError);
   }
 }

@@ -7,7 +7,8 @@ import {
   WalletDeposit,
   WalletStatistics,
   TransactionFilters,
-  DepositFilters
+  DepositFilters,
+  WalletDepositDetails
 } from './wallets.types';
 
 // Type guards for runtime validation
@@ -54,6 +55,7 @@ const initialState: WalletState = {
   wallet: null,
   transactions: [],
   deposits: [],
+  selectedDeposit: null,
   statistics: null,
   pagination: {
     transactions: {
@@ -163,6 +165,16 @@ const walletsSlice = createSlice({
     // Set pagination for deposits
     setDepositPagination: (state, action: PayloadAction<{ pageNumber: number; pageSize: number; totalPages: number }>) => {
       state.pagination.deposits = action.payload;
+    },
+    
+    // Select a specific deposit (details)
+    setSelectedDeposit: (state, action: PayloadAction<WalletDepositDetails | null>) => {
+      state.selectedDeposit = action.payload;
+    },
+    
+    // Clear selected deposit
+    clearSelectedDeposit: (state) => {
+      state.selectedDeposit = null;
     },
     
     // Set loading state
@@ -275,6 +287,8 @@ export const {
   updateBalanceOptimistically,
   filterTransactions,
   filterDeposits,
+  setSelectedDeposit,
+  clearSelectedDeposit,
 } = walletsSlice.actions;
 
 export default walletsSlice.reducer;

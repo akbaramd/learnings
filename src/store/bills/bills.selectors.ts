@@ -53,7 +53,7 @@ export const selectBillsByStatus = createSelector(
 
 export const selectBillsByType = createSelector(
   [selectBills, (state: RootState, type: BillType) => type],
-  (bills, type) => bills.filter(bill => bill.billType === type)
+  (bills, type) => bills.filter(bill => bill.referenceType === type)
 );
 
 export const selectBillsByDateRange = createSelector(
@@ -74,7 +74,7 @@ export const selectBillsByFilters = createSelector(
   [selectBills, (state: RootState, filters: BillFilters) => filters],
   (bills, filters) => {
     return bills.filter(bill => {
-      if (filters.billType && bill.billType !== filters.billType) {
+      if (filters.billType && bill.referenceType !== filters.billType) {
         return false;
       }
       if (filters.billStatus && bill.status !== filters.billStatus) {
@@ -275,7 +275,7 @@ export const selectBillTypeBreakdown = createSelector(
   (bills) => {
     const breakdown: Record<string, number> = {};
     bills.forEach(bill => {
-      const type = bill.billType || 'unknown';
+      const type = bill.referenceType || 'unknown';
       breakdown[type] = (breakdown[type] || 0) + 1;
     });
     return breakdown;

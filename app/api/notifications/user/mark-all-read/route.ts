@@ -31,6 +31,6 @@ export async function PUT(req: NextRequest) {
       type: typeof error,
     });
     
-    return handleApiError(error as Error, req);
+    return handleApiError(error as Error);
   }
 }

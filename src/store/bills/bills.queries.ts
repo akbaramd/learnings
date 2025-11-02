@@ -80,12 +80,10 @@ export const billsApi = createApi({
         if (request.status) {
           searchParams.append('status', request.status);
         }
-        if (request.onlyOverdue) {
-          searchParams.append('onlyOverdue', request.onlyOverdue.toString());
+        if (request.searchTerm) {
+          searchParams.append('searchTerm', request.searchTerm.toString());
         }
-        if (request.onlyUnpaid) {
-          searchParams.append('onlyUnpaid', request.onlyUnpaid.toString());
-        }
+      
         if (request.sortBy) {
           searchParams.append('sortBy', request.sortBy);
         }
@@ -139,7 +137,7 @@ export const billsApi = createApi({
           const { data } = await queryFulfilled;
 
           if (data?.data) {
-            dispatch(setCurrentBill(data.data as any));
+            dispatch(setCurrentBill(data.data as never));
           }
         } catch (error) {
           const errorMessage = handleBillsApiError(error);
@@ -165,7 +163,7 @@ export const billsApi = createApi({
           const { data } = await queryFulfilled;
 
           if (data?.data) {
-            dispatch(setCurrentBill(data.data as any));
+            dispatch(setCurrentBill(data.data as never));
           }
         } catch (error) {
           const errorMessage = handleBillsApiError(error);
@@ -177,12 +175,10 @@ export const billsApi = createApi({
     }),
 
     // Get bill details by tracking code - Returns GetBillDetailResponse
-    getBillDetailsByTrackingCode: builder.query<GetBillDetailResponse, { trackingCode: string; billType?: string }>({
-      query: ({ trackingCode, billType }) => {
+    getBillDetailsByTrackingCode: builder.query<GetBillDetailResponse, { trackingCode: string;  }>({
+      query: ({ trackingCode }) => {
         const searchParams = new URLSearchParams();
-        if (billType) {
-          searchParams.append('billType', billType);
-        }
+
         return {
           url: `/by-tracking/${trackingCode}?${searchParams.toString()}`,
           method: 'GET',
@@ -197,7 +193,7 @@ export const billsApi = createApi({
           const { data } = await queryFulfilled;
 
           if (data?.data) {
-            dispatch(setCurrentBill(data.data as any));
+            dispatch(setCurrentBill(data.data as never));
           }
         } catch (error) {
           const errorMessage = handleBillsApiError(error);
@@ -228,7 +224,7 @@ export const billsApi = createApi({
 
           if (data?.data) {
             // Update the bill status in the current bill if it matches
-            dispatch(setCurrentBill(data.data as any));
+            dispatch(setCurrentBill(data.data as never));
           }
         } catch (error) {
           const errorMessage = handleBillsApiError(error);
@@ -259,7 +255,7 @@ export const billsApi = createApi({
 
           if (data?.data) {
             // Update the bill status in the current bill if it matches
-            dispatch(setCurrentBill(data.data as any));
+            dispatch(setCurrentBill(data.data as never));
           }
         } catch (error) {
           const errorMessage = handleBillsApiError(error);

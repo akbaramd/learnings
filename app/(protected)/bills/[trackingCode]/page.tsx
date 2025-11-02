@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { 
   BillItem, 
@@ -14,8 +14,8 @@ import {
   ValidateDiscountCodeResponse,
 } from '@/src/store/discounts';
 import {
+  handlePaymentsApiError,
   useCreatePaymentMutation,
-  usePayWithWalletMutation,
 } from '@/src/store/payments';
 import { useToast } from '@/src/hooks/useToast';
 import { Button } from '@/src/components/ui/Button';
@@ -30,10 +30,10 @@ import {
   PiCreditCard,
   PiWallet,
   PiSpinner,
-  PiTag,
   PiTrash,
   PiArrowClockwise,
 } from 'react-icons/pi';
+import {usePayWithWalletMutation} from "@/src/store/wallets";
 
 // Utility functions
 function formatCurrencyFa(amount: number): string {
@@ -75,10 +75,9 @@ interface BillDetailPageProps {
 
 export default function BillDetailPage({ params }: BillDetailPageProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+
   
   const [trackingCodeFromParams, setTrackingCodeFromParams] = useState<string>('');
-  const [billTypeFromParams, setBillTypeFromParams] = useState<string>('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'online' | 'wallet' | null>(null);
   const [discountCodeInput, setDiscountCodeInput] = useState('');
   const [isDiscountValidating, setIsDiscountValidating] = useState(false);
@@ -106,9 +105,8 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
     };
     getParams();
     
-    const billTypeParam = searchParams.get('billType');
-    setBillTypeFromParams(billTypeParam || '');
-  }, [params, searchParams]);
+
+  }, [params]);
 
   // RTK Query for bill data - using lazy query
   const [getBillDetailsByTrackingCode, { 
@@ -119,13 +117,12 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
 
   // Load bill data when tracking code is available
   useEffect(() => {
-    if (trackingCodeFromParams && billTypeFromParams) {
+    if (trackingCodeFromParams ) {
       getBillDetailsByTrackingCode({
-        trackingCode: trackingCodeFromParams,
-        billType: billTypeFromParams
+        trackingCode: trackingCodeFromParams
       });
     }
-  }, [trackingCodeFromParams, billTypeFromParams, getBillDetailsByTrackingCode]);
+  }, [trackingCodeFromParams, getBillDetailsByTrackingCode]);
 
   // Get bill detail from response
   const bill: BillDetail | null = billResponse?.data || null;
@@ -145,13 +142,13 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
   const paymentAmount = remainingAmount;
 
   // Check if bill is fully paid using multiple indicators
-  const isBillFullyPaid = bill?.isPaid || remainingAmount <= 0 || bill?.status?.toLowerCase() === 'paid' || bill?.status?.toLowerCase() === 'completed';
+  const isBillFullyPaid = !!(bill?.isPaid || bill?.status?.toLowerCase() === 'paid' || bill?.status?.toLowerCase() === 'completed');
 
   const isWalletPaymentAvailable = selectedPaymentMethod === 'wallet';
   const isPaymentMethodSelected = selectedPaymentMethod !== null;
   
   // Check if this is a WalletDeposit bill
-  const isWalletDeposit = billTypeFromParams === 'WalletDeposit';
+  const isWalletDeposit = bill?.referenceType === 'WalletDeposit';
   const showWalletPayment = !isWalletDeposit;
 
   const hasSufficientBalance = (() => {
@@ -202,10 +199,9 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
   };
 
   const handleRefresh = () => {
-    if (trackingCodeFromParams && billTypeFromParams) {
+    if (trackingCodeFromParams ) {
       getBillDetailsByTrackingCode({
-        trackingCode: trackingCodeFromParams,
-        billType: billTypeFromParams
+        trackingCode: trackingCodeFromParams
       });
     }
   };
@@ -258,30 +254,32 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
       if (selectedPaymentMethod === 'wallet') {
         // Pay with wallet
         const walletResult = await payWithWallet({
-          billId: bill.id!,
-          amountRials: paymentAmount,
-          description: `پرداخت فاکتور ${bill.billNumber || bill.id}`,
-        }).unwrap();
-        
-        if (walletResult.result) {
+            billId: bill.id!,
+            // Send full, non-discounted remaining amount; backend will validate/apply discounts
+            amount: Math.max(0, (bill.totalAmountRials || 0) - (bill.paidAmountRials || 0)),
+            description: `پرداخت فاکتور ${bill.billNumber || bill.id}`,
+            paymentId: bill.id!
+        });
+        if (walletResult.data) {
           // Check if payment was successful
-          if (walletResult.result.isFullyPaid) {
+          if (walletResult.data.result?.paymentId) {
             success('پرداخت موفق', 'فاکتور با موفقیت پرداخت شد');
             // Redirect to payment success page with tracking code and payment ID
-            router.push(`/bills/${trackingCodeFromParams}/payments/success/${walletResult.result.paymentId}`);
+            router.push(`/bills/${trackingCodeFromParams}/payments/success/${walletResult.data.result.paymentId}`);
             return;
           } else {
             success('پرداخت جزئی', 'مبلغ پرداخت شد اما فاکتور هنوز کامل پرداخت نشده است');
             handleRefresh();
           }
         } else {
-          throw new Error(walletResult.errors?.[0] || 'خطا در پرداخت از کیف پول');
+          throw new Error(walletResult.data);
         }
       } else {
         // Create online payment
         const paymentResult = await createPayment({
           billId: bill.id!,
-          amountRials: Math.max(0, totalAmount - paidAmount), // Original amount without discount
+          // Send full, non-discounted remaining amount; backend validates discountCode
+          amountRials: Math.max(0, totalAmount - paidAmount),
           paymentMethod: 'online',
           paymentGateway: "Parsian", // Will be selected by backend
           callbackUrl: `${window.location.origin}/bills/${trackingCodeFromParams}/payments/success/{paymentId}?billType=${isWalletDeposit ? 'WalletDeposit' : 'Bill'}`,
@@ -329,7 +327,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
       }
     } catch (error) {
       console.error('Error processing payment:', error);
-      const errorMessage = error instanceof Error ? error.message : 'خطا در پردازش پرداخت';
+      const errorMessage = handlePaymentsApiError(error);
       showError('خطا در پرداخت', errorMessage);
     } finally {
       setIsProcessingPayment(false);
@@ -401,12 +399,14 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
     }, 500);
   };
 
-  // Auto-select online payment for WalletDeposit bills
+  // Auto-select online payment for WalletDeposit bills or free payments
   useEffect(() => {
-    if (isWalletDeposit && !selectedPaymentMethod) {
-      setSelectedPaymentMethod('online');
+    if (!selectedPaymentMethod) {
+      if (isWalletDeposit || paymentAmount === 0) {
+        setSelectedPaymentMethod('online');
+      }
     }
-  }, [isWalletDeposit, selectedPaymentMethod]);
+  }, [isWalletDeposit, paymentAmount, selectedPaymentMethod]);
 
   // Clear discount validation when bill changes
   useEffect(() => {
@@ -584,7 +584,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
             <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
               <span className="text-sm text-gray-500 dark:text-gray-400">کد پیگیری:</span>
               <span className="text-sm font-medium text-gray-900 dark:text-gray-100 font-mono">
-                {bill.trackingCode || trackingCodeFromParams}
+                {bill.referenceTrackingCode || trackingCodeFromParams}
               </span>
             </div>
 
@@ -719,30 +719,46 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
               کد تخفیف
                   </h3>
             <div className="space-y-3">
-              <div className="flex gap-2">
-                <InputField
-                  type="text"
-                  value={discountCodeInput}
-                  onChange={(e) => setDiscountCodeInput(e.target.value)}
-                  placeholder={appliedDiscount ? "کد تخفیف اعمال شده" : "کد تخفیف را وارد کنید"}
-                  className="flex-1"
-                  disabled={!!appliedDiscount}
-                />
-                <Button
-                  variant={appliedDiscount ? 'ghost' : (canApplyDiscount ? 'primary' : 'ghost')}
-                  disabled={!discountCodeInput.trim() || isDiscountValidating}
-                  onClick={appliedDiscount ? handleRemoveDiscount : handleDiscountValidation}
-                  className="px-3"
-                >
-                  {isDiscountValidating ? (
-                    <PiSpinner className="h-4 w-4 animate-spin" />
-                  ) : appliedDiscount ? (
-                    <PiTrash className="h-4 w-4" />
-                  ) : (
-                    <PiTag className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
+              {amountAfterDiscount === 0 ? (
+                <div className="p-3 rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <span>مبلغ صورت‌حساب پس از اعمال تخفیف، صفر است.</span>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleRemoveDiscount}
+                      aria-label="لغو تخفیف"
+                    >
+                      لغو تخفیف
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <InputField
+                    type="text"
+                    value={discountCodeInput}
+                    onChange={(e) => setDiscountCodeInput(e.target.value)}
+                    placeholder={appliedDiscount ? "کد تخفیف اعمال شده" : "کد تخفیف را وارد کنید"}
+                    className="flex-1"
+                    disabled={!!appliedDiscount}
+                  />
+                  <Button
+                    variant={appliedDiscount ? 'ghost' : (canApplyDiscount ? 'primary' : 'ghost')}
+                    disabled={!discountCodeInput.trim() || isDiscountValidating}
+                    onClick={appliedDiscount ? handleRemoveDiscount : handleDiscountValidation}
+                    className="px-3"
+                  >
+                    {isDiscountValidating ? (
+                      <PiSpinner className="h-4 w-4 animate-spin" />
+                    ) : appliedDiscount ? (
+                      <PiTrash className="h-4 w-4" />
+                    ) : (
+                      <PiCheckCircle className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              )}
               
               {discountError && (
                 <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
@@ -766,8 +782,8 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
           </div>
         )}
 
-        {/* Payment Method Selection */}
-        {!isBillFullyPaid && (
+        {/* Payment Method Selection (hidden if free) */}
+        {!isBillFullyPaid && amountAfterDiscount > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
               روش پرداخت

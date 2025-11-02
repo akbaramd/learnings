@@ -132,14 +132,21 @@ export default function CreateDepositPage({ params }: CreateDepositPageProps) {
     setError(null);
     
     try {
-      await createDeposit({
+      const result = await createDeposit({
         walletId: currentWalletId,
         amount: amount,
         description: formData.description || undefined
       });
       
-      // Navigate to bills list page
-      router.push('/bills');
+      // Navigate to new deposit details if id is available; fallback to deposits list
+      const newId = (result as unknown as { result?: { id?: string } })?.result?.id
+        || (result as unknown as { data?: { result?: { id?: string } } })?.data?.result?.id
+        || (result as unknown as { id?: string })?.id;
+      if (newId) {
+        router.push(`/wallet/${currentWalletId}/deposits/${encodeURIComponent(newId)}`);
+      } else {
+        router.push(`/wallet/${currentWalletId}/deposits`);
+      }
     } catch (error) {
       console.error('Failed to create deposit:', error);
       setError('خطا در ایجاد واریز جدید');

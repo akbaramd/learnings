@@ -36,6 +36,6 @@ export async function GET(req: NextRequest) {
       type: typeof error,
     });
     
-    return handleApiError(error as AxiosError, req);
+    return handleApiError(error as AxiosError);
   }
 }

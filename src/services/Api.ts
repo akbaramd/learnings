@@ -10,19 +10,6 @@
  * ---------------------------------------------------------------
  */
 
-export enum TourStatus {
-  Draft = "Draft",
-  Scheduled = "Scheduled",
-  RegistrationOpen = "RegistrationOpen",
-  RegistrationClosed = "RegistrationClosed",
-  InProgress = "InProgress",
-  Completed = "Completed",
-  Cancelled = "Cancelled",
-  Suspended = "Suspended",
-  Postponed = "Postponed",
-  Archived = "Archived",
-}
-
 export enum SettingType {
   String = "String",
   Integer = "Integer",
@@ -36,43 +23,15 @@ export enum SettingType {
   Color = "Color",
 }
 
-export enum ReservationStatus {
-  Draft = "Draft",
-  Held = "Held",
-  Paying = "Paying",
-  Confirmed = "Confirmed",
-  Cancelled = "Cancelled",
-  Expired = "Expired",
-  SystemCancelled = "SystemCancelled",
-  PaymentFailed = "PaymentFailed",
-  Refunding = "Refunding",
-  Refunded = "Refunded",
-  Waitlisted = "Waitlisted",
-  CancelRequested = "CancelRequested",
-  AmendRequested = "AmendRequested",
-  NoShow = "NoShow",
-  Rejected = "Rejected",
-}
-
 export enum PaymentStatus {
   Pending = "Pending",
   Processing = "Processing",
   Completed = "Completed",
+  PaidFromWallet = "PaidFromWallet",
   Failed = "Failed",
   Cancelled = "Cancelled",
   Expired = "Expired",
   Refunded = "Refunded",
-}
-
-export enum ParticipantType {
-  Member = "Member",
-  Guest = "Guest",
-}
-
-export enum CapacityState {
-  HasSpare = "HasSpare",
-  Tight = "Tight",
-  Full = "Full",
 }
 
 export enum AutoSaveMode {
@@ -119,12 +78,10 @@ export interface AddClaimsToUserCommand {
 export interface AddGuestToReservationResponse {
   /** @format uuid */
   participantId?: string;
-  trackingCode?: string | null;
-  /** @format int32 */
-  totalParticipants?: number;
-  /** @format double */
-  updatedTotalPrice?: number | null;
-  guestName?: string | null;
+  /** @format uuid */
+  reservationId?: string;
+  /** @format uuid */
+  capacityId?: string | null;
 }
 
 export interface AddGuestToReservationResponseApplicationResult {
@@ -142,6 +99,18 @@ export interface AddRoleToUserRequest {
   /** @format uuid */
   assignedBy?: string | null;
   notes?: string | null;
+}
+
+export interface AgencyDetailDto {
+  /** @format uuid */
+  agencyId?: string;
+  agencyName?: string | null;
+}
+
+export interface AgencySummaryDto {
+  /** @format uuid */
+  agencyId?: string;
+  agencyName?: string | null;
 }
 
 export interface AnswerQuestionRequest {
@@ -310,8 +279,9 @@ export interface BillDetailDto {
   deletedBy?: string | null;
   billNumber?: string | null;
   title?: string | null;
+  referenceTrackingCode?: string | null;
   referenceId?: string | null;
-  billType?: string | null;
+  referenceType?: string | null;
   /** @format uuid */
   externalUserId?: string;
   userFullName?: string | null;
@@ -334,7 +304,6 @@ export interface BillDetailDto {
   dueDate?: string | null;
   /** @format date-time */
   fullyPaidDate?: string | null;
-  trackingCode?: string | null;
   description?: string | null;
   metadata?: Record<string, string>;
   isPaid?: boolean;
@@ -416,8 +385,9 @@ export interface BillDto {
   deletedBy?: string | null;
   billNumber?: string | null;
   title?: string | null;
+  referenceTrackingCode?: string | null;
   referenceId?: string | null;
-  billType?: string | null;
+  referenceType?: string | null;
   /** @format uuid */
   externalUserId?: string;
   userFullName?: string | null;
@@ -559,32 +529,6 @@ export interface CancelFacilityRequestResultApplicationResult {
   data?: CancelFacilityRequestResult;
 }
 
-export interface CancelReservationRequest {
-  reason?: string | null;
-  permanentDelete?: boolean | null;
-}
-
-export interface CancelReservationResponse {
-  /** @format uuid */
-  reservationId?: string;
-  trackingCode?: string | null;
-  wasDeleted?: boolean;
-  /** @format int32 */
-  participantsRemoved?: number;
-  cancellationReason?: string | null;
-  /** @format date-time */
-  cancellationDate?: string;
-  /** @format double */
-  refundableAmountRials?: number | null;
-}
-
-export interface CancelReservationResponseApplicationResult {
-  isSuccess?: boolean;
-  message?: string | null;
-  errors?: string[] | null;
-  data?: CancelReservationResponse;
-}
-
 export interface CancelResponseResponse {
   canceled?: boolean;
   isAbandoned?: boolean;
@@ -598,6 +542,45 @@ export interface CancelResponseResponseApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: CancelResponseResponse;
+}
+
+export interface CapacityDetailDto {
+  /** @format uuid */
+  id?: string;
+  /** @format date-time */
+  registrationStart?: string;
+  /** @format date-time */
+  registrationEnd?: string;
+  /** @format int32 */
+  maxParticipants?: number;
+  /** @format int32 */
+  remainingParticipants?: number;
+  /** @format int32 */
+  allocatedParticipants?: number;
+  /** @format int32 */
+  minParticipantsPerReservation?: number;
+  /** @format int32 */
+  maxParticipantsPerReservation?: number;
+  isActive?: boolean;
+  isSpecial?: boolean;
+  capacityState?: string | null;
+  description?: string | null;
+}
+
+export interface CapacitySummaryDto {
+  /** @format uuid */
+  id?: string;
+  /** @format uuid */
+  tourId?: string;
+  /** @format int32 */
+  maxParticipants?: number;
+  /** @format date-time */
+  registrationStart?: string;
+  /** @format date-time */
+  registrationEnd?: string;
+  isActive?: boolean;
+  capacityState?: string | null;
+  description?: string | null;
 }
 
 export interface CategoryDetailDto {
@@ -630,6 +613,25 @@ export interface CategoryWithSettingsDto {
   settingCount?: number;
 }
 
+export interface ChangeReservationCapacityCommandResult {
+  /** @format uuid */
+  reservationId?: string;
+  /** @format uuid */
+  capacityId?: string;
+}
+
+export interface ChangeReservationCapacityCommandResultApplicationResult {
+  isSuccess?: boolean;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: ChangeReservationCapacityCommandResult;
+}
+
+export interface ChangeReservationCapacityRequest {
+  /** @format uuid */
+  newCapacityId?: string;
+}
+
 export interface ClaimDto {
   type?: string | null;
   value?: string | null;
@@ -652,10 +654,10 @@ export interface CommandProgressDto {
   completionPercentage?: number;
 }
 
-export interface ConfirmReservationRequest {
-  /** @format int64 */
-  totalAmountRials?: number | null;
-  paymentReference?: string | null;
+export interface CompletePaymentCommand {
+  /** @format uuid */
+  paymentId?: string;
+  gatewayTransactionId?: string | null;
 }
 
 export interface CooldownInfo {
@@ -842,38 +844,6 @@ export interface CreateSectionResponse {
   isActive?: boolean;
   /** @format date-time */
   createdAt?: string;
-}
-
-export interface CreateTourReservationCommand {
-  /** @format uuid */
-  tourId?: string;
-  /** @format uuid */
-  capacityId?: string;
-  idempotencyKey?: string | null;
-  guests?: GuestParticipantDto[] | null;
-  notes?: string | null;
-}
-
-export interface CreateTourReservationResponse {
-  /** @format uuid */
-  reservationId?: string;
-  trackingCode?: string | null;
-  /** @format date-time */
-  reservationDate?: string;
-  /** @format date-time */
-  expiryDate?: string | null;
-  tourTitle?: string | null;
-  /** @format int32 */
-  totalParticipants?: number;
-  /** @format double */
-  estimatedTotalPrice?: number | null;
-}
-
-export interface CreateTourReservationResponseApplicationResult {
-  isSuccess?: boolean;
-  message?: string | null;
-  errors?: string[] | null;
-  data?: CreateTourReservationResponse;
 }
 
 export interface CreateUserCommand {
@@ -1405,20 +1375,41 @@ export interface FailedUpdate {
   failureReason?: string | null;
 }
 
-export interface FeatureDto {
+export interface FeatureDetailDto {
   /** @format uuid */
-  id?: string;
+  featureId?: string;
   name?: string | null;
   description?: string | null;
-  iconClass?: string | null;
+}
+
+export interface FeatureSummaryDto {
   /** @format uuid */
-  categoryId?: string | null;
+  featureId?: string;
+  name?: string | null;
+}
+
+export interface FinalizeReservationResponse {
+  /** @format uuid */
+  reservationId?: string;
+  trackingCode?: string | null;
+  status?: string | null;
+  /** @format uuid */
+  billId?: string;
+  billNumber?: string | null;
+  /** @format double */
+  totalAmountRials?: number;
+  /** @format date-time */
+  expiryDate?: string | null;
   /** @format int32 */
-  displayOrder?: number;
-  isActive?: boolean;
-  isRequired?: boolean;
-  defaultValue?: string | null;
-  validationRules?: string | null;
+  participantCount?: number;
+  tourTitle?: string | null;
+}
+
+export interface FinalizeReservationResponseApplicationResult {
+  isSuccess?: boolean;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: FinalizeReservationResponse;
 }
 
 export interface FinancialTermsDto {
@@ -1586,7 +1577,6 @@ export interface GuestParticipantDto {
   nationalNumber?: string | null;
   phoneNumber?: string | null;
   email?: string | null;
-  participantType?: ParticipantType;
   /** @format date-time */
   birthDate?: string;
   emergencyContactName?: string | null;
@@ -1600,28 +1590,6 @@ export interface GuidApplicationResult {
   errors?: string[] | null;
   /** @format uuid */
   data?: string;
-}
-
-export interface InitiatePaymentRequest {
-  paymentMethod?: string | null;
-}
-
-export interface InitiatePaymentResponse {
-  /** @format uuid */
-  billId?: string;
-  billNumber?: string | null;
-  /** @format double */
-  totalAmountRials?: number;
-  paymentUrl?: string | null;
-  /** @format date-time */
-  expiryDate?: string;
-}
-
-export interface InitiatePaymentResponseApplicationResult {
-  isSuccess?: boolean;
-  message?: string | null;
-  errors?: string[] | null;
-  data?: InitiatePaymentResponse;
 }
 
 export interface InvalidAnswerDto {
@@ -1805,7 +1773,7 @@ export interface ParticipantDto {
   nationalNumber?: string | null;
   phoneNumber?: string | null;
   email?: string | null;
-  participantType?: ParticipantType;
+  participantType?: string | null;
   /** @format date-time */
   birthDate?: string | null;
   emergencyContactName?: string | null;
@@ -1863,8 +1831,6 @@ export interface ParticipantInfoDto {
 export interface ParticipantPricingDto {
   /** @format uuid */
   participantId?: string;
-  fullName?: string | null;
-  nationalNumber?: string | null;
   participantType?: string | null;
   /** @format double */
   requiredAmount?: number;
@@ -1873,10 +1839,6 @@ export interface ParticipantPricingDto {
   /** @format double */
   remainingAmount?: number;
   isFullyPaid?: boolean;
-  /** @format date-time */
-  paymentDate?: string | null;
-  /** @format date-time */
-  registrationDate?: string;
 }
 
 export interface ParticipationPolicyDto {
@@ -1979,8 +1941,8 @@ export interface PaymentCallbackResult {
   /** @format uuid */
   paymentId?: string;
   /** @format double */
-  trackingNumber?: number;
-  trackingCode?: string | null;
+  gatewayReference?: number;
+  billTrackingCode?: string | null;
   billType?: string | null;
   isSuccessful?: boolean;
   message?: string | null;
@@ -1991,7 +1953,6 @@ export interface PaymentCallbackResult {
   newStatus?: PaymentStatus;
   /** @format uuid */
   billId?: string;
-  billNumber?: string | null;
   billStatus?: string | null;
   /** @format double */
   billTotalAmount?: number | null;
@@ -2011,26 +1972,85 @@ export interface PaymentCallbackResultApplicationResult {
   data?: PaymentCallbackResult;
 }
 
-export interface PaymentDto {
+export interface PaymentDetailDto {
   /** @format uuid */
   paymentId?: string;
   /** @format uuid */
   billId?: string;
-  billNumber?: string | null;
   /** @format double */
   amountRials?: number;
-  method?: string | null;
   status?: string | null;
+  methodText?: string | null;
+  gatewayText?: string | null;
+  method?: string | null;
   statusText?: string | null;
   /** @format date-time */
   createdAt?: string;
   /** @format date-time */
   completedAt?: string | null;
-  trackingNumber?: string | null;
   gateway?: string | null;
   gatewayTransactionId?: string | null;
+  gatewayReference?: string | null;
   /** @format int64 */
   secondsUntilExpiry?: number | null;
+  /** @format date-time */
+  expiryDate?: string | null;
+  failureReason?: string | null;
+  appliedDiscountCode?: string | null;
+  /** @format uuid */
+  appliedDiscountCodeId?: string | null;
+  /** @format double */
+  appliedDiscountAmountRials?: number | null;
+  isFreePayment?: boolean;
+  bill?: BillDto;
+  transactions?: PaymentTransactionDto[] | null;
+}
+
+export interface PaymentDetailDtoApplicationResult {
+  isSuccess?: boolean;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: PaymentDetailDto;
+}
+
+export interface PaymentDto {
+  /** @format uuid */
+  paymentId?: string;
+  /** @format uuid */
+  billId?: string;
+  /** @format double */
+  amountRials?: number;
+  status?: string | null;
+  methodText?: string | null;
+  gatewayText?: string | null;
+  method?: string | null;
+  statusText?: string | null;
+  /** @format date-time */
+  createdAt?: string;
+  /** @format date-time */
+  completedAt?: string | null;
+  gateway?: string | null;
+  gatewayTransactionId?: string | null;
+  gatewayReference?: string | null;
+  /** @format int64 */
+  secondsUntilExpiry?: number | null;
+}
+
+export interface PaymentDtoPaginatedResult {
+  items?: PaymentDto[] | null;
+  /** @format int32 */
+  totalCount?: number;
+  /** @format int32 */
+  pageNumber?: number;
+  /** @format int32 */
+  pageSize?: number;
+}
+
+export interface PaymentDtoPaginatedResultApplicationResult {
+  isSuccess?: boolean;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: PaymentDtoPaginatedResult;
 }
 
 export interface PaymentGatewayInfo {
@@ -2043,6 +2063,38 @@ export interface PaymentGatewayInfo {
   minAmount?: number;
   /** @format double */
   maxAmount?: number;
+}
+
+export interface PaymentTransactionDto {
+  /** @format uuid */
+  transactionId?: string;
+  /** @format double */
+  amountRials?: number | null;
+  /** @format date-time */
+  createdAt?: string;
+  gateway?: string | null;
+  gatewayTransactionId?: string | null;
+  gatewayReference?: string | null;
+  status?: string | null;
+  statusText?: string | null;
+  note?: string | null;
+}
+
+export interface PhotoDetailDto {
+  /** @format uuid */
+  id?: string;
+  url?: string | null;
+  caption?: string | null;
+  /** @format int32 */
+  displayOrder?: number;
+}
+
+export interface PhotoSummaryDto {
+  /** @format uuid */
+  id?: string;
+  url?: string | null;
+  /** @format int32 */
+  displayOrder?: number;
 }
 
 export interface PreferenceValueDto {
@@ -2071,6 +2123,34 @@ export interface PreviousQuestionsNavigationDto {
   morePreviousAvailable?: number;
   canNavigatePrevious?: boolean;
   progress?: ProgressInfoDto;
+}
+
+export interface PriceSnapshotDto {
+  participantType?: string | null;
+  /** @format double */
+  finalPriceRials?: number;
+}
+
+export interface PricingDetailDto {
+  /** @format uuid */
+  id?: string;
+  participantType?: string | null;
+  /** @format double */
+  basePriceRials?: number;
+  /** @format double */
+  effectivePriceRials?: number;
+  /** @format double */
+  discountPercentage?: number | null;
+  /** @format double */
+  discountAmountRials?: number | null;
+  /** @format date-time */
+  validFrom?: string | null;
+  /** @format date-time */
+  validTo?: string | null;
+  isActive?: boolean;
+  isEarlyBird?: boolean;
+  isLastMinute?: boolean;
+  description?: string | null;
 }
 
 export interface ProblemDetails {
@@ -2359,33 +2439,17 @@ export interface QuestionsNavigationResponseApplicationResult {
   data?: QuestionsNavigationResponse;
 }
 
-export interface ReactivateExpiredReservationResponse {
+export interface ReactivateReservationResponse {
   /** @format uuid */
   reservationId?: string;
-  trackingCode?: string | null;
-  wasReactivated?: boolean;
-  wasDeleted?: boolean;
-  newStatus?: string | null;
-  /** @format date-time */
-  newExpiryDate?: string | null;
-  reason?: string | null;
-  /** @format int32 */
-  availableCapacity?: number;
-  /** @format int32 */
-  requiredCapacity?: number;
-  /** @format date-time */
-  processedDate?: string;
+  status?: string | null;
 }
 
-export interface ReactivateExpiredReservationResponseApplicationResult {
+export interface ReactivateReservationResponseApplicationResult {
   isSuccess?: boolean;
   message?: string | null;
   errors?: string[] | null;
-  data?: ReactivateExpiredReservationResponse;
-}
-
-export interface ReactivateReservationRequest {
-  reason?: string | null;
+  data?: ReactivateReservationResponse;
 }
 
 export interface RefreshTokenRequest {
@@ -2467,6 +2531,20 @@ export interface RejectFacilityRequestResultApplicationResult {
 
 export interface RemoveClaimsRequest {
   claimValues?: string[] | null;
+}
+
+export interface RemoveGuestFromReservationResponse {
+  /** @format uuid */
+  reservationId?: string;
+  /** @format uuid */
+  capacityId?: string | null;
+}
+
+export interface RemoveGuestFromReservationResponseApplicationResult {
+  isSuccess?: boolean;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: RemoveGuestFromReservationResponse;
 }
 
 export interface RepeatPolicyDto {
@@ -2562,7 +2640,7 @@ export interface ReservationDetailDto {
   /** @format uuid */
   tourId?: string;
   trackingCode?: string | null;
-  status?: ReservationStatus;
+  status?: string | null;
   /** @format date-time */
   reservationDate?: string;
   /** @format date-time */
@@ -2571,14 +2649,11 @@ export interface ReservationDetailDto {
   confirmationDate?: string | null;
   /** @format double */
   totalAmountRials?: number | null;
-  notes?: string | null;
-  /** @format uuid */
-  capacityId?: string | null;
-  /** @format uuid */
-  billId?: string | null;
-  capacity?: TourCapacityDetailDto;
-  tour?: TourSummaryDto;
-  participants?: ParticipantDto[] | null;
+  /** @format double */
+  paidAmountRials?: number | null;
+  /** @format double */
+  remainingAmountRials?: number | null;
+  isFullyPaid?: boolean;
   /** @format int32 */
   participantCount?: number;
   /** @format int32 */
@@ -2588,55 +2663,34 @@ export interface ReservationDetailDto {
   isExpired?: boolean;
   isConfirmed?: boolean;
   isPending?: boolean;
-  isActive?: boolean;
-  isCancelled?: boolean;
-  isTerminal?: boolean;
   isDraft?: boolean;
   isPaying?: boolean;
-  isSystemCancelled?: boolean;
-  timeUntilExpiry?: TimeSpan;
-  timeUntilTourStart?: TimeSpan;
-  /** @format int32 */
-  daysUntilTourStart?: number;
-  /** @format int32 */
-  hoursUntilTourStart?: number;
-  isExpiringSoon?: boolean;
-  isTourStartingSoon?: boolean;
-  expiryStatusText?: string | null;
-  statusText?: string | null;
-  statusColor?: string | null;
-  statusIcon?: string | null;
-  canBeCancelled?: boolean;
-  canBeModified?: boolean;
-  canBeConfirmed?: boolean;
-  availableActions?: string[] | null;
-  nextActionText?: string | null;
-  hasPayment?: boolean;
-  isPaymentPending?: boolean;
-  isPaymentCompleted?: boolean;
-  paymentStatusText?: string | null;
-  /** @format date-time */
-  paymentDate?: string | null;
-  paymentMethod?: string | null;
-  paymentReference?: string | null;
-  canRetryPayment?: boolean;
-  hasMainParticipant?: boolean;
-  hasGuestParticipants?: boolean;
-  /** @format int32 */
-  maxAllowedGuests?: number;
-  canAddMoreGuests?: boolean;
-  /** @format int32 */
-  remainingGuestSlots?: number;
-  tourSummary?: TourSummaryDto;
+  isCancelled?: boolean;
+  isTerminal?: boolean;
+  /** @format uuid */
+  capacityId?: string | null;
+  /** @format uuid */
+  billId?: string | null;
   tourTitle?: string | null;
   /** @format date-time */
-  tourStartDate?: string;
+  tourStart?: string | null;
   /** @format date-time */
-  tourEndDate?: string;
-  tourDuration?: string | null;
-  tourLocation?: string | null;
-  isTourActive?: boolean;
-  isTourCancelled?: boolean;
+  tourEnd?: string | null;
+  tourStatus?: string | null;
+  tourIsActive?: boolean | null;
+  /** @format date-time */
+  cancellationDate?: string | null;
+  cancellationReason?: string | null;
+  /** @format uuid */
+  memberId?: string | null;
+  /** @format uuid */
+  externalUserId?: string;
+  capacity?: CapacitySummaryDto;
+  tour?: TourBriefDto;
+  participants?: ParticipantDto[] | null;
+  priceSnapshots?: PriceSnapshotDto[] | null;
+  notes?: string | null;
+  tenantId?: string | null;
   /** @format date-time */
   createdAt?: string;
   /** @format date-time */
@@ -2652,22 +2706,55 @@ export interface ReservationDetailDtoApplicationResult {
   data?: ReservationDetailDto;
 }
 
-export interface ReservationPricingResponse {
+export interface ReservationDto {
   /** @format uuid */
-  reservationId?: string;
+  id?: string;
+  /** @format uuid */
+  tourId?: string;
   trackingCode?: string | null;
-  tourTitle?: string | null;
-  /** @format date-time */
-  tourStart?: string | null;
-  /** @format date-time */
-  tourEnd?: string | null;
+  status?: string | null;
   /** @format date-time */
   reservationDate?: string;
   /** @format date-time */
   expiryDate?: string | null;
   /** @format date-time */
   confirmationDate?: string | null;
-  participantPricing?: ParticipantPricingDto[] | null;
+  /** @format double */
+  totalAmountRials?: number | null;
+  /** @format double */
+  paidAmountRials?: number | null;
+  /** @format double */
+  remainingAmountRials?: number | null;
+  isFullyPaid?: boolean;
+  /** @format int32 */
+  participantCount?: number;
+  /** @format int32 */
+  mainParticipantCount?: number;
+  /** @format int32 */
+  guestParticipantCount?: number;
+  isExpired?: boolean;
+  isConfirmed?: boolean;
+  isPending?: boolean;
+  isDraft?: boolean;
+  isPaying?: boolean;
+  isCancelled?: boolean;
+  isTerminal?: boolean;
+  /** @format uuid */
+  capacityId?: string | null;
+  /** @format uuid */
+  billId?: string | null;
+  tourTitle?: string | null;
+  /** @format date-time */
+  tourStart?: string | null;
+  /** @format date-time */
+  tourEnd?: string | null;
+  tourStatus?: string | null;
+  tourIsActive?: boolean | null;
+}
+
+export interface ReservationPricingResponse {
+  /** @format uuid */
+  reservationId?: string;
   /** @format double */
   totalRequiredAmount?: number;
   /** @format double */
@@ -2675,18 +2762,7 @@ export interface ReservationPricingResponse {
   /** @format double */
   totalRemainingAmount?: number;
   isFullyPaid?: boolean;
-  /** @format date-time */
-  paymentDeadline?: string | null;
-  status?: string | null;
-  isExpired?: boolean;
-  isPending?: boolean;
-  isConfirmed?: boolean;
-  /** @format int32 */
-  participantCount?: number;
-  /** @format int32 */
-  mainParticipantCount?: number;
-  /** @format int32 */
-  guestParticipantCount?: number;
+  participants?: ParticipantPricingDto[] | null;
 }
 
 export interface ReservationPricingResponseApplicationResult {
@@ -2694,6 +2770,17 @@ export interface ReservationPricingResponseApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: ReservationPricingResponse;
+}
+
+export interface ReservationSummaryDto {
+  /** @format uuid */
+  id?: string;
+  /** @format uuid */
+  tourId?: string;
+  trackingCode?: string | null;
+  status?: string | null;
+  /** @format date-time */
+  reservationDate?: string;
 }
 
 export interface ResponseDetailsDto {
@@ -2873,30 +2960,10 @@ export interface ResponseSummaryDto {
   unansweredRequiredQuestions?: string[] | null;
 }
 
-export interface RestrictedTourDetailDto {
+export interface RestrictedTourSummaryDto {
   /** @format uuid */
-  id?: string;
+  restrictedTourId?: string;
   title?: string | null;
-  description?: string | null;
-  /** @format date-time */
-  tourStart?: string;
-  /** @format date-time */
-  tourEnd?: string;
-  isActive?: boolean;
-  reason?: string | null;
-  conflictType?: string | null;
-}
-
-export interface RestrictedTourDto {
-  /** @format uuid */
-  id?: string;
-  title?: string | null;
-  description?: string | null;
-  /** @format date-time */
-  tourStart?: string;
-  /** @format date-time */
-  tourEnd?: string;
-  isActive?: boolean;
 }
 
 export interface SectionDetailDto {
@@ -3030,6 +3097,25 @@ export interface SimpleSettingDto {
   isActive?: boolean;
   /** @format int32 */
   displayOrder?: number;
+}
+
+export interface StartReservationCommandResult {
+  /** @format uuid */
+  reservationId?: string;
+}
+
+export interface StartReservationCommandResultApplicationResult {
+  isSuccess?: boolean;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: StartReservationCommandResult;
+}
+
+export interface StartReservationRequest {
+  /** @format uuid */
+  tourId?: string;
+  /** @format uuid */
+  capacityId?: string;
 }
 
 export interface StartSurveyResponseRequest {
@@ -3468,286 +3554,105 @@ export interface TimeSpan {
   totalSeconds?: number;
 }
 
-export interface TourCapacityDetailDto {
-  /** @format uuid */
-  id?: string;
-  /** @format uuid */
-  tourId?: string;
-  /** @format int32 */
-  maxParticipants?: number;
-  /** @format date-time */
-  registrationStart?: string;
-  /** @format date-time */
-  registrationEnd?: string;
-  isActive?: boolean;
-  description?: string | null;
-  name?: string | null;
-  /** @format int32 */
-  remainingParticipants?: number;
-  /** @format int32 */
-  allocatedParticipants?: number;
-  /** @format int32 */
-  minParticipantsPerReservation?: number;
-  /** @format int32 */
-  maxParticipantsPerReservation?: number;
-  isFullyBooked?: boolean;
-  isNearlyFull?: boolean;
-  capacityState?: CapacityState;
-  availabilityStatus?: string | null;
-  availabilityMessage?: string | null;
-  color?: string | null;
-  icon?: string | null;
-  vehicleType?: string | null;
-  vehicleNumber?: string | null;
-  driverInfo?: string | null;
-  notes?: string | null;
-  /** @format int32 */
-  displayOrder?: number;
-  isRegistrationOpen?: boolean;
-  isEffectiveFor?: boolean;
-  /** @format int32 */
-  currentUtilization?: number;
-  /** @format int32 */
-  availableSpots?: number;
-  /** @format double */
-  utilizationPercentage?: number;
-  isAtCapacity?: boolean;
-  timeUntilRegistrationStart?: TimeSpan;
-  timeUntilRegistrationEnd?: TimeSpan;
-  isExpired?: boolean;
-}
-
-export interface TourCapacityDto {
-  /** @format uuid */
-  id?: string;
-  /** @format uuid */
-  tourId?: string;
-  /** @format int32 */
-  maxParticipants?: number;
-  /** @format int32 */
-  remainingParticipants?: number;
-  /** @format int32 */
-  allocatedParticipants?: number;
-  /** @format double */
-  utilizationPercentage?: number;
-  /** @format int32 */
-  minParticipantsPerReservation?: number;
-  /** @format int32 */
-  maxParticipantsPerReservation?: number;
-  /** @format date-time */
-  registrationStart?: string;
-  /** @format date-time */
-  registrationEnd?: string;
-  isActive?: boolean;
-  description?: string | null;
-  isRegistrationOpen?: boolean;
-  isEffectiveFor?: boolean;
-  isFullyBooked?: boolean;
-  isNearlyFull?: boolean;
-  isExpired?: boolean;
-  isAvailable?: boolean;
-  isClosed?: boolean;
-  canAcceptReservations?: boolean;
-  capacityState?: CapacityState;
-  availabilityStatus?: string | null;
-  availabilityMessage?: string | null;
-  /** @format int32 */
-  confirmedParticipants?: number;
-  /** @format int32 */
-  pendingParticipants?: number;
-  /** @format int32 */
-  payingParticipants?: number;
-  /** @format int32 */
-  expiredParticipants?: number;
-  capacityStatusText?: string | null;
-  capacityMessage?: string | null;
-  isCapacityCritical?: boolean;
-  /** @format int32 */
-  availableSpots?: number;
-  timeUntilRegistrationEnd?: TimeSpan;
-  /** @format int32 */
-  daysUntilRegistrationEnd?: number;
-  /** @format int32 */
-  hoursUntilRegistrationEnd?: number;
-  isRegistrationEndingSoon?: boolean;
-  registrationStatusText?: string | null;
-  isRegistrationClosed?: boolean;
-  isRegistrationNotStarted?: boolean;
-}
-
-export interface TourCapacityResponse {
-  /** @format uuid */
-  tourId?: string;
-  title?: string | null;
-  capacities?: TourCapacityDetailDto[] | null;
-  /** @format int32 */
-  maxCapacity?: number;
-  /** @format int32 */
-  remainingCapacity?: number;
-  /** @format int32 */
-  reservedCapacity?: number;
-  /** @format double */
-  utilizationPercentage?: number;
-  isFullyBooked?: boolean;
-  isNearlyFull?: boolean;
-  capacityStatus?: string | null;
-  capacityMessage?: string | null;
-  isRegistrationOpen?: boolean;
-  /** @format date-time */
-  registrationEnd?: string | null;
-}
-
-export interface TourDetailDto {
+export interface TourBriefDto {
   /** @format uuid */
   id?: string;
   title?: string | null;
-  description?: string | null;
-  longDescription?: string | null;
-  summary?: string | null;
   /** @format date-time */
   tourStart?: string;
   /** @format date-time */
   tourEnd?: string;
-  duration?: TimeSpan;
-  /** @format int32 */
-  durationDays?: number;
-  /** @format int32 */
-  durationHours?: number;
-  /** @format int32 */
-  maxCapacity?: number;
-  /** @format int32 */
-  remainingCapacity?: number;
-  /** @format int32 */
-  reservedCapacity?: number;
-  /** @format double */
-  capacityUtilizationPercentage?: number;
-  isFullyBooked?: boolean;
-  isNearlyFull?: boolean;
-  capacityStatus?: string | null;
-  capacityMessage?: string | null;
+  status?: string | null;
   isActive?: boolean;
-  isFeatured?: boolean;
-  isPopular?: boolean;
-  location?: string | null;
-  meetingPoint?: string | null;
-  coordinates?: string | null;
-  region?: string | null;
-  city?: string | null;
-  /** @format int32 */
-  minAge?: number | null;
-  /** @format int32 */
-  maxAge?: number | null;
-  ageRestrictionNote?: string | null;
-  /** @format int32 */
-  maxGuestsPerReservation?: number | null;
-  physicalRequirements?: string | null;
-  healthRequirements?: string | null;
+}
+
+export interface TourDetailWithUserReservationDto {
+  /** @format uuid */
+  id?: string;
+  title?: string | null;
+  /** @format date-time */
+  tourStart?: string;
+  /** @format date-time */
+  tourEnd?: string;
+  isActive?: boolean;
+  status?: string | null;
+  capacityState?: string | null;
   /** @format date-time */
   registrationStart?: string | null;
   /** @format date-time */
   registrationEnd?: string | null;
   isRegistrationOpen?: boolean;
-  registrationStatus?: string | null;
-  timeUntilRegistrationEnd?: TimeSpan;
-  capacities?: TourCapacityDetailDto[] | null;
+  /** @format int32 */
+  maxCapacity?: number;
+  /** @format int32 */
+  remainingCapacity?: number;
+  /** @format int32 */
+  reservedCapacity?: number;
+  /** @format double */
+  utilizationPct?: number;
+  isFullyBooked?: boolean;
+  isNearlyFull?: boolean;
+  agencies?: AgencyDetailDto[] | null;
+  features?: FeatureDetailDto[] | null;
+  photos?: PhotoDetailDto[] | null;
+  /** @format double */
+  lowestPriceRials?: number | null;
+  /** @format double */
+  highestPriceRials?: number | null;
+  hasDiscount?: boolean;
+  pricing?: PricingDetailDto[] | null;
+  description?: string | null;
+  longDescription?: string | null;
+  summary?: string | null;
+  /** @format int32 */
+  minAge?: number | null;
+  /** @format int32 */
+  maxAge?: number | null;
+  /** @format int32 */
+  maxGuestsPerReservation?: number | null;
   requiredCapabilities?: string[] | null;
   requiredFeatures?: string[] | null;
-  recommendedFeatures?: string[] | null;
-  features?: TourFeatureDetailDto[] | null;
-  highlights?: string[] | null;
-  inclusions?: string[] | null;
-  exclusions?: string[] | null;
-  restrictedTours?: RestrictedTourDetailDto[] | null;
-  pricing?: TourPricingDetailDto[] | null;
-  /** @format double */
-  lowestPrice?: number | null;
-  /** @format double */
-  highestPrice?: number | null;
-  hasDiscount?: boolean;
-  /** @format double */
-  maxDiscountPercentage?: number | null;
-  photos?: TourPhotoDetailDto[] | null;
-  mainPhotoUrl?: string | null;
-  videoUrl?: string | null;
-  galleryUrls?: string[] | null;
+  capacities?: CapacityDetailDto[] | null;
+  restrictedTours?: RestrictedTourSummaryDto[] | null;
   /** @format int32 */
-  totalParticipants?: number;
+  totalReservations?: number | null;
   /** @format int32 */
-  mainParticipants?: number;
+  confirmedReservations?: number | null;
   /** @format int32 */
-  guestParticipants?: number;
+  pendingReservations?: number | null;
   /** @format int32 */
-  totalReservations?: number;
-  /** @format int32 */
-  confirmedReservations?: number;
-  /** @format int32 */
-  pendingReservations?: number;
-  /** @format double */
-  averageRating?: number;
-  /** @format int32 */
-  reviewCount?: number;
-  userReservationStatus?: ReservationStatus;
-  /** @format uuid */
-  userReservationId?: string | null;
+  cancelledReservations?: number | null;
   userReservationTrackingCode?: string | null;
   /** @format date-time */
   userReservationDate?: string | null;
   /** @format date-time */
   userReservationExpiryDate?: string | null;
-  canUserReserve?: boolean;
-  reservationBlockReasons?: string[] | null;
-  transportationType?: string | null;
-  accommodationType?: string | null;
-  mealPlan?: string | null;
-  equipment?: string[] | null;
-  whatToBring?: string[] | null;
-  cancellationPolicy?: string | null;
-  refundPolicy?: string | null;
-  termsAndConditions?: string | null;
-  /** @format date-time */
-  cancellationDeadline?: string | null;
-  /** @format date-time */
-  changeDeadline?: string | null;
-  season?: string | null;
-  weatherConditions?: string | null;
-  bestTimeToVisit?: string | null;
-  contactPhone?: string | null;
-  contactEmail?: string | null;
-  guideInfo?: string | null;
-  emergencyContact?: string | null;
-  /** @format date-time */
-  createdAt?: string;
-  /** @format date-time */
-  updatedAt?: string | null;
-  createdBy?: string | null;
-  updatedBy?: string | null;
-  /** @format int32 */
-  viewCount?: number;
-  /** @format date-time */
-  lastViewedAt?: string | null;
-  tags?: string[] | null;
-  keywords?: string[] | null;
-  seoTitle?: string | null;
-  seoDescription?: string | null;
-  shareUrl?: string | null;
+  reservation?: ReservationDto;
 }
 
-export interface TourDetailDtoApplicationResult {
+export interface TourDetailWithUserReservationDtoApplicationResult {
   isSuccess?: boolean;
   message?: string | null;
   errors?: string[] | null;
-  data?: TourDetailDto;
+  data?: TourDetailWithUserReservationDto;
 }
 
-export interface TourDto {
+export interface TourWithUserReservationDto {
   /** @format uuid */
   id?: string;
   title?: string | null;
-  description?: string | null;
   /** @format date-time */
   tourStart?: string;
   /** @format date-time */
   tourEnd?: string;
+  isActive?: boolean;
+  status?: string | null;
+  capacityState?: string | null;
+  /** @format date-time */
+  registrationStart?: string | null;
+  /** @format date-time */
+  registrationEnd?: string | null;
+  isRegistrationOpen?: boolean;
   /** @format int32 */
   maxCapacity?: number;
   /** @format int32 */
@@ -3755,115 +3660,23 @@ export interface TourDto {
   /** @format int32 */
   reservedCapacity?: number;
   /** @format double */
-  capacityUtilizationPercentage?: number;
+  utilizationPct?: number;
   isFullyBooked?: boolean;
   isNearlyFull?: boolean;
-  isActive?: boolean;
-  status?: TourStatus;
-  capacityState?: CapacityState;
-  /** @format int32 */
-  minAge?: number | null;
-  /** @format int32 */
-  maxAge?: number | null;
-  /** @format int32 */
-  maxGuestsPerReservation?: number | null;
-  /** @format date-time */
-  registrationStart?: string | null;
-  /** @format date-time */
-  registrationEnd?: string | null;
-  isRegistrationOpen?: boolean;
-  capacities?: TourCapacityDto[] | null;
-  requiredCapabilities?: string[] | null;
-  requiredFeatures?: string[] | null;
-  features?: TourFeatureDto[] | null;
-  restrictedTours?: RestrictedTourDto[] | null;
-  pricing?: TourPricingDto[] | null;
-  photos?: TourPhotoDto[] | null;
-  /** @format int32 */
-  totalParticipants?: number;
-  /** @format int32 */
-  mainParticipants?: number;
-  /** @format int32 */
-  guestParticipants?: number;
-  userReservationStatus?: ReservationStatus;
-  /** @format uuid */
-  userReservationId?: string | null;
-  timeUntilTourStart?: TimeSpan;
-  timeUntilRegistrationEnd?: TimeSpan;
-  tourStatusText?: string | null;
-  registrationStatusText?: string | null;
-  isRegistrationEndingSoon?: boolean;
-  isTourStartingSoon?: boolean;
-  /** @format int32 */
-  daysUntilTourStart?: number;
-  /** @format int32 */
-  hoursUntilTourStart?: number;
-  /** @format int32 */
-  confirmedParticipants?: number;
-  /** @format int32 */
-  pendingParticipants?: number;
-  /** @format int32 */
-  payingParticipants?: number;
-  /** @format int32 */
-  expiredParticipants?: number;
-  capacityStatusText?: string | null;
-  capacityMessage?: string | null;
-  isCapacityCritical?: boolean;
-  /** @format int32 */
-  availableSpotsForUser?: number;
+  agencies?: AgencySummaryDto[] | null;
+  features?: FeatureSummaryDto[] | null;
+  photos?: PhotoSummaryDto[] | null;
   /** @format double */
   lowestPriceRials?: number | null;
   /** @format double */
   highestPriceRials?: number | null;
-  /** @format double */
-  averagePriceRials?: number | null;
   hasDiscount?: boolean;
-  /** @format double */
-  maxDiscountPercentage?: number | null;
-  priceRangeText?: string | null;
-  isEarlyBirdAvailable?: boolean;
-  isLastMinuteAvailable?: boolean;
-  canUserReserve?: boolean;
-  reservationBlockReasons?: string[] | null;
-  hasUserReservation?: boolean;
-  canUserCancel?: boolean;
-  canUserModify?: boolean;
-  userReservationStatusText?: string | null;
-  /** @format date-time */
-  userReservationExpiryDate?: string | null;
-  timeUntilUserReservationExpiry?: TimeSpan;
-  isUserReservationExpired?: boolean;
-  isUserReservationActive?: boolean;
-  isUserReservationPending?: boolean;
-  isUserReservationConfirmed?: boolean;
-  isUserReservationCancelled?: boolean;
-  isUserReservationTerminal?: boolean;
-  /** @format int32 */
-  totalReservationsCount?: number;
-  /** @format int32 */
-  confirmedReservationsCount?: number;
-  /** @format int32 */
-  pendingReservationsCount?: number;
-  /** @format int32 */
-  cancelledReservationsCount?: number;
-  /** @format double */
-  reservationSuccessRate?: number;
-  /** @format int32 */
-  viewCount?: number;
-  /** @format date-time */
-  lastViewedAt?: string | null;
-  isPopular?: boolean;
-  isTrending?: boolean;
-  /** @format date-time */
-  createdAt?: string;
-  /** @format date-time */
-  updatedAt?: string | null;
-  createdBy?: string | null;
-  updatedBy?: string | null;
+  pricing?: PricingDetailDto[] | null;
+  reservation?: ReservationSummaryDto;
 }
 
-export interface TourDtoPaginatedResult {
-  items?: TourDto[] | null;
+export interface TourWithUserReservationDtoPaginatedResult {
+  items?: TourWithUserReservationDto[] | null;
   /** @format int32 */
   totalCount?: number;
   /** @format int32 */
@@ -3872,184 +3685,11 @@ export interface TourDtoPaginatedResult {
   pageSize?: number;
 }
 
-export interface TourDtoPaginatedResultApplicationResult {
+export interface TourWithUserReservationDtoPaginatedResultApplicationResult {
   isSuccess?: boolean;
   message?: string | null;
   errors?: string[] | null;
-  data?: TourDtoPaginatedResult;
-}
-
-export interface TourFeatureDetailDto {
-  /** @format uuid */
-  id?: string;
-  /** @format uuid */
-  tourId?: string;
-  /** @format uuid */
-  featureId?: string;
-  name?: string | null;
-  description?: string | null;
-  value?: string | null;
-  iconClass?: string | null;
-  color?: string | null;
-  /** @format int32 */
-  displayOrder?: number;
-  isRequired?: boolean;
-  isHighlight?: boolean;
-  category?: string | null;
-  groupName?: string | null;
-}
-
-export interface TourFeatureDto {
-  /** @format uuid */
-  id?: string;
-  /** @format uuid */
-  tourId?: string;
-  /** @format uuid */
-  featureId?: string;
-  value?: string | null;
-  feature?: FeatureDto;
-}
-
-export interface TourPhotoDetailDto {
-  /** @format uuid */
-  id?: string;
-  url?: string | null;
-  thumbnailUrl?: string | null;
-  caption?: string | null;
-  altText?: string | null;
-  /** @format int32 */
-  displayOrder?: number;
-  isMain?: boolean;
-  isPublic?: boolean;
-  category?: string | null;
-  /** @format date-time */
-  takenAt?: string | null;
-  photographer?: string | null;
-  location?: string | null;
-  /** @format int32 */
-  width?: number;
-  /** @format int32 */
-  height?: number;
-  /** @format double */
-  fileSize?: number;
-  contentType?: string | null;
-}
-
-export interface TourPhotoDto {
-  /** @format uuid */
-  id?: string;
-  filePath?: string | null;
-  url?: string | null;
-  caption?: string | null;
-  /** @format int32 */
-  displayOrder?: number;
-}
-
-export interface TourPricingDetailDto {
-  /** @format uuid */
-  id?: string;
-  participantType?: ParticipantType;
-  participantTypeName?: string | null;
-  /** @format double */
-  basePrice?: number;
-  /** @format double */
-  discountPercentage?: number | null;
-  /** @format double */
-  effectivePrice?: number;
-  /** @format double */
-  discountAmount?: number | null;
-  /** @format date-time */
-  validFrom?: string | null;
-  /** @format date-time */
-  validTo?: string | null;
-  isActive?: boolean;
-  description?: string | null;
-  currency?: string | null;
-  isEarlyBird?: boolean;
-  isLastMinute?: boolean;
-  priceNote?: string | null;
-}
-
-export interface TourPricingDto {
-  /** @format uuid */
-  id?: string;
-  participantType?: ParticipantType;
-  /** @format double */
-  basePrice?: number;
-  /** @format double */
-  discountPercentage?: number | null;
-  /** @format double */
-  effectivePrice?: number;
-  /** @format date-time */
-  validFrom?: string | null;
-  /** @format date-time */
-  validTo?: string | null;
-  isActive?: boolean;
-}
-
-export interface TourPricingResponse {
-  /** @format uuid */
-  tourId?: string;
-  title?: string | null;
-  pricing?: TourPricingDetailDto[] | null;
-  /** @format double */
-  lowestPrice?: number | null;
-  /** @format double */
-  highestPrice?: number | null;
-  hasDiscount?: boolean;
-  /** @format double */
-  maxDiscountPercentage?: number | null;
-}
-
-export interface TourReservationEligibilityResponse {
-  /** @format uuid */
-  tourId?: string;
-  title?: string | null;
-  canReserve?: boolean;
-  blockReasons?: string[] | null;
-  userReservationStatus?: ReservationStatus;
-  /** @format uuid */
-  userReservationId?: string | null;
-  userReservationTrackingCode?: string | null;
-  isRegistrationOpen?: boolean;
-  /** @format date-time */
-  registrationEnd?: string | null;
-  /** @format int32 */
-  remainingCapacity?: number;
-  isFullyBooked?: boolean;
-  restrictedTours?: RestrictedTourDetailDto[] | null;
-}
-
-export interface TourSummaryDto {
-  /** @format uuid */
-  id?: string;
-  title?: string | null;
-  description?: string | null;
-  /** @format date-time */
-  tourStart?: string;
-  /** @format date-time */
-  tourEnd?: string;
-  /** @format int32 */
-  maxCapacity?: number;
-  isAtCapacity?: boolean;
-  /** @format date-time */
-  registrationStart?: string | null;
-  /** @format date-time */
-  registrationEnd?: string | null;
-  isRegistrationOpen?: boolean;
-  /** @format int32 */
-  minAge?: number | null;
-  /** @format int32 */
-  maxAge?: number | null;
-  /** @format int32 */
-  maxGuestsPerReservation?: number | null;
-  isActive?: boolean;
-  capacities?: TourCapacityDetailDto[] | null;
-  /** @format int32 */
-  currentReservations?: number;
-  /** @format int32 */
-  availableSpots?: number;
-  pricing?: TourPricingDto[] | null;
+  data?: TourWithUserReservationDtoPaginatedResult;
 }
 
 export interface UnreadCountResponse {
@@ -4342,86 +3982,6 @@ export interface UserRequestHistoryDto {
   isCancelled?: boolean;
 }
 
-export interface UserReservationDto {
-  /** @format uuid */
-  id?: string;
-  /** @format uuid */
-  tourId?: string;
-  tourTitle?: string | null;
-  tourDescription?: string | null;
-  trackingCode?: string | null;
-  status?: ReservationStatus;
-  statusDisplayName?: string | null;
-  /** @format date-time */
-  reservationDate?: string;
-  /** @format date-time */
-  expiryDate?: string | null;
-  /** @format date-time */
-  confirmationDate?: string | null;
-  /** @format date-time */
-  cancellationDate?: string | null;
-  /** @format double */
-  totalAmountRials?: number | null;
-  /** @format double */
-  paidAmountRials?: number | null;
-  notes?: string | null;
-  cancellationReason?: string | null;
-  /** @format uuid */
-  billId?: string | null;
-  /** @format uuid */
-  capacityId?: string | null;
-  /** @format uuid */
-  memberId?: string | null;
-  userNationalNumber?: string | null;
-  userFirstName?: string | null;
-  userLastName?: string | null;
-  userFullName?: string | null;
-  userParticipantType?: ParticipantType;
-  /** @format double */
-  userRequiredAmountRials?: number;
-  /** @format double */
-  userPaidAmountRials?: number | null;
-  /** @format date-time */
-  userPaymentDate?: string | null;
-  userHasPaid?: boolean;
-  userIsFullyPaid?: boolean;
-  /** @format double */
-  userRemainingAmountRials?: number;
-  /** @format date-time */
-  tourStartDate?: string | null;
-  /** @format date-time */
-  tourEndDate?: string | null;
-  tourLocation?: string | null;
-  /** @format int32 */
-  tourCapacity?: number | null;
-  /** @format int32 */
-  tourAvailableCapacity?: number | null;
-  isExpired?: boolean;
-  canCancel?: boolean;
-  canPay?: boolean;
-  canConfirm?: boolean;
-  isPaymentPending?: boolean;
-  isPaymentOverdue?: boolean;
-  paymentStatus?: string | null;
-}
-
-export interface UserReservationDtoPaginatedResult {
-  items?: UserReservationDto[] | null;
-  /** @format int32 */
-  totalCount?: number;
-  /** @format int32 */
-  pageNumber?: number;
-  /** @format int32 */
-  pageSize?: number;
-}
-
-export interface UserReservationDtoPaginatedResultApplicationResult {
-  isSuccess?: boolean;
-  message?: string | null;
-  errors?: string[] | null;
-  data?: UserReservationDtoPaginatedResult;
-}
-
 export interface UserResponseStatusDto {
   /** @format uuid */
   responseId?: string;
@@ -4564,6 +4124,31 @@ export interface WalletBalanceResponseApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: WalletBalanceResponse;
+}
+
+export interface WalletDepositDetailsDto {
+  /** @format uuid */
+  depositId?: string;
+  /** @format uuid */
+  walletId?: string;
+  /** @format uuid */
+  externalUserId?: string;
+  trackingCode?: string | null;
+  /** @format double */
+  amountRials?: number;
+  currency?: string | null;
+  status?: string | null;
+  /** @format date-time */
+  requestedAt?: string;
+  /** @format date-time */
+  completedAt?: string | null;
+}
+
+export interface WalletDepositDetailsDtoApplicationResult {
+  isSuccess?: boolean;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: WalletDepositDetailsDto;
 }
 
 export interface WalletDepositDto {
@@ -4887,7 +4472,7 @@ export class Api<
 > extends HttpClient<SecurityDataType> {
   api = {
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 🌐 Sends an OTP (One-Time Password) code to the user's phone number for authentication purposes
+     * @description 🌐 Sends an OTP (One-Time Password) code to the user's phone number for authentication purposes
      *
      * @tags Authentication
      * @name SendOtp
@@ -4915,7 +4500,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 🌐 Verifies an OTP code and returns authentication tokens if successful
+     * @description 🌐 Verifies an OTP code and returns authentication tokens if successful
      *
      * @tags Authentication
      * @name VerifyOtp
@@ -4943,7 +4528,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 🌐 RefreshToken an OTP code and returns authentication tokens if successful
+     * @description 🌐 RefreshToken an OTP code and returns authentication tokens if successful
      *
      * @tags Authentication
      * @name RefreshToken
@@ -4971,7 +4556,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Retrieves the profile information of the currently authenticated user
+     * @description 🔒 Retrieves the profile information of the currently authenticated user
      *
      * @tags Authentication
      * @name GetCurrentUser
@@ -5000,7 +4585,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Logs out the user and revokes both access and refresh tokens
+     * @description 🔒 Logs out the user and revokes both access and refresh tokens
      *
      * @tags Authentication
      * @name Logout
@@ -5030,7 +4615,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns a paginated list of BillDto for the current user with filtering and sorting.
+     * @description 🔒 Returns a paginated list of BillDto for the current user with filtering and sorting.
      *
      * @tags Bills
      * @name GetMyBills
@@ -5043,10 +4628,7 @@ export class Api<
       query?: {
         status?: string;
         billType?: string;
-        /** @default false */
-        onlyOverdue?: boolean;
-        /** @default false */
-        onlyUnpaid?: boolean;
+        searchTerm?: string;
         /**
          * @format int32
          * @default 1
@@ -5085,7 +4667,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Admin/operator variant. Requires explicit externalUserId.
+     * @description 🔒 Admin/operator variant. Requires explicit externalUserId.
      *
      * @tags Discount Codes
      * @name ValidateDiscountCodeForUser
@@ -5112,7 +4694,6 @@ export class Api<
       >({
         path: `/api/v1/me/bills/${billId}/discount-codes/${code}/validation`,
         method: "GET",
-        query: query,
         body: data,
         secure: true,
         format: "json",
@@ -5120,7 +4701,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns BillDetailDto including items, payments, and refunds.
+     * @description 🔒 Returns BillDetailDto including items, payments, and refunds.
      *
      * @tags Bills
      * @name GetBillDetailsById
@@ -5153,7 +4734,50 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns BillDetailDto including items, payments, and refunds.
+     * @description 🔒 Returns a paginated list of payments (PaymentDto) associated with a given bill ID. Supports search, sorting, and pagination.
+     *
+     * @tags Payments
+     * @name GetBillPayments
+     * @summary Get payments for a specific bill
+     * @request GET:/api/v1/bills/{billId}/payments
+     * @secure
+     */
+    getBillPayments: (
+      billId: string,
+      query: {
+        searchTerm?: string;
+        /** @format int32 */
+        pageNumber: number;
+        /** @format int32 */
+        pageSize: number;
+        sortBy: string;
+        sortDirection: string;
+      },
+      data: any,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        PaymentDtoPaginatedResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/bills/${billId}/payments`,
+        method: "GET",
+        query: query,
+        body: data,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 Returns BillDetailDto including items, payments, and refunds.
      *
      * @tags Bills
      * @name GetBillDetailsByNumber
@@ -5186,17 +4810,16 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Resolves a bill by tracking code (reference) and bill type; returns BillDetailDto.
+     * @description 🔒 Resolves a bill by tracking code (reference) and bill type; returns BillDetailDto.
      *
      * @tags Bills
      * @name GetBillDetailsByTrackingCode
      * @summary Get bill details by tracking code
-     * @request GET:/api/v1/bills/by-tracking/{billType}:{trackingCode}
+     * @request GET:/api/v1/bills/by-tracking/{trackingCode}
      * @secure
      */
     getBillDetailsByTrackingCode: (
       trackingCode: string,
-      billType: string,
       data: any,
       params: RequestParams = {},
     ) =>
@@ -5211,7 +4834,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/bills/by-tracking/${billType}:${trackingCode}`,
+        path: `/api/v1/bills/by-tracking/${trackingCode}`,
         method: "GET",
         body: data,
         secure: true,
@@ -5220,19 +4843,15 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Transitions a draft bill to the issued state.
+     * @description 🔒 Transitions a draft bill to the issued state.
      *
      * @tags Bills
      * @name IssueBill
      * @summary Issue a bill
-     * @request POST:/api/v1/bills/{billId}:issue
+     * @request POST:/api/v1/bills/{billId}/issue
      * @secure
      */
-    issueBill: (
-      billId: string,
-      data: any,
-      params: RequestParams = {},
-    ) =>
+    issueBill: (billId: string, data: any, params: RequestParams = {}) =>
       this.request<
         IssueBillResponseApplicationResult,
         void | {
@@ -5244,7 +4863,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/bills/${billId}:issue`,
+        path: `/api/v1/bills/${billId}/issue`,
         method: "POST",
         body: data,
         secure: true,
@@ -5253,12 +4872,12 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Cancels an active bill; returns operation result.
+     * @description 🔒 Cancels an active bill; returns operation result.
      *
      * @tags Bills
      * @name CancelBill
      * @summary Cancel a bill
-     * @request POST:/api/v1/bills/{billId}:cancel
+     * @request POST:/api/v1/bills/{billId}/cancel
      * @secure
      */
     cancelBill: (
@@ -5277,7 +4896,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/bills/${billId}:cancel`,
+        path: `/api/v1/bills/${billId}/cancel`,
         method: "POST",
         body: data,
         secure: true,
@@ -5287,7 +4906,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns a list of all distinct claims from registered claim providers.
+     * @description 🔒 Returns a list of all distinct claims from registered claim providers.
      *
      * @tags Claims
      * @name GetClaims
@@ -5727,7 +5346,321 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns a paginated list of notifications for a specific user with optional filtering.
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Me · Tour Reservations
+     * @name MeStartReservation
+     * @request POST:/api/me/recreation/reservations/start
+     * @secure
+     */
+    meStartReservation: (
+      data: StartReservationRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        StartReservationCommandResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/me/recreation/reservations/start`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Me · Tour Reservations
+     * @name MeAddGuestToReservation
+     * @request POST:/api/me/recreation/reservations/{reservationId}/guests
+     * @secure
+     */
+    meAddGuestToReservation: (
+      reservationId: string,
+      data: GuestParticipantDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        AddGuestToReservationResponseApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/me/recreation/reservations/${reservationId}/guests`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Me · Tour Reservations
+     * @name MeReactivateReservation
+     * @request POST:/api/me/recreation/reservations/{reservationId}/reactivate
+     * @secure
+     */
+    meReactivateReservation: (
+      reservationId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ReactivateReservationResponseApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/me/recreation/reservations/${reservationId}/reactivate`,
+        method: "POST",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Me · Tour Reservations
+     * @name MeChangeReservationCapacity
+     * @request PUT:/api/me/recreation/reservations/{reservationId}/capacity
+     * @secure
+     */
+    meChangeReservationCapacity: (
+      reservationId: string,
+      data: ChangeReservationCapacityRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ChangeReservationCapacityCommandResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/me/recreation/reservations/${reservationId}/capacity`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Me · Tour Reservations
+     * @name MeRemoveGuestFromReservation
+     * @request DELETE:/api/me/recreation/reservations/{reservationId}/guests/{participantId}
+     * @secure
+     */
+    meRemoveGuestFromReservation: (
+      reservationId: string,
+      participantId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        RemoveGuestFromReservationResponseApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/me/recreation/reservations/${reservationId}/guests/${participantId}`,
+        method: "DELETE",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Me · Tour Reservations
+     * @name MeFinalizeReservation
+     * @request POST:/api/me/recreation/reservations/{reservationId}/finalize
+     * @secure
+     */
+    meFinalizeReservation: (
+      reservationId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        FinalizeReservationResponseApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/me/recreation/reservations/${reservationId}/finalize`,
+        method: "POST",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Me · Tour Reservations
+     * @name MeGetReservationPricing
+     * @request GET:/api/me/recreation/reservations/{reservationId}/pricing
+     * @secure
+     */
+    meGetReservationPricing: (
+      reservationId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ReservationPricingResponseApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/me/recreation/reservations/${reservationId}/pricing`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Me · Tour Reservations
+     * @name MeGetReservationDetail
+     * @request GET:/api/me/recreation/reservations/{reservationId}
+     * @secure
+     */
+    meGetReservationDetail: (
+      reservationId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ReservationDetailDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/me/recreation/reservations/${reservationId}`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Me · Tours
+     * @name MeGetToursPaginated
+     * @request GET:/api/me/recreation/tours/paginated
+     * @secure
+     */
+    meGetToursPaginated: (
+      query: {
+        /** @format int32 */
+        pageNumber: number;
+        /** @format int32 */
+        pageSize: number;
+        search?: string;
+        isActive?: boolean;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        TourWithUserReservationDtoPaginatedResultApplicationResult,
+        {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/me/recreation/tours/paginated`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Me · Tours
+     * @name MeGetTourDetails
+     * @request GET:/api/me/recreation/tours/{id}
+     * @secure
+     */
+    meGetTourDetails: (id: string, params: RequestParams = {}) =>
+      this.request<
+        TourDetailWithUserReservationDtoApplicationResult,
+        {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/me/recreation/tours/${id}`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 Returns a paginated list of notifications for a specific user with optional filtering.
      *
      * @tags Notifications
      * @name GetUserNotificationsPaginated
@@ -5769,7 +5702,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns all notifications for a specific user with optional filtering.
+     * @description 🔒 Returns all notifications for a specific user with optional filtering.
      *
      * @tags Notifications
      * @name GetAllUserNotifications
@@ -5807,7 +5740,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Gets the count of unread notifications for a specific user.
+     * @description 🔒 Gets the count of unread notifications for a specific user.
      *
      * @tags Notifications
      * @name GetUnreadCount
@@ -5836,7 +5769,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Gets the count of unread notifications grouped by context for a specific user.
+     * @description 🔒 Gets the count of unread notifications grouped by context for a specific user.
      *
      * @tags Notifications
      * @name GetUnreadCountByContext
@@ -5865,7 +5798,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Gets the count of unread notifications grouped by action for a specific user.
+     * @description 🔒 Gets the count of unread notifications grouped by action for a specific user.
      *
      * @tags Notifications
      * @name GetUnreadCountByAction
@@ -5894,7 +5827,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Marks a specific notification as read for a user.
+     * @description 🔒 Marks a specific notification as read for a user.
      *
      * @tags Notifications
      * @name MarkAsRead
@@ -5926,7 +5859,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Marks all notifications as read for a specific user.
+     * @description 🔒 Marks all notifications as read for a specific user.
      *
      * @tags Notifications
      * @name MarkAllAsRead
@@ -5954,7 +5887,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Marks all notifications of a specific context as read for a user.
+     * @description 🔒 Marks all notifications of a specific context as read for a user.
      *
      * @tags Notifications
      * @name MarkByContextAsRead
@@ -5986,7 +5919,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Marks all notifications of a specific action as read for a user.
+     * @description 🔒 Marks all notifications of a specific action as read for a user.
      *
      * @tags Notifications
      * @name MarkByActionAsRead
@@ -6014,6 +5947,39 @@ export class Api<
         body: data,
         secure: true,
         type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 Returns detailed information about a specific payment (PaymentDetailDto) including status, amount, method, and metadata.
+     *
+     * @tags Payments
+     * @name GetPaymentDetail
+     * @summary Get payment details by ID
+     * @request GET:/api/v1/payments/{paymentId}
+     * @secure
+     */
+    getPaymentDetail: (
+      paymentId: string,
+      data: any,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        PaymentDetailDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/payments/${paymentId}`,
+        method: "GET",
+        body: data,
+        secure: true,
+        format: "json",
         ...params,
       }),
 
@@ -6046,10 +6012,12 @@ export class Api<
      * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Payments
-     * @name PaymentCallbackPost
+     * @name PaymentCallback2
      * @request POST:/api/v1/payments/callback
+     * @originalName paymentCallback
+     * @duplicate
      */
-    paymentCallbackPost: (params: RequestParams = {}) =>
+    paymentCallback2: (params: RequestParams = {}) =>
       this.request<
         PaymentCallbackResultApplicationResult,
         void | {
@@ -6201,7 +6169,37 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
+     * @description 🌐 This endpoint is publicly accessible.
+     *
+     * @tags Payments
+     * @name CompletePayment
+     * @request POST:/api/v1/payments/complete
+     */
+    completePayment: (
+      data: CompletePaymentCommand,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        CreatePaymentResponseApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/payments/complete`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetActiveOffices
@@ -6228,7 +6226,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name CreateOffice
@@ -6257,7 +6255,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetAllOffices
@@ -6284,7 +6282,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetOfficeById
@@ -6311,7 +6309,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name UpdateOffice
@@ -6344,7 +6342,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name DeleteOffice
@@ -6371,7 +6369,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetOfficeByCode
@@ -6398,7 +6396,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetOfficeByExternalCode
@@ -6428,7 +6426,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns all roles with optional filtering and includes.
+     * @description 🔒 Returns all roles with optional filtering and includes.
      *
      * @tags Roles
      * @name GetAllRoles
@@ -6466,7 +6464,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Creates a new role in the system.
+     * @description 🔒 Creates a new role in the system.
      *
      * @tags Roles
      * @name CreateRole
@@ -6495,7 +6493,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns a paginated list of roles with optional search and filtering.
+     * @description 🔒 Returns a paginated list of roles with optional search and filtering.
      *
      * @tags Roles
      * @name GetRolesPaginated
@@ -6538,7 +6536,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns a role by its unique identifier with claims and user count.
+     * @description 🔒 Returns a role by its unique identifier with claims and user count.
      *
      * @tags Roles
      * @name GetRoleById
@@ -6566,7 +6564,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Updates an existing role's details.
+     * @description 🔒 Updates an existing role's details.
      *
      * @tags Roles
      * @name UpdateRole
@@ -6599,7 +6597,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Deletes a role or deactivates it if users are assigned (with forceDelete=true).
+     * @description 🔒 Deletes a role or deactivates it if users are assigned (with forceDelete=true).
      *
      * @tags Roles
      * @name DeleteRole
@@ -6635,7 +6633,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Adds claims to an existing role.
+     * @description 🔒 Adds claims to an existing role.
      *
      * @tags Roles
      * @name AddClaimsToRole
@@ -6668,7 +6666,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Removes claims from an existing role.
+     * @description 🔒 Removes claims from an existing role.
      *
      * @tags Roles
      * @name RemoveClaimsFromRole
@@ -6701,7 +6699,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name CreateSection
@@ -6719,7 +6717,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name CreateCategory
@@ -6737,7 +6735,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name SetSetting
@@ -6755,7 +6753,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name GetSettings
@@ -6787,7 +6785,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name BulkUpdateSettings
@@ -6808,7 +6806,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name UpdateSetting
@@ -6830,7 +6828,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name GetSettingsBySection
@@ -6854,7 +6852,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name GetSettingByKey
@@ -7874,348 +7872,12 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Tour Reservations
-     * @name CreateTourReservation
-     * @request POST:/api/recreation/reservations
-     * @secure
-     */
-    createTourReservation: (
-      data: CreateTourReservationCommand,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        CreateTourReservationResponseApplicationResult,
-        | CreateTourReservationResponseApplicationResult
-        | {
-            /** @example "internal_server_error" */
-            error?: string;
-            /** @example "خطای داخلی سرور رخ داده است" */
-            message?: string;
-            /** @format date-time */
-            timestamp?: string;
-          }
-      >({
-        path: `/api/recreation/reservations`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Tour Reservations
-     * @name AddGuestToReservation
-     * @request POST:/api/recreation/reservations/{reservationId}/guests
-     * @secure
-     */
-    addGuestToReservation: (
-      reservationId: string,
-      data: GuestParticipantDto,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        AddGuestToReservationResponseApplicationResult,
-        | AddGuestToReservationResponseApplicationResult
-        | {
-            /** @example "internal_server_error" */
-            error?: string;
-            /** @example "خطای داخلی سرور رخ داده است" */
-            message?: string;
-            /** @format date-time */
-            timestamp?: string;
-          }
-      >({
-        path: `/api/recreation/reservations/${reservationId}/guests`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Tour Reservations
-     * @name GetReservationPricing
-     * @request GET:/api/recreation/reservations/{identifier}/pricing
-     * @secure
-     */
-    getReservationPricing: (identifier: string, params: RequestParams = {}) =>
-      this.request<
-        ReservationPricingResponse,
-        | ReservationPricingResponseApplicationResult
-        | {
-            /** @example "internal_server_error" */
-            error?: string;
-            /** @example "خطای داخلی سرور رخ داده است" */
-            message?: string;
-            /** @format date-time */
-            timestamp?: string;
-          }
-      >({
-        path: `/api/recreation/reservations/${identifier}/pricing`,
-        method: "GET",
-        secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Tour Reservations
-     * @name TrackReservation
-     * @request GET:/api/recreation/reservations/track/{trackingCode}
-     * @secure
-     */
-    trackReservation: (trackingCode: string, params: RequestParams = {}) =>
-      this.request<
-        ReservationPricingResponse,
-        | ReservationPricingResponseApplicationResult
-        | {
-            /** @example "internal_server_error" */
-            error?: string;
-            /** @example "خطای داخلی سرور رخ داده است" */
-            message?: string;
-            /** @format date-time */
-            timestamp?: string;
-          }
-      >({
-        path: `/api/recreation/reservations/track/${trackingCode}`,
-        method: "GET",
-        secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Tour Reservations
-     * @name GetReservationDetail
-     * @request GET:/api/recreation/reservations/{reservationId}
-     * @secure
-     */
-    getReservationDetail: (reservationId: string, params: RequestParams = {}) =>
-      this.request<
-        ReservationDetailDtoApplicationResult,
-        | ReservationDetailDtoApplicationResult
-        | {
-            /** @example "internal_server_error" */
-            error?: string;
-            /** @example "خطای داخلی سرور رخ داده است" */
-            message?: string;
-            /** @format date-time */
-            timestamp?: string;
-          }
-      >({
-        path: `/api/recreation/reservations/${reservationId}`,
-        method: "GET",
-        secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Tour Reservations
-     * @name CancelReservation
-     * @request DELETE:/api/recreation/reservations/{reservationId}
-     * @secure
-     */
-    cancelReservation: (
-      reservationId: string,
-      data: CancelReservationRequest,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        CancelReservationResponseApplicationResult,
-        | CancelReservationResponseApplicationResult
-        | {
-            /** @example "internal_server_error" */
-            error?: string;
-            /** @example "خطای داخلی سرور رخ داده است" */
-            message?: string;
-            /** @format date-time */
-            timestamp?: string;
-          }
-      >({
-        path: `/api/recreation/reservations/${reservationId}`,
-        method: "DELETE",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Tour Reservations
-     * @name InitiatePayment
-     * @request POST:/api/recreation/reservations/{reservationId}/payment
-     * @secure
-     */
-    initiatePayment: (
-      reservationId: string,
-      data: InitiatePaymentRequest,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        InitiatePaymentResponseApplicationResult,
-        | InitiatePaymentResponseApplicationResult
-        | {
-            /** @example "internal_server_error" */
-            error?: string;
-            /** @example "خطای داخلی سرور رخ داده است" */
-            message?: string;
-            /** @format date-time */
-            timestamp?: string;
-          }
-      >({
-        path: `/api/recreation/reservations/${reservationId}/payment`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Tour Reservations
-     * @name ConfirmReservation
-     * @request POST:/api/recreation/reservations/{reservationId}/confirm
-     * @secure
-     */
-    confirmReservation: (
-      reservationId: string,
-      data: ConfirmReservationRequest,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        ApplicationResult,
-        | ApplicationResult
-        | {
-            /** @example "internal_server_error" */
-            error?: string;
-            /** @example "خطای داخلی سرور رخ داده است" */
-            message?: string;
-            /** @format date-time */
-            timestamp?: string;
-          }
-      >({
-        path: `/api/recreation/reservations/${reservationId}/confirm`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Tour Reservations
-     * @name ReactivateExpiredReservation
-     * @request POST:/api/recreation/reservations/{reservationId}/reactivate
-     * @secure
-     */
-    reactivateExpiredReservation: (
-      reservationId: string,
-      data: ReactivateReservationRequest,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        ReactivateExpiredReservationResponseApplicationResult,
-        | ReactivateExpiredReservationResponseApplicationResult
-        | {
-            /** @example "internal_server_error" */
-            error?: string;
-            /** @example "خطای داخلی سرور رخ داده است" */
-            message?: string;
-            /** @format date-time */
-            timestamp?: string;
-          }
-      >({
-        path: `/api/recreation/reservations/${reservationId}/reactivate`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Tour Reservations
-     * @name GetUserReservations
-     * @request GET:/api/recreation/reservations/my-reservations
-     * @secure
-     */
-    getUserReservations: (
-      query?: {
-        /**
-         * @format int32
-         * @default 1
-         */
-        pageNumber?: number;
-        /**
-         * @format int32
-         * @default 10
-         */
-        pageSize?: number;
-        status?: ReservationStatus;
-        trackingCode?: string;
-        /** @format date-time */
-        fromDate?: string;
-        /** @format date-time */
-        toDate?: string;
-      },
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        UserReservationDtoPaginatedResultApplicationResult,
-        | UserReservationDtoPaginatedResultApplicationResult
-        | {
-            /** @example "internal_server_error" */
-            error?: string;
-            /** @example "خطای داخلی سرور رخ داده است" */
-            message?: string;
-            /** @format date-time */
-            timestamp?: string;
-          }
-      >({
-        path: `/api/recreation/reservations/my-reservations`,
-        method: "GET",
-        query: query,
-        secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns a paginated list of tours with optional search and filtering.
+     * @description 🔒 Returns a paginated list of tours with optional search and filtering.
      *
      * @tags Tours
      * @name GetToursPaginated
      * @summary Get Tours Paginated
-     * @request GET:/api/v1/tours/paginated
+     * @request GET:/api/me/v1/tours/paginated
      * @secure
      */
     getToursPaginated: (
@@ -8231,7 +7893,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<
-        TourDtoPaginatedResultApplicationResult,
+        TourWithUserReservationDtoPaginatedResultApplicationResult,
         {
           /** @example "internal_server_error" */
           error?: string;
@@ -8241,7 +7903,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/tours/paginated`,
+        path: `/api/me/v1/tours/paginated`,
         method: "GET",
         query: query,
         body: data,
@@ -8251,24 +7913,16 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns all tours with optional filtering.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Tours
-     * @name GetAllTours
-     * @summary Get All Tours
-     * @request GET:/api/v1/tours
+     * @name GetTourDetails
+     * @request GET:/api/me/v1/tours/{id}
      * @secure
      */
-    getAllTours: (
-      data: any,
-      query?: {
-        isActive?: boolean;
-        registrationOpen?: boolean;
-      },
-      params: RequestParams = {},
-    ) =>
+    getTourDetails: (id: string, params: RequestParams = {}) =>
       this.request<
-        TourDtoPaginatedResultApplicationResult,
+        TourDetailWithUserReservationDtoApplicationResult,
         {
           /** @example "internal_server_error" */
           error?: string;
@@ -8278,180 +7932,15 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/tours`,
+        path: `/api/me/v1/tours/${id}`,
         method: "GET",
-        query: query,
-        body: data,
         secure: true,
         format: "json",
         ...params,
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns detailed information about a specific tour including capacity, pricing, features, and user-specific data.
-     *
-     * @tags Tours
-     * @name GetTourDetail
-     * @summary Get Tour Detail
-     * @request GET:/api/v1/tours/{tourId}
-     * @secure
-     */
-    getTourDetail: (
-      tourId: string,
-      query: {
-        includeUserInfo: boolean;
-        includeStatistics: boolean;
-        includeCapacityDetails: boolean;
-        includePricing: boolean;
-        includeMedia: boolean;
-        includeFeatures: boolean;
-        includeRestrictions: boolean;
-      },
-      data: any,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        TourDetailDtoApplicationResult,
-        void | {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/v1/tours/${tourId}`,
-        method: "GET",
-        query: query,
-        body: data,
-        secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns basic tour information with capacity and pricing details (lightweight version).
-     *
-     * @tags Tours
-     * @name GetTourSummary
-     * @summary Get Tour Summary
-     * @request GET:/api/v1/tours/{tourId}/summary
-     * @secure
-     */
-    getTourSummary: (tourId: string, data: any, params: RequestParams = {}) =>
-      this.request<
-        TourDetailDtoApplicationResult,
-        void | {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/v1/tours/${tourId}/summary`,
-        method: "GET",
-        body: data,
-        secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns detailed capacity information for a specific tour.
-     *
-     * @tags Tours
-     * @name GetTourCapacity
-     * @summary Get Tour Capacity
-     * @request GET:/api/v1/tours/{tourId}/capacity
-     * @secure
-     */
-    getTourCapacity: (tourId: string, data: any, params: RequestParams = {}) =>
-      this.request<
-        TourCapacityResponse,
-        void | {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/v1/tours/${tourId}/capacity`,
-        method: "GET",
-        body: data,
-        secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns detailed pricing information for a specific tour.
-     *
-     * @tags Tours
-     * @name GetTourPricing
-     * @summary Get Tour Pricing
-     * @request GET:/api/v1/tours/{tourId}/pricing
-     * @secure
-     */
-    getTourPricing: (tourId: string, data: any, params: RequestParams = {}) =>
-      this.request<
-        TourPricingResponse,
-        void | {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/v1/tours/${tourId}/pricing`,
-        method: "GET",
-        body: data,
-        secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Checks if the current user can reserve a specific tour and returns eligibility information.
-     *
-     * @tags Tours
-     * @name CheckTourReservationEligibility
-     * @summary Check Tour Reservation Eligibility
-     * @request GET:/api/v1/tours/{tourId}/can-reserve
-     * @secure
-     */
-    checkTourReservationEligibility: (
-      tourId: string,
-      data: any,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        TourReservationEligibilityResponse,
-        void | {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/v1/tours/${tourId}/can-reserve`,
-        method: "GET",
-        body: data,
-        secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns a paginated list of users with optional search filter.
+     * @description 🔒 Returns a paginated list of users with optional search filter.
      *
      * @tags Users
      * @name GetUsersPaginated
@@ -8491,7 +7980,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Creates a new user with the provided information.
+     * @description 🔒 Creates a new user with the provided information.
      *
      * @tags Users
      * @name CreateUser
@@ -8522,7 +8011,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns full UserDetail DTO with roles, claims, preferences and tokens.
+     * @description 🔒 Returns full UserDetail DTO with roles, claims, preferences and tokens.
      *
      * @tags Users
      * @name GetUserDetail
@@ -8552,7 +8041,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Updates an existing user with the provided information.
+     * @description 🔒 Updates an existing user with the provided information.
      *
      * @tags Users
      * @name UpdateUser
@@ -8587,7 +8076,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Deletes a user. By default performs soft delete, but can perform hard delete if specified.
+     * @description 🔒 Deletes a user. By default performs soft delete, but can perform hard delete if specified.
      *
      * @tags Users
      * @name DeleteUser
@@ -8626,7 +8115,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Adds the specified claims to a user. Claims are validated against available claim providers.
+     * @description 🔒 Adds the specified claims to a user. Claims are validated against available claim providers.
      *
      * @tags Users
      * @name AddClaimsToUser
@@ -8661,7 +8150,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Removes the specified claims from a user. Claims are soft-deleted by deactivating them.
+     * @description 🔒 Removes the specified claims from a user. Claims are soft-deleted by deactivating them.
      *
      * @tags Users
      * @name DeleteClaimsFromUser
@@ -8696,7 +8185,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Assigns a role to a user with optional expiration and audit information.
+     * @description 🔒 Assigns a role to a user with optional expiration and audit information.
      *
      * @tags Users
      * @name AddRoleToUser
@@ -8731,7 +8220,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Removes a role assignment from a user with optional audit information.
+     * @description 🔒 Removes a role assignment from a user with optional audit information.
      *
      * @tags Users
      * @name RemoveRoleFromUser
@@ -8920,6 +8409,33 @@ export class Api<
         path: `/api/v1/me/wallets/deposits`,
         method: "GET",
         query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Wallets
+     * @name GetWalletDepositDetails
+     * @request GET:/api/v1/me/wallets/deposits/{depositId}
+     * @secure
+     */
+    getWalletDepositDetails: (depositId: string, params: RequestParams = {}) =>
+      this.request<
+        WalletDepositDetailsDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/me/wallets/deposits/${depositId}`,
+        method: "GET",
         secure: true,
         format: "json",
         ...params,

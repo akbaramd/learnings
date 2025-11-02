@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
 
     // Parse request body
     const requestBody: CreatePaymentRequest = await req.json();
-    console.log('requestBody', requestBody);
+ 
 
     // Call the upstream API to create payment
     const upstream = await api.api.createPayment({
@@ -28,43 +28,74 @@ export async function POST(req: NextRequest) {
     });
     const status = upstream.status ?? 200;
 
-    // Map backend response to frontend CreatePaymentResponse type
-    const backendData = upstream.data?.data;
+    const d = upstream.data?.data;
 
-    console.log('upstream', upstream.data);
-    const frontendPayment = backendData ? {
-      paymentId: backendData.paymentId || '',
-      billId: backendData.billId || '',
-      billNumber: backendData.billNumber || undefined,
-      amount: backendData.amount || 0,
-      paymentMethod: backendData.paymentMethod || undefined,
-      status: backendData.status || undefined,
-      createdAt: backendData.createdAt || new Date().toISOString(),
-      expiryDate: backendData.expiryDate || undefined,
-      gatewayRedirectUrl: backendData.gatewayRedirectUrl || undefined,
-      billStatus: backendData.billStatus || undefined,
-      billTotalAmount: backendData.billTotalAmount || 0,
-      itemsAdded: backendData.itemsAdded || 0,
-      billWasIssued: backendData.billWasIssued || false,
-      trackingNumber: backendData.trackingNumber || undefined,
-      requiresRedirect: backendData.requiresRedirect || false,
-      paymentMessage: backendData.paymentMessage || undefined,
-      paymentGateway: backendData.paymentGateway || undefined,
-      appliedDiscountCode: backendData.appliedDiscountCode || undefined,
-      appliedDiscountAmount: backendData.appliedDiscountAmount || 0,
-      originalBillAmount: backendData.originalBillAmount || 0,
-      finalBillAmount: backendData.finalBillAmount || 0,
-      isFreePayment: backendData.isFreePayment || false,
-      paymentSkipped: backendData.paymentSkipped || false,
-    } : null;
-
-    // Strongly typed response structure
+    // If upstream indicates failure, propagate errors/message in wrapper
+    const isSuccess = upstream.data?.isSuccess ?? true;
+    if (!isSuccess) {
+      const allErrors = [
+        ...(Array.isArray(upstream.data?.errors) ? upstream.data.errors : []),
+        ...(upstream.data?.message ? [upstream.data.message] : []),
+      ];
+      const response: CreatePaymentResponseWrapper = {
+        result: null,
+        errors: allErrors.length > 0 ? allErrors : null,
+      };
+      const res = NextResponse.json(response, { status });
+      res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      const setCookieFail = upstream.headers?.['set-cookie'];
+      if (setCookieFail) {
+        if (Array.isArray(setCookieFail)) setCookieFail.forEach((c) => res.headers.append('set-cookie', c));
+        else res.headers.set('set-cookie', setCookieFail as string);
+      }
+      return res;
+    }
+ 
+    const mappedResult = d
+      ? {
+          paymentId: d.paymentId,
+          billId: d.billId,
+          billNumber: d.billNumber ?? undefined,
+          amount: d.amount ?? undefined,
+          paymentMethod: d.paymentMethod ?? undefined,
+          status: d.status ?? undefined,
+          createdAt: d.createdAt ?? undefined,
+          expiryDate: d.expiryDate ?? undefined,
+          gatewayRedirectUrl: d.gatewayRedirectUrl ?? undefined,
+          billStatus: d.billStatus ?? undefined,
+          billTotalAmount: d.billTotalAmount ?? undefined,
+          itemsAdded: d.itemsAdded ?? undefined,
+          billWasIssued: d.billWasIssued ?? undefined,
+          trackingNumber: d.trackingNumber ?? undefined,
+          requiresRedirect: d.requiresRedirect ?? undefined,
+          paymentMessage: d.paymentMessage ?? undefined,
+          paymentGateway: d.paymentGateway ?? undefined,
+          appliedDiscountCode: d.appliedDiscountCode ?? undefined,
+          appliedDiscountAmount: d.appliedDiscountAmount ?? undefined,
+          originalBillAmount: d.originalBillAmount ?? undefined,
+          finalBillAmount: d.finalBillAmount ?? undefined,
+          isFreePayment: d.isFreePayment ?? undefined,
+          paymentSkipped: d.paymentSkipped ?? undefined,
+          paymentStatus: d.paymentStatus ?? undefined,
+        }
+      : null;
+  
     const response: CreatePaymentResponseWrapper = {
-      result: frontendPayment,
-      errors: upstream.data?.errors || null
+      result: mappedResult,
+      errors: upstream.data?.errors || null,
     };
 
-    return NextResponse.json(response, { status });
+    const res = NextResponse.json(response, { status });
+
+    res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+
+    const setCookie = upstream.headers?.['set-cookie'];
+    if (setCookie) {
+      if (Array.isArray(setCookie)) setCookie.forEach((c) => res.headers.append('set-cookie', c));
+      else res.headers.set('set-cookie', setCookie as string);
+    }
+
+    return res;
   } catch (error) {
     console.error('Create payment BFF error:', {
       name: error instanceof Error ? error.name : 'Unknown',
@@ -72,7 +103,7 @@ export async function POST(req: NextRequest) {
       stack: error instanceof Error ? error.stack : undefined,
       type: typeof error,
     });
-      console.log((error as AxiosError).response?.data);
-    return handleApiError(error as AxiosError, req);
+    console.log((error as AxiosError).response?.data);
+    return handleApiError(error as AxiosError);
   }
 }

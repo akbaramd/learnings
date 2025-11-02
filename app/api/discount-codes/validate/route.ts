@@ -33,7 +33,6 @@ export async function POST(req: NextRequest) {
     const upstream = await api.api.validateDiscountCodeForUser(
       requestBody.billId,
       requestBody.discountCode,
-      { externalUserId: '' }, // This might need to be adjusted based on actual API
       {}
     );
     const status = upstream.status ?? 200;
