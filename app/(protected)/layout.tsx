@@ -3,22 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/src/hooks/useAuth';
-import { useAuthGuard } from '@/src/hooks/useAuthGuard';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { useTheme } from '@/src/hooks/useTheme';
-import { BottomNavigation } from '@/src/components/navigation/BottomNavigation';
 import { NotificationDot } from '@/src/components/ui/NotificationBadge';
 import { GetUnreadCountResponse, useGetUnreadCountQuery } from '@/src/store/notifications';
-import Drawer from '@/src/components/overlays/Drawer';
 import {
-  PiListDashesDuotone,
   PiBell,
   PiSun,
   PiMoon,
   PiHouse,
-  PiUser,
-  PiSignOut,
-  PiReceipt,
 } from 'react-icons/pi';
 
 interface ProtectedLayoutProps {
@@ -100,90 +93,6 @@ function NotificationButton({ unreadCountData, notificationsLoading }: {
   );
 }
 
-function MenuDrawer({ isOpen, onClose, onLogout }: { isOpen: boolean; onClose: () => void; onLogout: () => Promise<void> }) {
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const menuItems = [
-    {
-      id: 'dashboard',
-      label: 'داشبورد',
-      icon: <PiHouse className="h-5 w-5" />,
-      path: '/dashboard',
-      active: pathname === '/dashboard' || pathname === '/',
-    },
-    {
-      id: 'bills',
-      label: 'صورت حساب‌ها',
-      icon: <PiReceipt className="h-5 w-5" />,
-      path: '/bills',
-      active: pathname.startsWith('/bills'),
-    },
-    {
-      id: 'notifications',
-      label: 'اعلان‌ها',
-      icon: <PiBell className="h-5 w-5" />,
-      path: '/notifications',
-      active: pathname.startsWith('/notifications'),
-    },
-    {
-      id: 'profile',
-      label: 'پروفایل',
-      icon: <PiUser className="h-5 w-5" />,
-      path: '/profile',
-      active: pathname.startsWith('/profile'),
-    },
-  ];
-
-  const handleNavigation = (path: string) => {
-    router.push(path);
-    onClose();
-  };
-
-  const handleLogout = async () => {
-    await onLogout(); // This handles cross-tab sync + redirect
-    onClose();
-  };
-
-  return (
-    <Drawer open={isOpen} onClose={onClose} side="start" size="sm">
-      <Drawer.Header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          منو
-        </h2>
-      </Drawer.Header>
-      
-      <Drawer.Body className="bg-gray-50 dark:bg-gray-950">
-        <nav className="space-y-2">
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => handleNavigation(item.path)}
-              className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-lg text-right transition-all ${
-                item.active
-                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 shadow-sm'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm'
-              }`}
-            >
-              {item.icon}
-              <span className="font-medium">{item.label}</span>
-            </button>
-          ))}
-        </nav>
-      </Drawer.Body>
-      
-      <Drawer.Footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3.5 rounded-lg text-right text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 transition-all hover:shadow-sm"
-        >
-          <PiSignOut className="h-5 w-5" />
-          <span className="font-medium">خروج</span>
-        </button>
-      </Drawer.Footer>
-    </Drawer>
-  );
-}
 
 function BrandTitle() {
   const pathname = usePathname();
@@ -225,12 +134,11 @@ function BrandTitle() {
 }
 
 export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const router = useRouter();
   
   // Auth is handled by AuthSyncProvider at root
   // Only use auth state for data fetching (not for guards/redirects)
   const { isAuthenticated, isReady } = useAuth();
-  const { requestLogout } = useAuthGuard();
 
   // Auto-fetch notifications when authenticated and ready
   const { data: unreadCountData, isLoading: notificationsLoading } = useGetUnreadCountQuery(
@@ -244,17 +152,21 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
     }
   );
 
+  const handleHomeClick = () => {
+    router.push('/dashboard');
+  };
+
   return (
     <div className="h-screen container mx-auto  sm:max-w-full md:max-w-[30rem] lg:max-w-[25rem] max-w-full bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex flex-col" dir="rtl">
       {/* Top App Bar - Fixed at top with elevation */}
       <header className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm">
         <div className="flex h-14 items-center justify-between px-4">
           <IconButton 
-            aria-label="Open menu"
-            onClick={() => setIsMenuOpen(true)}
+            aria-label="Go to home"
+            onClick={handleHomeClick}
             className="hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
-            <PiListDashesDuotone className="h-4 w-4 text-gray-700 dark:text-gray-200" />
+            <PiHouse className="h-4 w-4 text-gray-700 dark:text-gray-200" />
           </IconButton>
           <BrandTitle />
           <div className="flex items-center gap-2">
@@ -273,21 +185,6 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
           {children}
         </div>
       </main>
-
-      {/* Bottom Navigation - Fixed at bottom */}
-      <div className="flex-shrink-0">
-        <BottomNavigation 
-          unreadCountData={unreadCountData} 
-          notificationsLoading={notificationsLoading} 
-        />
-      </div>
-
-      {/* Menu Drawer */}
-      <MenuDrawer 
-        isOpen={isMenuOpen} 
-        onClose={() => setIsMenuOpen(false)}
-        onLogout={requestLogout}
-      />
     </div>
   );
 }

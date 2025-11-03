@@ -84,6 +84,7 @@ function SafeImage({
   className?: string;
   priority?: boolean;
 }) {
+  
   const isRemote = /^https?:\/\//i.test(src);
   if (!src) {
     return (
@@ -190,12 +191,13 @@ export function TourCard({
   dir,
 }: TourCardProps) {
   const router = useRouter();
-  
+  {console.log(tour)}
   if (loading) {
     return <TourCardSkeleton className={className} dir={dir} />;
   }
 
   const cover = tour.photos?.[0] ?? '';
+
   const hasReservation = !!tour.reservationId;
   const reservationBadge = hasReservation && tour.reservationStatus 
     ? getReservationStatusBadge(tour.reservationStatus)

@@ -42,7 +42,10 @@ export function TourSection({ title, seeAllHref, dir = 'auto', tours, className 
         peekPaddingClass="pe-4"
         showDots
       >
-        {tours.map((t) => (
+      
+        {
+    
+        tours.map((t) => (
           <div key={t.id} className="p-0 h-full flex">
             <TourCard tour={t} className="w-full h-full" />
           </div>
