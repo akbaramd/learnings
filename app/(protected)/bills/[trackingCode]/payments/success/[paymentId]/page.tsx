@@ -207,7 +207,7 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
   }
 
   return (
-    <div className="h-full flex flex-col" dir="rtl">
+      <div className="h-full flex flex-col" dir="rtl">
         <PageHeader
           title="رسید پرداخت"
           titleIcon={<PiCheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />}

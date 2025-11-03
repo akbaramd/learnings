@@ -13,6 +13,8 @@ let refreshPromise: Promise<Response> | null = null;
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: '/api',
   credentials: 'include',
+  // Disable automatic retries - we handle retries manually for auth errors only
+  fetchFn: fetch,
   prepareHeaders: (headers) => {
     headers.set('content-type', 'application/json');
     
@@ -37,6 +39,37 @@ function isRefreshEndpoint(args: string | FetchArgs): boolean {
   return s === '/auth/refresh' || s.startsWith('/auth/refresh?') || s.endsWith('/auth/refresh');
 }
 
+/**
+ * Check if error is a network error (DNS failure, connection refused, etc.)
+ * Network errors should NOT trigger token refresh - they should fail immediately
+ */
+function isNetworkError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  
+  // Check for common network error codes
+  if ('status' in error) {
+    // RTK Query wraps network errors as status: 'FETCH_ERROR'
+    if (error.status === 'FETCH_ERROR') return true;
+  }
+  
+  // Check error message for network-related errors
+  const errorMessage = 'message' in error ? String(error.message) : '';
+  const networkErrorPatterns = [
+    'ENOTFOUND',
+    'ECONNREFUSED',
+    'ETIMEDOUT',
+    'ENETUNREACH',
+    'ECONNRESET',
+    'getaddrinfo',
+    'Failed to fetch',
+    'NetworkError',
+  ];
+  
+  return networkErrorPatterns.some(pattern => 
+    errorMessage.includes(pattern)
+  );
+}
+
 export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, unknown> = async (
   args,
   api,
@@ -44,10 +77,19 @@ export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, unkno
 ) => {
   const result = await rawBaseQuery(args, api, extraOptions);
   
-  // Check if we got a 401 error
-  const got401 = (result?.error && 'status' in result.error && result.error.status === 401) || (result.meta?.response?.status === 401);
+  // If we have a network error, return immediately without retrying or refreshing
+  // Network errors indicate connectivity issues, not authentication problems
+  if (result?.error && isNetworkError(result.error)) {
+    // Don't try to refresh token on network errors - just return the error
+    return result;
+  }
+  
+  // Check if we got a 401 error (only HTTP 401, not network errors)
+  const got401 = (result?.error && 'status' in result.error && result.error.status === 401) || 
+                 (result.meta?.response?.status === 401);
   
   // If we get a 401 and the request wasn't to the refresh endpoint, try to refresh
+  // ONLY retry for HTTP 401 errors, not network errors
   if (got401 && !isRefreshEndpoint(args)) {
     // Single-flight pattern: only create refresh request if one doesn't exist
     if (!refreshPromise) {
@@ -82,7 +124,7 @@ export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, unkno
                                      refreshData?.data?.isSuccess === true;
 
         if (isRefreshSuccessful) {
-          // Refresh successful - retry the original request
+          // Refresh successful - retry the original request (only once)
           return await rawBaseQuery(args, api, extraOptions);
         }
 
@@ -97,8 +139,16 @@ export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, unkno
       // Let useAuthGuard handle cross-tab sync and UI redirect
       api.dispatch(setAnonymous());
       return { error: { status: 401, data: { errors: ['Session expired. Please login again.'] } } };
-    } catch {
-      // Network error - only update state, NO broadcast, NO redirect
+    } catch (refreshError) {
+      // Network error during refresh - don't retry, just fail immediately
+      // Check if it's a network error
+      if (isNetworkError(refreshError)) {
+        // Network error during refresh - return immediately without retrying
+        api.dispatch(setAnonymous());
+        return { error: { status: 'FETCH_ERROR', data: { errors: ['Network error. Please check your connection.'] } } };
+      }
+      
+      // Other errors during refresh
       api.dispatch(setAnonymous());
       return { error: { status: 401, data: { errors: ['Session expired'] } } };
     } finally {

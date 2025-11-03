@@ -141,14 +141,15 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const { isAuthenticated, isReady } = useAuth();
 
   // Auto-fetch notifications when authenticated and ready
+  // Stop polling immediately when authentication fails
   const { data: unreadCountData, isLoading: notificationsLoading } = useGetUnreadCountQuery(
     undefined,
     {
       skip: !isReady || !isAuthenticated, // Only fetch when ready and authenticated
-      pollingInterval: 30000, // Poll every 30 seconds for real-time updates
+      pollingInterval: isReady && isAuthenticated ? 30000 : 0, // Stop polling when not authenticated
       refetchOnMountOrArgChange: false, // Don't refetch on mount
       refetchOnFocus: false, // Don't refetch on window focus
-      refetchOnReconnect: true, // Only refetch on reconnect
+      refetchOnReconnect: isReady && isAuthenticated, // Only refetch on reconnect when authenticated
     }
   );
 

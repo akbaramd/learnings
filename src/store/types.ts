@@ -4,6 +4,7 @@ import { api } from '@/src/services/apiBase';
 import { authReducer, authApi } from './auth';
 import { notificationsReducer, notificationsApi } from './notifications';
 import { walletsReducer, walletsApi } from './wallets';
+import { facilitiesApi, facilitiesReducer } from './facilities';
 
 export const store = configureStore({
   reducer: {
@@ -14,13 +15,15 @@ export const store = configureStore({
     auth: authReducer,
     notifications: notificationsReducer,
     wallets: walletsReducer,
+    facilities: facilitiesReducer,
   },
   middleware: (getDefault) => 
     getDefault()
       .concat(api.middleware)
       .concat(authApi.middleware)
       .concat(notificationsApi.middleware)
-      .concat(walletsApi.middleware),
+      .concat(walletsApi.middleware)
+      .concat(facilitiesApi.middleware),
   devTools: process.env.NODE_ENV !== 'production',
 });
 

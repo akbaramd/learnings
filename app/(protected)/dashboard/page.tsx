@@ -148,7 +148,7 @@ function WalletCard() {
 
 const services = [
   { id: 'tour', title: 'تور', icon: <PiMapPinDuotone className="h-5 w-5" />, accent: 'blue', disabled: false },
-  { id: 'facility', title: 'تسهیلات', icon: <PiMoney className="h-5 w-5" />, accent: 'emerald', disabled: true },
+  { id: 'facility', title: 'تسهیلات', icon: <PiMoney className="h-5 w-5" />, accent: 'emerald', disabled: false },
   { id: 'hotel', title: 'هتل', icon: <PiBuildingOffice className="h-5 w-5" />, accent: 'amber', disabled: true },
   { id: 'flight', title: 'پرواز', icon: <PiDiamondDuotone className="h-5 w-5" />, accent: 'indigo', disabled: true },
   { id: 'insurance', title: 'بیمه', icon: <PiShieldCheck className="h-5 w-5" />, accent: 'rose', disabled: true },
@@ -196,6 +196,15 @@ function useToursList(): { tours: Tour[]; isLoading: boolean; isError: boolean }
 
 export default function HomeDashboard() {
   const { tours, isLoading, isError } = useToursList();
+  const router = useRouter();
+
+  function handleServiceSelect(id: string): void {
+    if (id === 'facility') {
+      router.push('/facilities');
+    } else if (id === 'tour') {
+      router.push('/tours');
+    }
+  }
 
   return (
     <div className="h-full flex flex-col" dir="rtl">
@@ -208,7 +217,7 @@ export default function HomeDashboard() {
 
             {/* Services */}
             <section className="px-4">
-              <ServicesGrid items={services} />
+              <ServicesGrid items={services} onSelect={handleServiceSelect} />
             </section>
 
             {/* Tours Section */}

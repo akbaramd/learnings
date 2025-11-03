@@ -12,6 +12,7 @@ import { billsApi } from '@/src/store/bills';
 import { paymentsApi } from '@/src/store/payments';
 import { notificationsApi } from '@/src/store/notifications';
 import { discountsApi } from '@/src/store/discounts';
+import { facilitiesApi } from '@/src/store/facilities';
 
 type AuthSyncEvent =
   | { type: 'AUTH_LOGOUT'; source?: string }
@@ -120,6 +121,7 @@ export function useAuthGuard(opts?: UseAuthGuardOptions) {
     dispatch(paymentsApi.util.resetApiState());
     dispatch(notificationsApi.util.resetApiState());
     dispatch(discountsApi.util.resetApiState());
+    dispatch(facilitiesApi.util.resetApiState());
     
     // 3. Both soft and hard redirect
     router.replace(returnUrl);
@@ -194,6 +196,7 @@ export function useAuthGuard(opts?: UseAuthGuardOptions) {
     if (!isReady) return;          // صبر تا اولین چک سشن
     if (isPublic) return;          // صفحه عمومی
 
+    // Redirect if not authenticated (includes cases where session check failed)
     if (!isAuthenticated) {
       if (redirectedRef.current) return;
       redirectedRef.current = true;
@@ -201,6 +204,25 @@ export function useAuthGuard(opts?: UseAuthGuardOptions) {
       performLogoutRedirect(`/login?r=${ret}`);
     }
   }, [options.autoRedirect, isReady, isAuthenticated, isPublic, pathname, performLogoutRedirect]);
+
+  // ---- monitor session check failures and redirect ----
+  // This effect monitors when session check fails (401, 500, network errors)
+  // and ensures redirect happens even if authStatus didn't change yet
+  useEffect(() => {
+    if (!options.autoRedirect) return;
+    if (isPublic) return;
+    if (redirectedRef.current) return;
+    
+    // If session is loading/fetching, wait for it to complete
+    if (isSessionLoading || isSessionFetching) return;
+    
+    // After session check completes, if still not authenticated, redirect
+    if (isReady && !isAuthenticated && authStatus !== 'otp-sent') {
+      redirectedRef.current = true;
+      const ret = encodeURIComponent(pathname || '/');
+      performLogoutRedirect(`/login?r=${ret}`);
+    }
+  }, [options.autoRedirect, isReady, isAuthenticated, isPublic, pathname, performLogoutRedirect, authStatus, isSessionLoading, isSessionFetching]);
 
   // ---- واکنش خودکار به موفقیت logout: ارسال سیگنال به تمام تب‌ها + redirect تب جاری ----
   useEffect(() => {

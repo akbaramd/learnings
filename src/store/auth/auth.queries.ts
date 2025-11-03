@@ -54,7 +54,7 @@ export const authApi = createApi({
   keepUnusedDataFor: 300, // Keep data for 5 minutes
   refetchOnMountOrArgChange: false, // Don't refetch on mount
   refetchOnFocus: false, // Don't refetch on window focus for auth
-  refetchOnReconnect: true, // Refetch when reconnecting
+  refetchOnReconnect: false, // Don't auto-refetch on reconnect - let manual checks handle it
   endpoints: (builder) => ({
     // Send OTP mutation (login endpoint)
     sendOtp: builder.mutation<SendOtpResponse, SendOtpRequest>({
@@ -129,6 +129,8 @@ export const authApi = createApi({
       }),
       providesTags: ['Auth'],
       keepUnusedDataFor: 300, // Keep session data for 5 minutes
+      // Don't retry session checks on network errors - fail fast
+      // Network errors will be handled by isNetworkError in baseQueryWithReauth
       async onQueryStarted(arg, { dispatch, queryFulfilled, getState }) {
         try {
           const currentState = getState() as RootState;
@@ -139,27 +141,55 @@ export const authApi = createApi({
             dispatch(setAuthStatus('loading'));
           }
 
-          const { data } = await queryFulfilled;
+          const { data, meta } = await queryFulfilled;
 
-          if (data?.isSuccess && data?.data?.authenticated) {
-            if (currentStatus !== 'otp-sent') {
+          // Session is only valid if:
+          // 1. HTTP status is 200
+          // 2. isSuccess === true
+          // 3. data?.authenticated === true
+          const httpStatus = (meta as { response?: { status?: number } })?.response?.status;
+          const isValidSession = httpStatus === 200 && 
+                                 data?.isSuccess === true && 
+                                 data?.data?.authenticated === true;
+
+          if (isValidSession) {
+            if (currentStatus !== 'otp-sent') { 
               dispatch(setAuthStatus('authenticated'));
               // Don't automatically fetch user profile - let components decide when to fetch
               // dispatch(authApi.endpoints.getMe.initiate());
             }
           } else {
+            // Session invalid: 401, 500, network error, or isSuccess=false
+            // Trigger logout: clear state, reset APIs, notify other tabs
             if (currentStatus !== 'otp-sent' && currentStatus !== 'loading') {
               dispatch(setAuthStatus('anonymous'));
               dispatch(clearUser());
+              // Notify other tabs about logout
+              notifyLogoutAllTabs();
             }
           }
-        } catch {
+        } catch (error: unknown) {
+          // Handle network errors, 401, 500, etc.
           const currentState = getState() as RootState;
           const currentStatus = currentState.auth.status;
+          
+          // Get HTTP status if available
+          const httpStatus = error && typeof error === 'object' && 'status' in error 
+            ? (error as { status?: number }).status 
+            : undefined;
+          
+          // Logout on any session check failure (401, 500, network error)
           if (currentStatus !== 'otp-sent' && currentStatus !== 'loading') {
             dispatch(setAuthStatus('anonymous'));
             dispatch(clearUser());
+            // Notify other tabs about logout
+            notifyLogoutAllTabs();
           }
+          
+          console.error('Session check failed:', {
+            httpStatus,
+            error: error instanceof Error ? error.message : String(error),
+          });
         } finally {
           dispatch(setInitialized(true));
         }

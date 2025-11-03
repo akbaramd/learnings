@@ -80,9 +80,30 @@ export const useAuth = () => {
   // Manual session and profile checks
   const checkSession = async () => {
     try {
-      return await triggerCheckSession();
+      const result = await triggerCheckSession();
+      
+      // Validate session: must have HTTP 200, isSuccess=true, and authenticated=true
+      // Access meta safely - check if result is fulfilled and has meta
+      const httpStatus = result.isSuccess && 'meta' in result && result.meta 
+        ? (result.meta as { response?: { status?: number } })?.response?.status 
+        : undefined;  
+      const isValidSession = httpStatus === 200 && 
+                             result.data?.isSuccess === true && 
+                             result.data?.data?.authenticated === true;
+      
+      if (!isValidSession) {
+        // Session is invalid - logout will be handled by onQueryStarted
+        console.warn('Session check returned invalid session:', {
+          httpStatus,
+          isSuccess: result.data?.isSuccess,
+          authenticated: result.data?.data?.authenticated,
+        });
+      }
+      
+      return result;
     } catch (error) {
       console.error('Failed to check session:', error);
+      // Error handling (logout) is done in onQueryStarted
       throw error;
     }
   };
@@ -98,20 +119,36 @@ export const useAuth = () => {
 
   const refreshAuthData = async () => {
     try {
-      const promises = [];
+      // Always check session first
+      const sessionResult = await triggerCheckSession();
       
-      // Always check session
-      promises.push(triggerCheckSession());
+      // Validate session response - access meta safely
+      const httpStatus = sessionResult.isSuccess && 'meta' in sessionResult && sessionResult.meta
+        ? (sessionResult.meta as { response?: { status?: number } })?.response?.status
+        : undefined;
+      const isValidSession = httpStatus === 200 && 
+                             sessionResult.data?.isSuccess === true && 
+                             sessionResult.data?.data?.authenticated === true;
+      
+      if (!isValidSession) {
+        // Session invalid - logout handled by onQueryStarted
+        return { success: false, error: 'Session invalid' };
+      }
       
       // Only get profile if authenticated and don't have user data
       if (isAuthenticated && !hasUser) {
-        promises.push(triggerGetMe());
+        try {
+          await triggerGetMe();
+        } catch (error) {
+          console.error('Failed to get user profile:', error);
+          // Continue even if profile fetch fails
+        }
       }
       
-      await Promise.all(promises);
       return { success: true };
     } catch (error) {
       console.error('Failed to refresh auth data:', error);
+      // Logout handling is done in onQueryStarted
       return { success: false, error };
     }
   };
@@ -121,17 +158,37 @@ export const useAuth = () => {
     try {
       // Only check session if we don't have any auth state yet
       if (authStatus === 'idle' || authStatus === 'loading') {
-        await triggerCheckSession();
+        const sessionResult = await triggerCheckSession();
+        
+        // Validate session: must have HTTP 200, isSuccess=true, and authenticated=true
+        // Access meta safely - check if result is fulfilled and has meta
+        const httpStatus = sessionResult.isSuccess && 'meta' in sessionResult && sessionResult.meta
+          ? (sessionResult.meta as { response?: { status?: number } })?.response?.status
+          : undefined;
+        const isValidSession = httpStatus === 200 && 
+                               sessionResult.data?.isSuccess === true && 
+                               sessionResult.data?.data?.authenticated === true;
+        
+        if (!isValidSession) {
+          // Session invalid - logout will be handled by onQueryStarted
+          return { success: false, error: 'Session invalid' };
+        }
       }
       
       // Get user profile if authenticated but don't have user data
       if (isAuthenticated && !hasUser) {
-        await triggerGetMe();
+        try {
+          await triggerGetMe();
+        } catch (error) {
+          console.error('Failed to get user profile:', error);
+          // Continue even if profile fetch fails
+        }
       }
       
       return { success: true };
     } catch (error) {
       console.error('Failed to initialize auth:', error);
+      // Error handling (logout) is done in onQueryStarted
       return { success: false, error };
     }
   };
