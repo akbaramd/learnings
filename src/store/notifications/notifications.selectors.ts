@@ -1,7 +1,7 @@
 // src/store/notifications/notifications.selectors.ts
 import { createSelector } from '@reduxjs/toolkit';
-import { RootState } from '../types';
 import { NotificationState, NotificationFilters } from './notifications.types';
+import { RootState } from '..';
 
 // Base selector for notification state
 const selectNotificationState = (state: RootState): NotificationState => state.notifications;

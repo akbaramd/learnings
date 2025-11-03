@@ -1,6 +1,6 @@
 // src/store/auth/auth.queries.ts
 import { createApi } from '@reduxjs/toolkit/query/react';
-import type { RootState } from '../types';
+import type { RootState } from '../index';
 import {
   SendOtpRequest,
   SendOtpResponse,
@@ -141,15 +141,13 @@ export const authApi = createApi({
             dispatch(setAuthStatus('loading'));
           }
 
-          const { data, meta } = await queryFulfilled;
+          const { data } = await queryFulfilled;
 
           // Session is only valid if:
-          // 1. HTTP status is 200
-          // 2. isSuccess === true
-          // 3. data?.authenticated === true
-          const httpStatus = (meta as { response?: { status?: number } })?.response?.status;
-          const isValidSession = httpStatus === 200 && 
-                                 data?.isSuccess === true && 
+          // 1. isSuccess === true
+          // 2. data?.authenticated === true
+          // Note: HTTP status is handled by baseQueryWithReauth, if queryFulfilled succeeds, we have valid response
+          const isValidSession = data?.isSuccess === true && 
                                  data?.data?.authenticated === true;
 
           if (isValidSession) {
@@ -170,13 +168,9 @@ export const authApi = createApi({
           }
         } catch (error: unknown) {
           // Handle network errors, 401, 500, etc.
+          // If queryFulfilled throws, it means the request failed (network error, 401, 500, etc.)
           const currentState = getState() as RootState;
           const currentStatus = currentState.auth.status;
-          
-          // Get HTTP status if available
-          const httpStatus = error && typeof error === 'object' && 'status' in error 
-            ? (error as { status?: number }).status 
-            : undefined;
           
           // Logout on any session check failure (401, 500, network error)
           if (currentStatus !== 'otp-sent' && currentStatus !== 'loading') {
@@ -187,7 +181,6 @@ export const authApi = createApi({
           }
           
           console.error('Session check failed:', {
-            httpStatus,
             error: error instanceof Error ? error.message : String(error),
           });
         } finally {

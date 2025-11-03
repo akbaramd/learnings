@@ -1,6 +1,5 @@
 // src/store/bills/bills.queries.ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import type { RootState } from '../types';
 import {
   GetBillsRequest,
   IssueBillRequest,

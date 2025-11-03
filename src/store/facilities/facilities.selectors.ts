@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
-import type { RootState } from '../types';
 import type { FacilitiesState } from './facilities.types';
+import { RootState } from '..';
 
 // Base selectors
 const selectFacilitiesState = (state: RootState): FacilitiesState => state.facilities;
