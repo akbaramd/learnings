@@ -162,3 +162,14 @@ export const selectIsPaymentIdle = createSelector(
   [selectPaymentsLoading, selectPaymentsError],
   (loading, error) => !loading && !error
 );
+
+// Payments list selectors
+export const selectPayments = createSelector(
+  [selectPaymentState],
+  (paymentState) => paymentState.payments
+);
+
+export const selectPaymentsPagination = createSelector(
+  [selectPaymentState],
+  (paymentState) => paymentState.pagination
+);

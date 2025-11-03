@@ -610,7 +610,7 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <div className="p-4 space-y-4">
             {/* Compact Reservation Details */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   {details.tour?.title && (
@@ -757,7 +757,7 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
             </div>
 
             {/* Participants Card with Pricing */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                   <div className="w-1 h-5 bg-emerald-500 rounded-full" />

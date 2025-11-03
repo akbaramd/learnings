@@ -6,11 +6,11 @@ import { useLazyWallets } from '@/src/hooks/useLazyWallets';
 import { selectWalletDeposits } from '@/src/store/wallets';
 import { useSelector } from 'react-redux';
 import { Button } from '@/src/components/ui/Button';
+import { Card } from '@/src/components/ui/Card';
+import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import { useToast } from '@/src/hooks/useToast';
 import { useWalletPageHeader } from '../WalletPageHeaderContext';
 import {
-  PiArrowLeft,
-  PiPlusCircle,
   PiClock,
   PiCheckCircle,
   PiXCircle,
@@ -238,58 +238,11 @@ export default function DepositsPage({ params }: DepositsPageProps) {
     return () => clearInterval(intervalId);
   }, [deposits, fetchDeposits, currentWalletId]);
 
-  const handleCreateDeposit = () => {
-    router.push(`/wallet/${currentWalletId}/deposits/create`);
-  };
-
   return (
-    <>
-      <style jsx>{`
-        .custom-scrollbar {
-          scrollbar-width: thin;
-          scrollbar-color: #9CA3AF #F3F4F6;
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #F3F4F6;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #9CA3AF;
-          border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #6B7280;
-        }
-        .dark .custom-scrollbar {
-          scrollbar-color: #4B5563 #1F2937;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-track {
-          background: #1F2937;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #4B5563;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #6B7280;
-        }
-      `}</style>
-      <div className="h-full flex flex-col" dir="rtl">
+    <div className="h-full flex flex-col" dir="rtl">
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="p-4 space-y-4">
-            {/* Add Deposit Button */}
-            <Button
-              onClick={handleCreateDeposit}
-              variant="primary"
-              size="lg"
-              block
-              leftIcon={<PiPlusCircle className="h-5 w-5" />}
-            >
-              واریز جدید
-            </Button>
-
+        <ScrollableArea className="flex-1" hideScrollbar={true}>
+          <div className="ps-2 space-y-2">
             {/* Error Message */}
             {error && (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
@@ -300,23 +253,28 @@ export default function DepositsPage({ params }: DepositsPageProps) {
             )}
 
             {/* Deposits List */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                {isLoading ? (
-                  <div className="p-8 text-center">
-                    <div className="h-8 w-8 animate-spin border-2 border-gray-300 border-t-gray-600 rounded-full mx-auto mb-2" />
-                    <p className="text-sm text-gray-500 dark:text-gray-400">در حال بارگذاری...</p>
-                  </div>
-                ) : deposits && deposits.length > 0 ? (
-                  <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {deposits.map((deposit) => {
-                      const statusInfo = getStatusInfo(deposit.status, deposit.statusText);
-                      
-                      return (
-                         <div
-                           key={deposit.id}
-                           className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
-                           onClick={() => router.push(`/wallet/${currentWalletId}/deposits/${encodeURIComponent(deposit.id)}`)}
-                         >
+            {isLoading ? (
+              <Card variant="default" radius="lg" padding="lg">
+                <div className="text-center">
+                  <div className="h-8 w-8 animate-spin border-2 border-gray-300 border-t-gray-600 rounded-full mx-auto mb-2" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">در حال بارگذاری...</p>
+                </div>
+              </Card>
+            ) : deposits && deposits.length > 0 ? (
+              <div className="space-y-2">
+                {deposits.map((deposit) => {
+                  const statusInfo = getStatusInfo(deposit.status, deposit.statusText);
+                  
+                  return (
+                    <Card
+                      key={deposit.id}
+                      variant="default"
+                      radius="lg"
+                      padding="md"
+                      hover={true}
+                      clickable={true}
+                      onClick={() => router.push(`/wallet/${currentWalletId}/deposits/${encodeURIComponent(deposit.id)}`)}
+                    >
                            {/* Amount and Status Row */}
                            <div className="flex items-center justify-between mb-2">
                              <div className="text-lg font-semibold text-green-600 dark:text-green-400">
@@ -333,77 +291,77 @@ export default function DepositsPage({ params }: DepositsPageProps) {
                            </div>
                            
                            {/* Tracking Code Row */}
-                           <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-md border border-dashed border-green-200 dark:border-green-600">
-                             <div className="flex items-center justify-between">
-                               <div className="flex items-center gap-2">
-                                 <div className="text-xs text-green-700 dark:text-green-300 font-medium">کد پیگیری:</div>
-                                 <div className="font-mono text-xs font-semibold text-green-800 dark:text-green-200">
-                                   {deposit.trackingCode}
+                           {deposit.trackingCode && (
+                             <div className="mb-3">
+                               <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-md border border-dashed border-green-200 dark:border-green-600">
+                                 <div className="flex items-center justify-between">
+                                   <div className="flex items-center gap-2">
+                                     <div className="text-xs text-green-700 dark:text-green-300 font-medium">کد پیگیری:</div>
+                                     <div className="font-mono text-xs font-semibold text-green-800 dark:text-green-200">
+                                       {deposit.trackingCode}
+                                     </div>
+                                   </div>
+                                   <button
+                                     onClick={(e) => { e.stopPropagation(); copyToClipboard(deposit.trackingCode || '', toast); }}
+                                     className="p-1.5 rounded-md text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-200 hover:bg-green-100 dark:hover:bg-green-800/30 transition-colors"
+                                     title="کپی کد پیگیری"
+                                   >
+                                     <PiCopy className="h-3.5 w-3.5" />
+                                   </button>
                                  </div>
                                </div>
-                               <button
-                                 onClick={(e) => { e.stopPropagation(); copyToClipboard(deposit.trackingCode || '', toast); }}
-                                 className="p-1.5 rounded-md text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-200 hover:bg-green-100 dark:hover:bg-green-800/30 transition-colors"
-                                 title="کپی کد پیگیری"
-                               >
-                                 <PiCopy className="h-3.5 w-3.5" />
-                               </button>
                              </div>
-                             
-                            {/* AwaitingBill guidance */}
-                            {deposit.status === 'AwaitingBill' && (
-                              <div className="mt-2 pt-2 border-t border-green-200 dark:border-green-600">
-                                <div className="text-xs text-green-700 dark:text-green-300">
-                                  در انتظار صدور صورت‌حساب... لیست به‌صورت خودکار به‌روزرسانی می‌شود.
-                                </div>
-                              </div>
-                            )}
+                           )}
 
-                            {/* View Bill Button when awaiting payment */}
-                            {deposit.status === 'AwaitingPayment' && deposit.trackingCode && (
-                              <div className="mt-2 pt-2 border-t border-green-200 dark:border-green-600">
-                                <div className="text-xs text-green-700 dark:text-green-300 mb-1">
-                                  برای مشاهده و پرداخت صورت‌حساب:
-                                </div>
-                                <Button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (deposit.trackingCode && deposit.trackingCode.trim() !== '') {
-                                      router.push(`/bills/${encodeURIComponent(deposit.trackingCode)}?billType=WalletDeposit`);
-                                    } else {
-                                      toast({
-                                        title: 'خطا',
-                                        description: 'کد پیگیری موجود نیست',
-                                        variant: 'error',
-                                        duration: 3000
-                                      });
-                                    }
-                                  }}
-                                  variant="secondary"
-                                  size="sm"
-                                  className="w-full text-xs"
-                                  leftIcon={<PiReceipt className="h-3.5 w-3.5" />}
-                                >
-                                  مشاهده صورت‌حساب
-                                </Button>
-                              </div>
-                            )}
-                           </div>
-                         </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="p-8 text-center">
-                    <PiReceipt className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">هنوز واریزی ثبت نشده است</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">برای شروع، واریز جدیدی ایجاد کنید</p>
-                  </div>
-                )}
-            </div>
+                           {/* AwaitingBill guidance */}
+                           {deposit.status === 'AwaitingBill' && (
+                             <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-600">
+                               <div className="text-xs text-blue-700 dark:text-blue-300">
+                                 در انتظار صدور صورت‌حساب... لیست به‌صورت خودکار به‌روزرسانی می‌شود.
+                               </div>
+                             </div>
+                           )}
+
+                           {/* Action Buttons */}
+                           {deposit.status === 'AwaitingPayment' && deposit.trackingCode && (
+                             <div className="mt-2">
+                               <Button
+                                 onClick={(e) => {
+                                   e.stopPropagation();
+                                   if (deposit.trackingCode && deposit.trackingCode.trim() !== '') {
+                                     router.push(`/bills/${encodeURIComponent(deposit.trackingCode)}?billType=WalletDeposit`);
+                                   } else {
+                                     toast({
+                                       title: 'خطا',
+                                       description: 'کد پیگیری موجود نیست',
+                                       variant: 'error',
+                                       duration: 3000
+                                     });
+                                   }
+                                 }}
+                                 variant='ghost'
+                                 className="w-full"
+                                 leftIcon={<PiReceipt className="h-4 w-4" />}
+                               >
+                                 مشاهده صورت‌حساب
+                               </Button>
+                             </div>
+                           )}
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <Card variant="default" radius="lg" padding="lg">
+                <div className="text-center">
+                  <PiReceipt className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">هنوز واریزی ثبت نشده است</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">برای شروع، واریز جدیدی ایجاد کنید</p>
+                </div>
+              </Card>
+            )}
           </div>
-        </div>
+        </ScrollableArea>
       </div>
-    </>
   );
 }

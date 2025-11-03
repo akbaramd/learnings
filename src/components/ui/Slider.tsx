@@ -15,7 +15,7 @@ type PeekSliderProps = {
   /** Tailwind padding on the trailing edge to hint the next slide (e.g. 'pe-4' or 'pr-4') */
   peekPaddingClass?: string; // default: 'pe-4' (works with dir)
   /** Card container classes for each slide’s content wrapper */
-  itemClassName?: string; // e.g. 'rounded-xl border bg-white dark:bg-neutral-800'
+  itemClassName?: string; // e.g. 'rounded-lg border bg-white dark:bg-neutral-800'
   /** Show tiny dot indicators */
   showDots?: boolean; // default: true
   /** Callback when the selected slide changes */
@@ -38,7 +38,7 @@ export function PeekSlider({
   loop = false,
   disableDrag = true,
   peekPaddingClass = 'pe-4',
-  itemClassName = 'rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800',
+  itemClassName = 'rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800',
   showDots = true,
   onIndexChange,
 }: PeekSliderProps) {

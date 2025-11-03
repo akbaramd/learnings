@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Button from '../ui/Button';
+import { Card } from '../ui/Card';
 
 /* ===================== Types ===================== */
 
@@ -119,12 +120,12 @@ function SafeImage({
 
 export function TourCardSkeleton({ className, dir }: { className?: string; dir?: 'rtl'|'ltr' }) {
   return (
-    <div
+    <Card
       dir={dir}
-      className={[
-        'animate-pulse w-full rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 overflow-hidden',
-        className || '',
-      ].join(' ')}
+      variant="default"
+      radius="lg"
+      padding="none"
+      className={['animate-pulse w-full overflow-hidden', className || ''].join(' ')}
     >
       <div className="relative h-48 w-full bg-neutral-100 dark:bg-neutral-700" />
       <div className="p-3 space-y-3">
@@ -139,7 +140,7 @@ export function TourCardSkeleton({ className, dir }: { className?: string; dir?:
           <div className="h-3 w-1/3 bg-neutral-200 dark:bg-neutral-700 rounded" />
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -212,12 +213,15 @@ export function TourCard({
   };
 
   return (
-    <article
+    <Card
       dir={dir}
+      variant="default"
+      radius="lg"
+      padding="none"
+      hover={true}
       className={[
-        'group w-full h-full flex flex-col text-right rounded-lg border border-neutral-200 dark:border-neutral-700',
-        'bg-white dark:bg-neutral-800 hover:shadow-lg hover:border-emerald-300/40 dark:hover:border-emerald-400/40',
-        'transition-all duration-300 overflow-hidden',
+        'group w-full h-full flex flex-col text-right overflow-hidden',
+        'hover:border-emerald-300/40 dark:hover:border-emerald-400/40',
         className || '',
       ].join(' ')}
     >
@@ -348,7 +352,7 @@ export function TourCard({
           {hasReservation ? 'جزئیات رزرو' : 'جزئیات و ثبت نام'}
         </Button>
       </div>
-    </article>
+    </Card>
   );
 }
 

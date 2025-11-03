@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useLazyWallets } from '@/src/hooks/useLazyWallets';
 import { selectWallet, selectWalletLastFetched } from '@/src/store/wallets';
 import { useSelector } from 'react-redux';
+import { Button } from '@/src/components/ui/Button';
+import { Card } from '@/src/components/ui/Card';
+import { IconButton } from '@/src/components/ui/IconButton';
+import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import { useWalletPageHeader } from './WalletPageHeaderContext';
 import {
   PiMoney,
@@ -13,6 +17,9 @@ import {
   PiArrowClockwise,
   PiReceipt,
   PiPlusCircle,
+  PiEye,
+  PiEyeSlash,
+  PiInfo,
 } from 'react-icons/pi';
 
 function formatCurrencyFa(amount: number) {
@@ -64,6 +71,7 @@ export default function WalletPage({ params }: WalletPageProps) {
   const lastFetched = useSelector(selectWalletLastFetched);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hidden, setHidden] = useState(false);
   const { setHeaderState } = useWalletPageHeader();
 
   // Handle case where walletId might be undefined
@@ -148,43 +156,17 @@ export default function WalletPage({ params }: WalletPageProps) {
     }
   };
 
+  const handleCreateDeposit = () => {
+    if (currentWalletId) {
+      router.push(`/wallet/${currentWalletId}/deposits/create`);
+    }
+  };
+
   return (
-    <>
-      <style jsx>{`
-        .custom-scrollbar {
-          scrollbar-width: thin;
-          scrollbar-color: #9CA3AF #F3F4F6;
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #F3F4F6;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #9CA3AF;
-          border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #6B7280;
-        }
-        .dark .custom-scrollbar {
-          scrollbar-color: #4B5563 #1F2937;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-track {
-          background: #1F2937;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #4B5563;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #6B7280;
-        }
-      `}</style>
-      <div className="h-full w-full flex flex-col" dir="rtl">
+    <div className="ps-2 h-full w-full flex flex-col" dir="rtl">
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar w-full">
-          <div className="p-4 space-y-4">
+        <ScrollableArea className="flex-1" hideScrollbar={true}>
+          <div className="space-y-2">
             {/* Error Message */}
             {error && (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-4">
@@ -194,43 +176,44 @@ export default function WalletPage({ params }: WalletPageProps) {
               </div>
             )}
 
-            {/* Wallet Balance Card - Modern Design */}
-            <div className="relative bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 rounded-lg p-6 text-white shadow-lg overflow-hidden">
-              {/* Decorative Background Elements */}
-              <div className="absolute top-0 left-0 w-32 h-32 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl" />
-              <div className="absolute bottom-0 right-0 w-40 h-40 bg-white/10 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl" />
-              
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-white/20 backdrop-blur-sm rounded-lg">
-                      <PiMoney className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-emerald-50 opacity-90">موجودی کیف پول</div>
-                      <div className="text-xs text-emerald-100 opacity-75 mt-0.5">
-                        {formatRelativeFa(wallet?.lastUpdated || lastFetched)}
-                      </div>
-                    </div>
-                  </div>
+            {/* Wallet Balance Card */}
+            <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-lg p-4 text-white shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-sm font-medium opacity-90">موجودی کیف پول</div>
+                <div className="flex items-center gap-2">
                   {isLoading && (
                     <div className="animate-spin">
-                      <PiArrowClockwise className="h-5 w-5 text-white/80" />
+                      <PiArrowClockwise className="h-4 w-4" />
                     </div>
                   )}
-                </div>
-                
-                <div className="mb-4">
-                  <div className="text-4xl font-bold mb-1">
-                    {wallet ? `${formatCurrencyFa(wallet.balance)} ریال` : 'در حال بارگذاری...'}
-                  </div>
-                  {wallet && (
-                    <div className="text-sm text-emerald-50 opacity-80 mt-1">
-                      {wallet.currency || 'ریال'}
-                    </div>
-                  )}
+                  <IconButton
+                    aria-label={hidden ? 'نمایش موجودی' : 'مخفی کردن موجودی'}
+                    onClick={() => setHidden(v => !v)}
+                    variant="ghost"
+                    className="text-white hover:bg-white/15 border-white/20"
+                  >
+                    {hidden ? <PiEye className="h-4 w-4" /> : <PiEyeSlash className="h-4 w-4" />}
+                  </IconButton>
                 </div>
               </div>
+
+              <div className="mb-1 text-2xl font-semibold tracking-tight">
+                {isLoading && !wallet ? 'در حال بارگذاری...' : hidden ? '•••••' : `${formatCurrencyFa(wallet?.balance ?? 0)} ریال`}
+              </div>
+              <div className="mb-4 text-sm font-normal text-emerald-100">
+                آخرین بروزرسانی: {formatRelativeFa(wallet?.lastUpdated || lastFetched)}
+              </div>
+
+              {error && (
+                <div className="mb-4 rounded-md bg-red-500/20 p-2 text-sm text-red-100">
+                  <div className="flex items-center justify-between">
+                    <span>{error}</span>
+                    <button onClick={handleRefresh} className="ml-2 text-xs underline hover:no-underline">
+                      تلاش مجدد
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Quick Actions - Improved Design */}
@@ -272,6 +255,17 @@ export default function WalletPage({ params }: WalletPageProps) {
               </button>
             </div>
 
+            {/* Add Deposit Button - Outside card */}
+            <Button
+              onClick={handleCreateDeposit}
+              variant="emerald"
+              size="lg"
+              className="w-full"
+              leftIcon={<PiPlusCircle className="h-5 w-5" />}
+            >
+              واریز جدید
+            </Button>
+
             {/* Wallet Information - Card Design */}
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
               <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
@@ -304,7 +298,7 @@ export default function WalletPage({ params }: WalletPageProps) {
                   </span>
                 </div>
                 
-                <div className="flex items-center justify-between py-3">
+                <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700/50">
                   <div className="flex items-center gap-2.5 text-gray-600 dark:text-gray-400">
                     <div className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700/50">
                       <PiClock className="h-4 w-4" />
@@ -317,9 +311,47 @@ export default function WalletPage({ params }: WalletPageProps) {
                 </div>
               </div>
             </div>
+
+            {/* Information Card */}
+            <Card variant="default" radius="lg" padding="md">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                  <PiInfo className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                  درباره کیف پول و خدمات
+                </h3>
+              </div>
+
+              <div className="space-y-4 text-sm text-gray-600 dark:text-gray-400">
+                <div>
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">کیف پول دیجیتال</h4>
+                  <p className="leading-relaxed">
+                    کیف پول دیجیتال شما امکان ذخیره و مدیریت موجودی را فراهم می‌کند. می‌توانید با واریز وجه به کیف پول، 
+                    از آن برای پرداخت انواع خدمات استفاده کنید. موجودی کیف پول در تمام زمان‌ها قابل مشاهده و مدیریت است.
+                  </p>
+                </div>
+
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">کاربران و حساب کاربری</h4>
+                  <p className="leading-relaxed">
+                    حساب کاربری شما به شما امکان دسترسی به تمام خدمات از جمله تورها، تسهیلات و سایر سرویس‌ها را می‌دهد. 
+                    شما می‌توانید اطلاعات حساب خود را مدیریت کرده و از تاریخچه تراکنش‌ها و فعالیت‌های خود مطلع شوید.
+                  </p>
+                </div>
+
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">امنیت و حریم خصوصی</h4>
+                  <p className="leading-relaxed">
+                    تمام اطلاعات کیف پول و تراکنش‌های شما به صورت امن ذخیره می‌شوند. می‌توانید موجودی خود را 
+                    در هر زمان مخفی کنید تا از امنیت بیشتر برخوردار شوید. همچنین تمام پرداخت‌ها و واریزها با بالاترین 
+                    استانداردهای امنیتی انجام می‌شود.
+                  </p>
+                </div>
+              </div>
+            </Card>
           </div>
-        </div>
+        </ScrollableArea>
       </div>
-    </>
   );
 }

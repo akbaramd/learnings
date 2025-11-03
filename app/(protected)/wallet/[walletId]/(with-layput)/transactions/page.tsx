@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useLazyWallets } from '@/src/hooks/useLazyWallets';
 import { selectWalletTransactions } from '@/src/store/wallets';
 import { useSelector } from 'react-redux';
+import { Card } from '@/src/components/ui/Card';
+import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import { useWalletPageHeader } from '../WalletPageHeaderContext';
 import {
   PiArrowLeft,
@@ -215,42 +217,10 @@ export default function TransactionsPage({ params }: TransactionsPageProps) {
   }, [fetchTransactions, currentWalletId]);
 
   return (
-    <>
-      <style jsx>{`
-        .custom-scrollbar {
-          scrollbar-width: thin;
-          scrollbar-color: #9CA3AF #F3F4F6;
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #F3F4F6;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #9CA3AF;
-          border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #6B7280;
-        }
-        .dark .custom-scrollbar {
-          scrollbar-color: #4B5563 #1F2937;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-track {
-          background: #1F2937;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #4B5563;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #6B7280;
-        }
-      `}</style>
-      <div className="h-full flex flex-col" dir="rtl">
+    <div className="h-full flex flex-col" dir="rtl">
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="p-4 space-y-4">
+        <ScrollableArea className="flex-1" hideScrollbar={true}>
+          <div className="ps-2 space-y-2">
             {/* Error Message */}
             {error && (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
@@ -262,25 +232,30 @@ export default function TransactionsPage({ params }: TransactionsPageProps) {
 
             {/* Transactions List */}
             {isLoading ? (
-              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
-                <div className="h-8 w-8 animate-spin border-2 border-gray-300 border-t-gray-600 rounded-full mx-auto mb-2" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">در حال بارگذاری...</p>
-              </div>
+              <Card variant="default" radius="lg" padding="lg">
+                <div className="text-center">
+                  <div className="h-8 w-8 animate-spin border-2 border-gray-300 border-t-gray-600 rounded-full mx-auto mb-2" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">در حال بارگذاری...</p>
+                </div>
+              </Card>
             ) : transactions && transactions.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {transactions.map((transaction) => {
                   const typeInfo = getTransactionTypeInfo(transaction.type);
                   const TypeIcon = typeInfo.icon;
                   
                   return (
-                     <div
-                       key={transaction.id}
-                       className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm transition-all"
-                     >
+                    <Card
+                      key={transaction.id}
+                      variant="default"
+                      radius="lg"
+                      padding="md"
+                      hover={true}
+                    >
                        {/* Top Row: Icon, Amount, Type Badge */}
                        <div className="flex items-center justify-between mb-2">
                          <div className="flex items-center gap-3 flex-1">
-                           <div className={`p-2 rounded-xl ${typeInfo.bgColor} flex-shrink-0`}>
+                           <div className={`p-2 rounded-lg ${typeInfo.bgColor} flex-shrink-0`}>
                              <TypeIcon className={`h-4 w-4 ${typeInfo.color}`} />
                            </div>
                            <div className={`text-base font-semibold ${typeInfo.amountColor}`}>
@@ -311,21 +286,22 @@ export default function TransactionsPage({ params }: TransactionsPageProps) {
                            </div>
                          )}
                        </div>
-                     </div>
+                    </Card>
                   );
                 })}
               </div>
             ) : (
-              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
-                <PiReceipt className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">هنوز تراکنشی ثبت نشده است</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500">تراکنش‌های شما در اینجا نمایش داده می‌شوند</p>
-              </div>
+              <Card variant="default" radius="lg" padding="lg">
+                <div className="text-center">
+                  <PiReceipt className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">هنوز تراکنشی ثبت نشده است</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">تراکنش‌های شما در اینجا نمایش داده می‌شوند</p>
+                </div>
+              </Card>
             )}
           </div>
-        </div>
+        </ScrollableArea>
       </div>
-    </>
   );
 }
 

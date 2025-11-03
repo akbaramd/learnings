@@ -6,13 +6,16 @@ import type {
   TourDetailWithUserReservationDto,
   ReservationDetailDto,
 } from './tours.types';
+import { ReservationDto } from '@/src/services/Api';
 
 const initialState: ToursState = {
   items: [],
   selectedTour: null,
   reservations: [],
+  reservationsList: [],
   selectedReservation: null,
   pagination: null,
+  reservationsPagination: null,
   isLoading: false,
   error: null,
   lastFetched: null,
@@ -106,6 +109,33 @@ const toursSlice = createSlice({
       state.pagination = action.payload;
     },
 
+    // Reservations list (paginated)
+    setReservationsList: (state, action: PayloadAction<ReservationDto[]>) => {
+      state.reservationsList = action.payload;
+    },
+
+    clearReservationsList: (state) => {
+      state.reservationsList = [];
+      state.reservationsPagination = null;
+    },
+
+    setReservationsPagination: (state, action: PayloadAction<PaginationInfo>) => {
+      state.reservationsPagination = action.payload;
+    },
+
+    addReservationToList: (state, action: PayloadAction<ReservationDto>) => {
+      const idx = state.reservationsList.findIndex(x => x.id === action.payload.id);
+      if (idx === -1) {
+        state.reservationsList.unshift(action.payload);
+      } else {
+        state.reservationsList[idx] = action.payload;
+      }
+    },
+
+    removeReservationFromList: (state, action: PayloadAction<string>) => {
+      state.reservationsList = state.reservationsList.filter(x => x.id !== action.payload);
+    },
+
     // Loading and error states
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
@@ -142,6 +172,11 @@ export const {
   setSelectedReservation,
   clearSelectedReservation,
   setPagination,
+  setReservationsList,
+  clearReservationsList,
+  setReservationsPagination,
+  addReservationToList,
+  removeReservationFromList,
   setLoading,
   setError,
   clearError,

@@ -124,7 +124,7 @@ export function ServiceCard({ s, onClick, active, className, dir }: ServiceCardP
       onClick={() => !s.disabled && onClick?.(s.id)}
       aria-disabled={s.disabled || undefined}
       className={[
-        'group relative w-full rounded-xl border p-3 text-center transition-all duration-200',
+        'group relative w-full rounded-lg border p-3 text-center transition-all duration-200',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500 dark:focus-visible:ring-emerald-400',
         cls.card,
         s.disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
@@ -144,7 +144,7 @@ export function ServiceCard({ s, onClick, active, className, dir }: ServiceCardP
       {/* Icon */}
       <div
         className={[
-          'mx-auto mb-2 grid h-8 w-8 place-items-center rounded-xl',
+          'mx-auto mb-2 grid h-8 w-8 place-items-center rounded-lg',
           'transition-transform duration-200',
           s.disabled ? '' : 'group-hover:scale-105',
           cls.iconWrap,

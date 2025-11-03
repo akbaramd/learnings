@@ -13,6 +13,8 @@ import {
   ReactivateReservationResponse,
   StartReservationRequestWrapper,
   AddGuestToReservationRequest,
+  GetReservationsPaginatedRequest,
+  GetReservationsPaginatedResponse,
   PaginationInfo,
 } from './tours.types';
 import {
@@ -25,6 +27,9 @@ import {
   clearSelectedReservation,
   setLoading,
   setError,
+  setReservationsList,
+  clearReservationsList,
+  setReservationsPagination,
 } from './tours.slice';
 
 /** Error handler for Tours API */
@@ -278,6 +283,65 @@ export const toursApi = createApi({
         }
       },
     }),
+
+    // Get Reservations Paginated
+    getReservationsPaginated: builder.query<GetReservationsPaginatedResponse, GetReservationsPaginatedRequest>({
+      query: (request) => {
+        const searchParams = new URLSearchParams();
+        searchParams.append('pageNumber', request.pageNumber.toString());
+        searchParams.append('pageSize', request.pageSize.toString());
+        if (request.status) {
+          searchParams.append('status', request.status);
+        }
+        if (request.search) {
+          searchParams.append('search', request.search);
+        }
+        if (request.fromDate) {
+          searchParams.append('fromDate', request.fromDate);
+        }
+        if (request.toDate) {
+          searchParams.append('toDate', request.toDate);
+        }
+        return {
+          url: `/tours/reservations?${searchParams.toString()}`,
+          method: 'GET',
+        };
+      },
+      providesTags: ['Reservations'],
+      keepUnusedDataFor: 300,
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          dispatch(setLoading(true));
+          const { data } = await queryFulfilled;
+          const payload = data?.data;
+          if (payload) {
+            dispatch(clearReservationsList());
+            dispatch(setReservationsList(payload.items || []));
+            
+            const pageSize = payload.pageSize || arg.pageSize;
+            const totalCount = payload.totalCount || 0;
+            const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(totalCount / pageSize)) : 1;
+            const pageNumber = payload.pageNumber || arg.pageNumber;
+            
+            const pagination: PaginationInfo = {
+              pageNumber,
+              pageSize,
+              totalPages,
+              totalCount,
+              hasPreviousPage: pageNumber > 1,
+              hasNextPage: pageNumber < totalPages,
+            };
+            dispatch(setReservationsPagination(pagination));
+            dispatch(setError(null));
+          }
+        } catch (error: unknown) {
+          const errorMessage = handleToursApiError(error);
+          dispatch(setError(errorMessage));
+        } finally {
+          dispatch(setLoading(false));
+        }
+      },
+    }),
   }),
 });
 
@@ -295,6 +359,8 @@ export const {
   useRemoveGuestFromReservationMutation,
   useFinalizeReservationMutation,
   useReactivateReservationMutation,
+  useGetReservationsPaginatedQuery,
+  useLazyGetReservationsPaginatedQuery,
 } = toursApi;
 
 export default toursApi;

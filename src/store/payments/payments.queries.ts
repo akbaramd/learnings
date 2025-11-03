@@ -1,52 +1,26 @@
 // src/store/payments/payments.queries.ts
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi } from '@reduxjs/toolkit/query/react';
 import {
     CreatePaymentRequest,
     CreatePaymentResponseWrapper,
-    PayWithWalletRequest,
-    PayWithWalletResponseWrapper,
     GetPaymentGatewaysResponseWrapper,
-    PaymentGatewayInfo, GetPaymentDetailWrapper,
+    GetPaymentDetailWrapper,
+    GetPaymentsPaginatedRequest,
+    GetPaymentsPaginatedResponse,
+    GetBillPaymentsRequest,
+    GetBillPaymentsResponse,
+    PaginationInfo,
 } from './payments.types';
 import {
   setCurrentPayment,
   setPaymentGateways,
   setError,
   setLoading,
+  setPayments,
+  clearPayments,
+  setPaymentsPagination,
 } from './payments.slice';
-import { AxiosError } from 'axios';
 import { baseQueryWithReauth } from '../api/baseApi';
-
-
-// Lightweight diagnostic logger to understand error shapes at runtime
-const debugLogError = (error: unknown) => {
-  const base = {
-    typeof: typeof error,
-    constructor: error && typeof error === 'object' ? (error as unknown as { constructor?: { name?: string } })?.constructor?.name : undefined,
-  };
-  try {
-    if (error && typeof error === 'object') {
-      const err = error as AxiosError & { isAxiosError?: boolean };
-      // Avoid logging entire payloads; just summarize
-      // eslint-disable-next-line no-console
-      console.log('[payments] error diagnostic:', {
-        ...base,
-        isAxiosError: !!err?.isAxiosError,
-        message: (err as unknown as Error)?.message,
-        code: (err as unknown as AxiosError)?.code,
-        status: err?.response?.status,  
-        statusText: err?.response?.statusText,
-        dataType: typeof err?.response?.data,
-        dataKeys: err?.response?.data && typeof err.response.data === 'object' ? Object.keys(err.response.data as object) : undefined,
-      });
-    } else {
-      // eslint-disable-next-line no-console
-      console.log('[payments] error diagnostic:', base);
-    }
-  } catch {
-    // Swallow any logging errors
-  }
-};
 
 export const handlePaymentsApiError = (payload: unknown): string => {
   try {
@@ -111,7 +85,6 @@ export const paymentsApi = createApi({
             dispatch(setError(data.errors[0] || 'Failed to create payment'));
           }
         } catch (error) {
-          debugLogError(error);
           dispatch(setError(handlePaymentsApiError(error)));
         } finally {
           dispatch(setLoading(false));
@@ -136,7 +109,6 @@ export const paymentsApi = createApi({
                       dispatch(setError(data.errors[0] || 'Failed to create payment'));
                   }
               } catch (error) {
-                  debugLogError(error);
                   dispatch(setError(handlePaymentsApiError(error)));
               } finally {
                   dispatch(setLoading(false));
@@ -167,6 +139,120 @@ export const paymentsApi = createApi({
       },
     }),
 
+    // Get Payments Paginated
+    getPaymentsPaginated: builder.query<GetPaymentsPaginatedResponse, GetPaymentsPaginatedRequest>({
+      query: (request) => {
+        const searchParams = new URLSearchParams();
+        searchParams.append('pageNumber', request.pageNumber.toString());
+        searchParams.append('pageSize', request.pageSize.toString());
+        if (request.status) {
+          searchParams.append('status', request.status);
+        }
+        if (request.search) {
+          searchParams.append('search', request.search);
+        }
+        if (request.fromDate) {
+          searchParams.append('fromDate', request.fromDate);
+        }
+        if (request.toDate) {
+          searchParams.append('toDate', request.toDate);
+        }
+        return {
+          url: `/payments?${searchParams.toString()}`,
+          method: 'GET',
+        };
+      },
+      providesTags: ['Payment'],
+      keepUnusedDataFor: 300,
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          dispatch(setLoading(true));
+          const { data } = await queryFulfilled;
+          const payload = data?.data;
+          if (payload) {
+            dispatch(clearPayments());
+            dispatch(setPayments(payload.items || []));
+            
+            const pageSize = payload.pageSize || arg.pageSize;
+            const totalCount = payload.totalCount || 0;
+            const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(totalCount / pageSize)) : 1;
+            const pageNumber = payload.pageNumber || arg.pageNumber;
+            
+            const pagination: PaginationInfo = {
+              pageNumber,
+              pageSize,
+              totalPages,
+              totalCount,
+              hasPreviousPage: pageNumber > 1,
+              hasNextPage: pageNumber < totalPages,
+            };
+            dispatch(setPaymentsPagination(pagination));
+            dispatch(setError(null));
+          }
+        } catch (error: unknown) {
+          dispatch(setError(handlePaymentsApiError(error)));
+        } finally {
+          dispatch(setLoading(false));
+        }
+      },
+    }),
+
+    // Get Bill Payments Paginated
+    getBillPayments: builder.query<GetBillPaymentsResponse, GetBillPaymentsRequest>({
+      query: (request) => {
+        const searchParams = new URLSearchParams();
+        searchParams.append('pageNumber', request.pageNumber.toString());
+        searchParams.append('pageSize', request.pageSize.toString());
+        // Valid sort fields: id, issuedate, duedate, amount, status
+        const validSortFields = ['id', 'issuedate', 'duedate', 'amount', 'status'];
+        const sortBy = request.sortBy && validSortFields.includes(request.sortBy)
+          ? request.sortBy
+          : 'issuedate'; // Default to issuedate if invalid or missing
+        searchParams.append('sortBy', sortBy);
+        searchParams.append('sortDirection', request.sortDirection || 'desc');
+        if (request.searchTerm) {
+          searchParams.append('searchTerm', request.searchTerm);
+        }
+        return {
+          url: `/bills/${request.billId}/payments?${searchParams.toString()}`,
+          method: 'GET',
+        };
+      },
+      providesTags: ['Payment'],
+      keepUnusedDataFor: 300,
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          dispatch(setLoading(true));
+          const { data } = await queryFulfilled;
+          const payload = data?.data;
+          if (payload) {
+            dispatch(clearPayments());
+            dispatch(setPayments(payload.items || []));
+            
+            const pageSize = payload.pageSize || arg.pageSize;
+            const totalCount = payload.totalCount || 0;
+            const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(totalCount / pageSize)) : 1;
+            const pageNumber = payload.pageNumber || arg.pageNumber;
+            
+            const pagination: PaginationInfo = {
+              pageNumber,
+              pageSize,
+              totalPages,
+              totalCount,
+              hasPreviousPage: pageNumber > 1,
+              hasNextPage: pageNumber < totalPages,
+            };
+            dispatch(setPaymentsPagination(pagination));
+            dispatch(setError(null));
+          }
+        } catch (error: unknown) {
+          dispatch(setError(handlePaymentsApiError(error)));
+        } finally {
+          dispatch(setLoading(false));
+        }
+      },
+    }),
+
   }),
 });
 
@@ -175,8 +261,12 @@ export const {
   useCreatePaymentMutation,
   useGetPaymentGatewaysQuery,
   useGetPaymentDetailQuery,
+  useGetPaymentsPaginatedQuery,
+  useGetBillPaymentsQuery,
   useLazyGetPaymentGatewaysQuery,
   useLazyGetPaymentDetailQuery,
+  useLazyGetPaymentsPaginatedQuery,
+  useLazyGetBillPaymentsQuery,
 } = paymentsApi;
 
 // Export the API slice

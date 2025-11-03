@@ -298,7 +298,7 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
                         <button
                           key={capacity.id}
                           onClick={() => setSelectedCapacityId(capacity.id!)}
-                          className={`capacity-card w-full text-right p-5 rounded-xl border-2 transition-all duration-200 ${
+                          className={`capacity-card w-full text-right p-5 rounded-lg border-2 transition-all duration-200 ${
                             isSelected
                               ? 'border-emerald-500 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/20 shadow-md selected'
                               : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md'
@@ -377,7 +377,7 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
               )}
 
               {/* Tour Information */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 space-y-4">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                   <div className="w-1 h-5 bg-emerald-500 rounded-full" />
                   اطلاعات تور

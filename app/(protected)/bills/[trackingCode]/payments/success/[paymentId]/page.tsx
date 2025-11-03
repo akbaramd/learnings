@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { useLazyGetPaymentDetailQuery, selectPaymentsLoading } from '@/src/store/payments';
 import { Button } from '@/src/components/ui/Button';
 import { PageHeader } from '@/src/components/ui/PageHeader';
+import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import { PiCheckCircle, PiReceipt, PiArrowLeft } from 'react-icons/pi';
 import { PaymentDetailDto } from '@/src/services/Api';
 
@@ -206,39 +207,7 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
   }
 
   return (
-    <>
-      <style jsx>{`
-        .custom-scrollbar {
-          scrollbar-width: thin;
-          scrollbar-color: #9CA3AF #F3F4F6;
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #F3F4F6;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #9CA3AF;
-          border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #6B7280;
-        }
-        .dark .custom-scrollbar {
-          scrollbar-color: #4B5563 #1F2937;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-track {
-          background: #1F2937;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #4B5563;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #6B7280;
-        }
-      `}</style>
-      <div className="h-full flex flex-col" dir="rtl">
+    <div className="h-full flex flex-col" dir="rtl">
         <PageHeader
           title="رسید پرداخت"
           titleIcon={<PiCheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />}
@@ -247,7 +216,7 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
         />
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <ScrollableArea className="flex-1" hideScrollbar={true}>
           <div className="p-4 space-y-4">
             {/* Success Card */}
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center shadow-sm">
@@ -329,7 +298,7 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
               </div>
             </div>
           </div>
-        </div>
+        </ScrollableArea>
 
         {/* Fixed Action Buttons at Bottom */}
         <div className="flex-shrink-0 sticky bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent dark:from-gray-900 dark:via-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)] z-10">
@@ -364,7 +333,6 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
           </div>
         </div>
       </div>
-    </>
   );
 }
 

@@ -127,6 +127,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
   // Get bill detail from response
   const bill: BillDetail | null = billResponse?.data || null;
   const billItems = bill?.items || [];
+  const billId = bill?.id || '';
   
   const totalAmount = bill?.totalAmountRials || 0;
 
@@ -436,6 +437,16 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
           onBack={handleBack}
           rightActions={[
             {
+              icon: <PiCreditCard className="h-4 w-4" />,
+              onClick: () => {
+                if (bill?.id) {
+                  router.push(`/bills/${trackingCodeFromParams}/payments?billId=${bill.id}`);
+                }
+              },
+              label: 'پرداخت‌ها',
+              'aria-label': 'مشاهده پرداخت‌های این فاکتور',
+            },
+            {
               icon: <PiArrowClockwise className="h-4 w-4" />,
               onClick: handleRefresh,
               label: 'تازه‌سازی',
@@ -545,6 +556,16 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
           showBackButton
           onBack={handleBack}
           rightActions={[
+            {
+              icon: <PiCreditCard className="h-4 w-4" />,
+              onClick: () => {
+                if (billId) {
+                  router.push(`/bills/${trackingCodeFromParams}/payments?billId=${billId}`);
+                }
+              },
+              label: 'پرداخت‌ها',
+              'aria-label': 'مشاهده پرداخت‌های این فاکتور',
+            },
             {
               icon: <PiArrowClockwise className="h-4 w-4" />,
               onClick: handleRefresh,

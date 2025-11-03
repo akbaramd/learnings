@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Call the upstream API to pay with wallet
-    const upstream = await api.api.payWithWallet({
+    const upstream = await api.api.mePayWithWallet({
       billId: requestBody.billId,
       amountRials: requestBody.amountRials,
       description: requestBody.description,

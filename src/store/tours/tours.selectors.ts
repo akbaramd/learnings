@@ -15,6 +15,8 @@ const selectToursState = (state: RootState): ToursState => {
       isLoading: false,
       error: null,
       lastFetched: null,
+      reservationsList:[],
+      reservationsPagination:null
     };
   }
   return state.tours;

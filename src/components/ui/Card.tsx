@@ -8,6 +8,8 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'outlined' | 'elevated';
   padding?: 'none' | 'sm' | 'md' | 'lg';
   radius?: 'none' | 'sm' | 'md' | 'lg';
+  hover?: boolean;
+  clickable?: boolean;
   className?: string;
 }
 
@@ -46,17 +48,29 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
     children,
     variant = 'default',
     padding = 'md',
-    radius = 'md',
+    radius = 'lg',
+    hover = false,
+    clickable = false,
     className = '',
     ...rest
   },
   ref
 ) {
+  const hoverClasses = hover
+    ? 'hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600'
+    : '';
+  
+  const clickableClasses = clickable
+    ? 'cursor-pointer'
+    : '';
+
   const cardClasses = [
     CARD_VARIANTS[variant],
     PADDING_CLASSES[padding],
     RADIUS_CLASSES[radius],
-    'transition-colors duration-200',
+    'transition-all duration-200',
+    hoverClasses,
+    clickableClasses,
     className,
   ].filter(Boolean).join(' ');
 

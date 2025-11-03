@@ -4,10 +4,10 @@ import {
   PaymentState, 
   CreatePaymentResponse,
   PaymentGatewayInfo,
-  PayWithWalletResponse,
-  PaymentStatus
+  PaymentStatus,
+  PaginationInfo
 } from './payments.types';
-import {PaymentDetailDto} from "@/src/services/Api";
+import {PaymentDetailDto, PaymentDto} from "@/src/services/Api";
 
 // Type guards for runtime validation
 const isValidPayment = (payment: unknown): payment is CreatePaymentResponse => {
@@ -38,25 +38,13 @@ const isValidGateway = (gateway: unknown): gateway is PaymentGatewayInfo => {
     typeof gatewayObj.isActive === 'boolean';
 };
 
-const isValidWalletPayment = (payment: unknown): payment is PayWithWalletResponse => {
-  if (payment === null || typeof payment !== 'object') return false;
-  
-  const paymentObj = payment as Record<string, unknown>;
-  
-  return 'paymentId' in paymentObj && 
-    'billId' in paymentObj &&
-    'amount' in paymentObj &&
-    'status' in paymentObj &&
-    typeof paymentObj.paymentId === 'string' && 
-    typeof paymentObj.billId === 'string' &&
-    typeof paymentObj.amount === 'number' &&
-    typeof paymentObj.status === 'string';
-};
 
 // Initial state
 const initialState: PaymentState = {
   currentPayment: null,
   paymentGateways: [],
+  payments: [],
+  pagination: null,
   isLoading: false,
   error: null,
 };
@@ -148,6 +136,35 @@ const paymentsSlice = createSlice({
       state.error = null;
     },
 
+    // Payments list management
+    setPayments: (state, action: PayloadAction<PaymentDto[]>) => {
+      state.payments = action.payload;
+      state.error = null;
+    },
+
+    clearPayments: (state) => {
+      state.payments = [];
+      state.pagination = null;
+      state.error = null;
+    },
+
+    setPaymentsPagination: (state, action: PayloadAction<PaginationInfo>) => {
+      state.pagination = action.payload;
+    },
+
+    addPaymentToList: (state, action: PayloadAction<PaymentDto>) => {
+      const idx = state.payments.findIndex(x => x.paymentId === action.payload.paymentId);
+      if (idx === -1) {
+        state.payments.unshift(action.payload);
+      } else {
+        state.payments[idx] = action.payload;
+      }
+    },
+
+    removePaymentFromList: (state, action: PayloadAction<string>) => {
+      state.payments = state.payments.filter(x => x.paymentId !== action.payload);
+    },
+
     // Reset actions
     resetPaymentsState: () => initialState,
 
@@ -155,6 +172,11 @@ const paymentsSlice = createSlice({
     updatePaymentStatusOptimistically: (state, action: PayloadAction<{ paymentId: string; status: PaymentStatus }>) => {
       if (state.currentPayment && state.currentPayment.paymentId === action.payload.paymentId) {
         state.currentPayment.status = action.payload.status;
+      }
+      // Also update in list if exists
+      const paymentInList = state.payments.find(p => p.paymentId === action.payload.paymentId);
+      if (paymentInList) {
+        paymentInList.status = action.payload.status;
       }
     },
 
@@ -169,6 +191,11 @@ export const {
   addPaymentGateway,
   updatePaymentGateway,
   removePaymentGateway,
+  setPayments,
+  clearPayments,
+  setPaymentsPagination,
+  addPaymentToList,
+  removePaymentFromList,
   setLoading,
   setError,
   clearError,

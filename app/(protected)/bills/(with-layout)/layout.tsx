@@ -1,53 +1,40 @@
 'use client';
 
-import { use, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { WalletPageHeaderProvider, useWalletPageHeader } from './WalletPageHeaderContext';
+import { BillsPageHeaderProvider, useBillsPageHeader } from './BillsPageHeaderContext';
 import { PageHeader } from '@/src/components/ui/PageHeader';
 import {
-  PiGridFour,
-  PiPlusCircle,
   PiReceipt,
+  PiCreditCard,
 } from 'react-icons/pi';
 
-interface WalletLayoutProps {
+interface BillsLayoutProps {
   children: React.ReactNode;
-  params: Promise<{
-    walletId?: string;
-  }>;
 }
 
-function WalletLayoutContent({ children, params }: WalletLayoutProps) {
+function BillsLayoutContent({ children }: BillsLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { walletId } = use(params);
-  const currentWalletId = walletId || 'default';
-  const { headerState } = useWalletPageHeader();
+  const { headerState } = useBillsPageHeader();
 
   // Define navigation tabs
   const tabs = useMemo(() => [
     {
-      id: 'dashboard',
-      label: 'پیشخوان',
-      icon: PiGridFour,
-      path: `/wallet/${currentWalletId}`,
-      active: pathname === `/wallet/${currentWalletId}` || pathname === `/wallet/${currentWalletId}/`,
-    },
-    {
-      id: 'deposits',
-      label: 'واریزها',
-      icon: PiPlusCircle,
-      path: `/wallet/${currentWalletId}/deposits`,
-      active: pathname.startsWith(`/wallet/${currentWalletId}/deposits`),
-    },
-    {
-      id: 'transactions',
-      label: 'تراکنش‌ها',
+      id: 'bills',
+      label: 'صورت حساب‌ها',
       icon: PiReceipt,
-      path: `/wallet/${currentWalletId}/transactions`,
-      active: pathname.startsWith(`/wallet/${currentWalletId}/transactions`),
+      path: '/bills',
+      active: pathname === '/bills' || pathname === '/bills/',
     },
-  ], [currentWalletId, pathname]);
+    {
+      id: 'payments',
+      label: 'پرداخت‌ها',
+      icon: PiCreditCard,
+      path: '/bills/payments',
+      active: pathname.startsWith('/bills/payments'),
+    },
+  ], [pathname]);
 
   const handleTabClick = (path: string) => {
     router.push(path);
@@ -176,13 +163,13 @@ function WalletLayoutContent({ children, params }: WalletLayoutProps) {
   );
 }
 
-export default function WalletLayout({ children, params }: WalletLayoutProps) {
+export default function BillsLayout({ children }: BillsLayoutProps) {
   return (
-    <WalletPageHeaderProvider>
-      <WalletLayoutContent params={params}>
+    <BillsPageHeaderProvider>
+      <BillsLayoutContent>
         {children}
-      </WalletLayoutContent>
-    </WalletPageHeaderProvider>
+      </BillsLayoutContent>
+    </BillsPageHeaderProvider>
   );
 }
 

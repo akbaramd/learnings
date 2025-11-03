@@ -65,6 +65,20 @@ export type FinalizeReservationResponse = FinalizeReservationResponseApplication
 
 export type ReactivateReservationResponse = ReactivateReservationResponseApplicationResult;
 
+// Reservations paginated types
+import { ReservationDtoPaginatedResultApplicationResult, ReservationDto } from '@/src/services/Api';
+
+export type GetReservationsPaginatedResponse = ReservationDtoPaginatedResultApplicationResult;
+
+export interface GetReservationsPaginatedRequest {
+  pageNumber: number;
+  pageSize: number;
+  status?: string;
+  search?: string;
+  fromDate?: string;
+  toDate?: string;
+}
+
 // Request types
 export interface GetToursPaginatedRequest {
   pageNumber: number;
@@ -98,8 +112,10 @@ export interface ToursState {
   items: TourWithUserReservationDto[];
   selectedTour: TourDetailWithUserReservationDto | null;
   reservations: ReservationDetailDto[];
+  reservationsList: ReservationDto[]; // Paginated reservations list
   selectedReservation: ReservationDetailDto | null;
   pagination: PaginationInfo | null;
+  reservationsPagination: PaginationInfo | null; // Pagination for reservations list
   isLoading: boolean;
   error: string | null;
   lastFetched: string | null;

@@ -4,7 +4,7 @@ import { Button as HUIButton } from '@headlessui/react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { forwardRef, useMemo } from 'react';
 
-type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
+type Variant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'emerald';
 type Size = 'xs' | 'sm' | 'md' | 'lg';
 type Radius = 'xs' | 'sm' | 'md' | 'none';
 
@@ -48,6 +48,13 @@ const VARIANT_STYLES: Record<Variant, string> = {
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800',
     'focus-visible:ring-neutral-300 dark:focus-visible:ring-gray-500',
     'disabled:text-neutral-400 dark:disabled:text-gray-500 disabled:border-neutral-200 dark:disabled:border-gray-700',
+  ].join(' '),
+  emerald: [
+    'bg-gradient-to-br from-emerald-600 to-emerald-700 dark:from-emerald-500 dark:to-emerald-600 text-white',
+    'data-[hover]:from-emerald-700 data-[hover]:to-emerald-800 dark:data-[hover]:from-emerald-600 dark:data-[hover]:to-emerald-700',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800',
+    'focus-visible:ring-emerald-600 dark:focus-visible:ring-emerald-500',
+    'disabled:from-gray-400 disabled:to-gray-500 dark:disabled:from-gray-600 dark:disabled:to-gray-700 disabled:text-gray-200 dark:disabled:text-gray-300',
   ].join(' '),
 };
 

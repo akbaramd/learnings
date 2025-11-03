@@ -15,7 +15,6 @@ import {
   PiBell,
   PiSun,
   PiMoon,
-  PiComputerTowerDuotone,
   PiHouse,
   PiUser,
   PiSignOut,
@@ -27,7 +26,7 @@ interface ProtectedLayoutProps {
 }
 
 function ThemeIconButton() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   // Prevent hydration mismatch by only rendering after mount
@@ -36,27 +35,38 @@ function ThemeIconButton() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Ensure system mode is converted to light on mount
+  useEffect(() => {
+    if (mounted && theme === 'system') {
+      setTheme('light');
+    }
+  }, [mounted, theme, setTheme]);
+
+  const handleToggleTheme = () => {
+    // Only toggle between light and dark
+    if (theme === 'light') {
+      setTheme('dark');
+    } else {
+      setTheme('light');
+    }
+  };
+
   if (!mounted) {
     // Return a placeholder that matches the expected size
     return (
       <IconButton aria-label="Loading theme" variant="ghost">
-        <PiComputerTowerDuotone className="h-4 w-4" />
+        <PiSun className="h-4 w-4" />
       </IconButton>
     );
   }
 
-  const icon =
-    theme === 'light' ? <PiSun className="h-4 w-4" /> :
-    theme === 'dark' ? <PiMoon className="h-4 w-4" /> :
-    <PiComputerTowerDuotone className="h-4 w-4" />;
-
-  const label =
-    theme === 'light' ? 'Switch to dark mode' :
-    theme === 'dark' ? 'Switch to system mode' :
-    'Switch to light mode';
+  // Only show light or dark icons (no system mode)
+  const currentTheme = theme === 'system' ? 'light' : theme;
+  const icon = currentTheme === 'light' ? <PiSun className="h-4 w-4" /> : <PiMoon className="h-4 w-4" />;
+  const label = currentTheme === 'light' ? 'Switch to dark mode' : 'Switch to light mode';
 
   return (
-    <IconButton aria-label={label} onClick={toggleTheme} variant="ghost">
+    <IconButton aria-label={label} onClick={handleToggleTheme} variant="ghost">
       {icon}
     </IconButton>
   );
@@ -149,7 +159,7 @@ function MenuDrawer({ isOpen, onClose, onLogout }: { isOpen: boolean; onClose: (
             <button
               key={item.id}
               onClick={() => handleNavigation(item.path)}
-              className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-right transition-all ${
+              className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-lg text-right transition-all ${
                 item.active
                   ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 shadow-sm'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm'
@@ -165,7 +175,7 @@ function MenuDrawer({ isOpen, onClose, onLogout }: { isOpen: boolean; onClose: (
       <Drawer.Footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-right text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 transition-all hover:shadow-sm"
+          className="w-full flex items-center gap-3 px-4 py-3.5 rounded-lg text-right text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 transition-all hover:shadow-sm"
         >
           <PiSignOut className="h-5 w-5" />
           <span className="font-medium">خروج</span>

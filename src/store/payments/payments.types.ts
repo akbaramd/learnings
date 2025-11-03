@@ -112,10 +112,48 @@ export type PaymentStatus =
   | 'expired'
   | 'refunded';
 
+// Paginated Payments Types
+import { PaymentDtoPaginatedResultApplicationResult, PaymentDto } from '@/src/services/Api';
+
+export type GetPaymentsPaginatedResponse = PaymentDtoPaginatedResultApplicationResult;
+
+export interface GetPaymentsPaginatedRequest {
+  pageNumber: number;
+  pageSize: number;
+  status?: string;
+  search?: string;
+  fromDate?: string;
+  toDate?: string;
+}
+
+// Bill Payments Types
+export type GetBillPaymentsResponse = PaymentDtoPaginatedResultApplicationResult;
+
+export interface GetBillPaymentsRequest {
+  billId: string;
+  pageNumber: number;
+  pageSize: number;
+  searchTerm?: string;
+  sortBy?: string;
+  sortDirection?: string;
+}
+
 // Payment State Types
 export interface PaymentState {
   currentPayment: PaymentDetailDto | null;
   paymentGateways: PaymentGatewayInfo[];
+  payments: PaymentDto[]; // List of payments for paginated view
+  pagination: PaginationInfo | null;
   isLoading: boolean;
   error: string | null;
+}
+
+// Pagination info
+export interface PaginationInfo {
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+  totalCount: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
 }

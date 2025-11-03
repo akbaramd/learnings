@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     // Call the upstream API to pay with wallet
-    const upstream = await api.api.payWithWallet(body);
+    const upstream = await api.api.mePayWithWallet(body);
     const status = upstream.status ?? 200;
 
     // Map backend response to frontend PayWithWalletResponse type

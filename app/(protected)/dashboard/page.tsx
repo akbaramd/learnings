@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { IconButton } from '@/src/components/ui/IconButton';
+import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import { PiEye, PiEyeSlash, PiGear, PiArrowClockwise, PiMapPinDuotone, PiMoney, PiBuildingOffice, PiDiamondDuotone, PiShieldCheck, PiTruck } from 'react-icons/pi';
 import { ServicesGrid } from '@/src/components/services/ServiceCard';
 import { TourSection } from '@/src/components/tours/TourSection';
@@ -197,26 +198,8 @@ export default function HomeDashboard() {
   const { tours, isLoading, isError } = useToursList();
 
   return (
-    <>
-      <style jsx>{`
-        .custom-scrollbar {
-          scrollbar-width: thin;
-          scrollbar-color: #9ca3af #f3f4f6;
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #9ca3af;
-          border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #6b7280;
-        }
-      `}</style>
-
-      <div className="h-full flex flex-col" dir="rtl">
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+    <div className="h-full flex flex-col" dir="rtl">
+        <ScrollableArea className="flex-1" hideScrollbar={true}>
           <div className="space-y-4">
             {/* Wallet */}
             <section>
@@ -235,8 +218,7 @@ export default function HomeDashboard() {
               {!isLoading && !isError && <TourSection seeAllHref="/tours" title="تورها" dir="rtl" tours={tours} />}
             </section>
           </div>
-        </div>
+        </ScrollableArea>
       </div>
-    </>
   );
 }
