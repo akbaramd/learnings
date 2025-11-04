@@ -1,5 +1,6 @@
 // src/store/discounts/discounts.queries.ts
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { baseQueryWithReauth } from '@/src/store/api/baseApi';
 import {
   ValidateDiscountCodeRequest,
   ValidateDiscountCodeResponseWrapper,
@@ -36,19 +37,13 @@ export const handleDiscountsApiError = (error: unknown): string => {
 // Discounts API slice
 export const discountsApi = createApi({
   reducerPath: 'discountsApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: '/api/discount-codes',
-    prepareHeaders: (headers) => {
-      headers.set('Content-Type', 'application/json');
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithReauth,
   tagTypes: ['DiscountValidation'],
   endpoints: (builder) => ({
     // Validate discount code
     validateDiscountCode: builder.mutation<ValidateDiscountCodeResponseWrapper, ValidateDiscountCodeRequest>({
       query: (validationData) => ({
-        url: '/validate',
+        url: '/discount-codes/validate',
         method: 'POST',
         body: validationData,
       }),

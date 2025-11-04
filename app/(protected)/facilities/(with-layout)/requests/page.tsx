@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { InputField } from '@/src/components/forms/InputField';
 import { Button } from '@/src/components/ui/Button';
@@ -19,6 +19,11 @@ import {
   PiClock,
   PiXCircle,
   PiWarning,
+  PiWarningCircle,
+  PiListChecks,
+  PiArrowCounterClockwise,
+  PiBuilding,
+  PiCalendarCheck,
 } from 'react-icons/pi';
 import { useFacilitiesPageHeader } from '../FacilitiesPageHeaderContext';
 
@@ -56,45 +61,105 @@ function formatDateFa(date: Date | string | null | undefined): string {
   }
 }
 
-function getStatusIcon(status: string | null | undefined) {
-  switch (status) {
-    case 'Approved':
-      return <PiCheckCircle className="h-5 w-5 text-green-500" />;
-    case 'Pending':
-    case 'UnderReview':
-      return <PiClock className="h-5 w-5 text-amber-500" />;
-    case 'Rejected':
-    case 'Cancelled':
-      return <PiXCircle className="h-5 w-5 text-red-500" />;
-    case 'Expired':
-      return <PiWarning className="h-5 w-5 text-orange-500" />;
-    default:
-      return <PiWarning className="h-5 w-5 text-gray-500" />;
-  }
-}
-
-function getStatusLabel(status: string | null | undefined): string {
-  const labels: Record<string, string> = {
-    'Pending': 'در انتظار',
-    'UnderReview': 'در حال بررسی',
-    'Approved': 'تایید شده',
-    'Rejected': 'رد شده',
-    'Cancelled': 'لغو شده',
-    'Expired': 'منقضی شده'
+function getStatusInfo(status: string | null | undefined) {
+  const statusMap: Record<string, {
+    icon: React.ReactNode;
+    label: string;
+    badgeClass: string;
+    iconBgClass: string;
+  }> = {
+    'RequestSent': {
+      icon: <PiFileText className="h-4 w-4 text-blue-500" />,
+      label: 'ارسال شده',
+      badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
+      iconBgClass: 'bg-blue-50 dark:bg-blue-900/20',
+    },
+    'PendingApproval': {
+      icon: <PiClock className="h-4 w-4 text-amber-500" />,
+      label: 'در انتظار تایید',
+      badgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
+      iconBgClass: 'bg-amber-50 dark:bg-amber-900/20',
+    },
+    'PendingDocuments': {
+      icon: <PiFileText className="h-4 w-4 text-orange-500" />,
+      label: 'در انتظار مدارک',
+      badgeClass: 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300',
+      iconBgClass: 'bg-orange-50 dark:bg-orange-900/20',
+    },
+    'Waitlisted': {
+      icon: <PiListChecks className="h-4 w-4 text-purple-500" />,
+      label: 'در لیست انتظار',
+      badgeClass: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300',
+      iconBgClass: 'bg-purple-50 dark:bg-purple-900/20',
+    },
+    'ReturnedForAmendment': {
+      icon: <PiArrowCounterClockwise className="h-4 w-4 text-yellow-500" />,
+      label: 'بازگشت برای اصلاح',
+      badgeClass: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300',
+      iconBgClass: 'bg-yellow-50 dark:bg-yellow-900/20',
+    },
+    'UnderReview': {
+      icon: <PiClock className="h-4 w-4 text-indigo-500" />,
+      label: 'در حال بررسی',
+      badgeClass: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300',
+      iconBgClass: 'bg-indigo-50 dark:bg-indigo-900/20',
+    },
+    'Approved': {
+      icon: <PiCheckCircle className="h-4 w-4 text-green-500" />,
+      label: 'تایید شده',
+      badgeClass: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
+      iconBgClass: 'bg-green-50 dark:bg-green-900/20',
+    },
+    'QueuedForDispatch': {
+      icon: <PiCheckCircle className="h-4 w-4 text-teal-500" />,
+      label: 'در صف ارسال به بانک',
+      badgeClass: 'bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-300',
+      iconBgClass: 'bg-teal-50 dark:bg-teal-900/20',
+    },
+    'SentToBank': {
+      icon: <PiBuilding className="h-4 w-4 text-cyan-500" />,
+      label: 'ارسال شده به بانک',
+      badgeClass: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-300',
+      iconBgClass: 'bg-cyan-50 dark:bg-cyan-900/20',
+    },
+    'BankScheduled': {
+      icon: <PiCalendarCheck className="h-4 w-4 text-emerald-500" />,
+      label: 'زمان‌بندی شده در بانک',
+      badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300',
+      iconBgClass: 'bg-emerald-50 dark:bg-emerald-900/20',
+    },
+    'ProcessedByBank': {
+      icon: <PiCheckCircle className="h-4 w-4 text-green-600" />,
+      label: 'پردازش شده توسط بانک',
+      badgeClass: 'bg-green-200 text-green-900 dark:bg-green-800 dark:text-green-200',
+      iconBgClass: 'bg-green-50 dark:bg-green-900/20',
+    },
+    'Rejected': {
+      icon: <PiXCircle className="h-4 w-4 text-red-500" />,
+      label: 'رد شده',
+      badgeClass: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
+      iconBgClass: 'bg-red-50 dark:bg-red-900/20',
+    },
+    'Cancelled': {
+      icon: <PiXCircle className="h-4 w-4 text-gray-500" />,
+      label: 'لغو شده',
+      badgeClass: 'bg-gray-100 text-gray-600 dark:bg-gray-900/50 dark:text-gray-500',
+      iconBgClass: 'bg-gray-50 dark:bg-gray-900/20',
+    },
+    'Expired': {
+      icon: <PiWarningCircle className="h-4 w-4 text-orange-500" />,
+      label: 'منقضی شده',
+      badgeClass: 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300',
+      iconBgClass: 'bg-orange-50 dark:bg-orange-900/20',
+    },
   };
-  return labels[status || ''] || status || 'نامشخص';
-}
 
-function getStatusBadgeClass(status: string | null | undefined) {
-  const badgeMap: Record<string, string> = {
-    'Approved': 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
-    'Pending': 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
-    'UnderReview': 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
-    'Rejected': 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
-    'Cancelled': 'bg-gray-100 text-gray-600 dark:bg-gray-900/50 dark:text-gray-500',
-    'Expired': 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300',
+  return statusMap[status || ''] || {
+    icon: <PiWarning className="h-4 w-4 text-gray-500" />,
+    label: status || 'نامشخص',
+    badgeClass: 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300',
+    iconBgClass: 'bg-gray-50 dark:bg-gray-900/20',
   };
-  return badgeMap[status || ''] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300';
 }
 
 // Equality guard for array comparison
@@ -409,11 +474,25 @@ export default function RequestsPage() {
                   همه
                 </Button>
                 <Button
-                  variant={statusFilter === 'Pending' ? 'primary' : 'secondary'}
+                  variant={statusFilter === 'RequestSent' ? 'primary' : 'secondary'}
                   size="sm"
-                  onClick={() => setStatusFilter('Pending')}
+                  onClick={() => setStatusFilter('RequestSent')}
                 >
-                  در انتظار
+                  ارسال شده
+                </Button>
+                <Button
+                  variant={statusFilter === 'PendingApproval' ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => setStatusFilter('PendingApproval')}
+                >
+                  در انتظار تایید
+                </Button>
+                <Button
+                  variant={statusFilter === 'PendingDocuments' ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => setStatusFilter('PendingDocuments')}
+                >
+                  در انتظار مدارک
                 </Button>
                 <Button
                   variant={statusFilter === 'UnderReview' ? 'primary' : 'secondary'}
@@ -428,6 +507,13 @@ export default function RequestsPage() {
                   onClick={() => setStatusFilter('Approved')}
                 >
                   تایید شده
+                </Button>
+                <Button
+                  variant={statusFilter === 'SentToBank' ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => setStatusFilter('SentToBank')}
+                >
+                  ارسال به بانک
                 </Button>
                 <Button
                   variant={statusFilter === 'Rejected' ? 'primary' : 'secondary'}
@@ -469,6 +555,11 @@ export default function RequestsPage() {
 
               <div className="space-y-2">
                 {allRequests.map((request) => {
+                  const statusInfo = getStatusInfo(request.status);
+                  const facilityName = request.facility?.name || 'وام';
+                  const cycleName = request.cycle?.name || 'نامشخص';
+                  const requestId = request.id?.substring(0, 8) || 'نامشخص';
+                  
                   return (
                     <Card
                       key={request.id}
@@ -479,67 +570,51 @@ export default function RequestsPage() {
                       clickable={true}
                       onClick={() => handleRequestClick(request)}
                     >
-                      <div className="pb-2">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-3">
-                            {getStatusIcon(request.status)}
-                            <div>
-                              <div className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                                درخواست #{request.id?.substring(0, 8)}
-                              </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                {formatDateFa(request.createdAt || null)}
-                              </div>
-                            </div>
+                      {/* Top Row: Icon, Amount, Status Badge */}
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className={`p-2 rounded-lg ${statusInfo.iconBgClass} flex-shrink-0`}>
+                            {statusInfo.icon}
                           </div>
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(request.status)}`}>
-                            {getStatusLabel(request.status)}
-                          </span>
+                          <div className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                            {formatCurrencyFa(request.requestedAmountRials || 0)} ریال
+                          </div>
+                        </div>
+                        <div className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusInfo.badgeClass} flex-shrink-0`}>
+                          {statusInfo.label}
                         </div>
                       </div>
-
-                      <div className="px-4 pb-4">
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          {request.requestedAmountRials && (
-                            <div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">مبلغ درخواستی</div>
-                              <div className="font-semibold text-gray-900 dark:text-gray-100">
-                                {formatCurrencyFa(request.requestedAmountRials)} ریال
-                              </div>
-                            </div>
-                          )}
-                          {request.approvedAmountRials && (
-                            <div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">مبلغ تایید شده</div>
-                              <div className="font-semibold text-green-600 dark:text-green-400">
-                                {formatCurrencyFa(request.approvedAmountRials)} ریال
-                              </div>
-                            </div>
-                          )}
+                      
+                      {/* Divider Line */}
+                      <div className="border-t border-gray-200 dark:border-gray-700/50 my-2.5" />
+                      
+                      {/* Request Info - Always show */}
+                      <div className="text-[11px] text-gray-500 dark:text-gray-400 mb-2.5 leading-relaxed space-y-1">
+                        <div>
+                          <span className="opacity-80">شناسه درخواست:</span>{' '}
+                          <span className="font-medium text-gray-700 dark:text-gray-300">{requestId}</span>
                         </div>
-                        {request.facility?.name && (
-                          <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              تسهیلات: {request.facility?.name}
-                            </div>
-                          </div>
-                        )}
-                        {request.cycle?.name && (
-                          <div className="mt-1">
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              دوره: {request.cycle?.name}
-                            </div>
+                        <div>
+                          <span className="opacity-80">تسهیلات:</span>{' '}
+                          <span className="font-medium text-gray-700 dark:text-gray-300 truncate">{facilityName}</span>
+                        </div>
+                        <div>
+                          <span className="opacity-80">دوره:</span>{' '}
+                          <span className="font-medium text-gray-700 dark:text-gray-300 truncate">{cycleName}</span>
+                        </div>
+                      </div>
+                      
+                      {/* Bottom Row: Date (Left) and Approved Amount (Right) */}
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {formatDateFa(request.createdAt || null)}
+                        </div>
+                        {request.approvedAmountRials && (
+                          <div className="text-xs text-green-600 dark:text-green-400 opacity-75">
+                            مبلغ تایید شده: {formatCurrencyFa(request.approvedAmountRials)} ریال
                           </div>
                         )}
                       </div>
-
-                      {request.facility?.description && (
-                        <div className="px-4 pb-3">
-                          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                            {request.facility?.description}
-                          </p>
-                        </div>
-                      )}
                     </Card>
                   );
                 })}

@@ -1,5 +1,6 @@
 // src/store/bills/bills.queries.ts
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { baseQueryWithReauth } from '@/src/store/api/baseApi';
 import {
   GetBillsRequest,
   IssueBillRequest,
@@ -45,13 +46,7 @@ export const handleBillsApiError = (error: unknown): string => {
 // Bills API slice
 export const billsApi = createApi({
   reducerPath: 'billsApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: '/api/bills',
-    prepareHeaders: (headers) => {
-      headers.set('content-type', 'application/json');
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithReauth,
   tagTypes: ['Bills', 'BillStatus', 'Statistics'],
   // Add proper caching configuration
   keepUnusedDataFor: 300, // Keep data for 5 minutes
@@ -91,7 +86,7 @@ export const billsApi = createApi({
         }
 
         return {
-          url: `/me?${searchParams.toString()}`,
+          url: `/bills/me?${searchParams.toString()}`,
           method: 'GET',
         };
       },
@@ -124,7 +119,7 @@ export const billsApi = createApi({
     // Get bill details by ID - Returns GetBillDetailResponse
     getBillDetailsById: builder.query<GetBillDetailResponse, string>({
       query: (billId) => ({
-        url: `/${billId}`,
+        url: `/bills/${billId}`,
         method: 'GET',
       }),
       providesTags: (result, error, billId) => [{ type: 'BillStatus', id: billId }],
@@ -150,7 +145,7 @@ export const billsApi = createApi({
     // Get bill details by number - Returns GetBillDetailResponse
     getBillDetailsByNumber: builder.query<GetBillDetailResponse, string>({
       query: (billNumber) => ({
-        url: `/by-number/${billNumber}`,
+        url: `/bills/by-number/${billNumber}`,
         method: 'GET',
       }),
       providesTags: (result, error, billNumber) => [{ type: 'BillStatus', id: billNumber }],
@@ -179,7 +174,7 @@ export const billsApi = createApi({
         const searchParams = new URLSearchParams();
 
         return {
-          url: `/by-tracking/${trackingCode}?${searchParams.toString()}`,
+          url: `/bills/by-tracking/${trackingCode}?${searchParams.toString()}`,
           method: 'GET',
         };
       },
@@ -206,7 +201,7 @@ export const billsApi = createApi({
     // Issue bill - Returns IssueBillResponseWrapper
     issueBill: builder.mutation<IssueBillResponseWrapper, { billId: string; request?: IssueBillRequest }>({
       query: ({ billId, request = {} }) => ({
-        url: `/${billId}/issue`,
+        url: `/bills/${billId}/issue`,
         method: 'POST',
         body: request,
       }),
@@ -237,7 +232,7 @@ export const billsApi = createApi({
     // Cancel bill - Returns CancelBillResponseWrapper
     cancelBill: builder.mutation<CancelBillResponseWrapper, { billId: string; request: CancelBillRequest }>({
       query: ({ billId, request }) => ({
-        url: `/${billId}/cancel`,
+        url: `/bills/${billId}/cancel`,
         method: 'POST',
         body: request,
       }),

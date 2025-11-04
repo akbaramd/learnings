@@ -6,7 +6,6 @@ import {
   SendOtpResponse,
   VerifyOtpRequest,
   VerifyOtpResponse,
-  SessionResponse,
   LogoutResponse,
   RefreshResponse,
   GetMeResponse,
@@ -23,7 +22,6 @@ import {
   setInitialized,
 } from './auth.slice';
 import { baseQueryWithReauth } from '@/src/store/api/baseApi';
-import { notifyLogoutAllTabs } from '@/src/hooks/useAuthGuard';
 
 // Error handling utility
 export const handleApiError = (error: unknown): string => {
@@ -121,74 +119,6 @@ export const authApi = createApi({
       },
     }),
 
-    // Check session query
-    checkSession: builder.query<SessionResponse, void>({
-      query: () => ({
-        url: '/auth/session',
-        method: 'GET',
-      }),
-      providesTags: ['Auth'],
-      keepUnusedDataFor: 300, // Keep session data for 5 minutes
-      // Don't retry session checks on network errors - fail fast
-      // Network errors will be handled by isNetworkError in baseQueryWithReauth
-      async onQueryStarted(arg, { dispatch, queryFulfilled, getState }) {
-        try {
-          const currentState = getState() as RootState;
-          const currentStatus = currentState.auth.status;
-          
-          // Only set loading if we're not in OTP flow or already loading
-          if (currentStatus !== 'otp-sent' && currentStatus !== 'loading') {
-            dispatch(setAuthStatus('loading'));
-          }
-
-          const { data } = await queryFulfilled;
-
-          // Session is only valid if:
-          // 1. isSuccess === true
-          // 2. data?.authenticated === true
-          // Note: HTTP status is handled by baseQueryWithReauth, if queryFulfilled succeeds, we have valid response
-          const isValidSession = data?.isSuccess === true && 
-                                 data?.data?.authenticated === true;
-
-          if (isValidSession) {
-            if (currentStatus !== 'otp-sent') { 
-              dispatch(setAuthStatus('authenticated'));
-              // Don't automatically fetch user profile - let components decide when to fetch
-              // dispatch(authApi.endpoints.getMe.initiate());
-            }
-          } else {
-            // Session invalid: 401, 500, network error, or isSuccess=false
-            // Trigger logout: clear state, reset APIs, notify other tabs
-            if (currentStatus !== 'otp-sent' && currentStatus !== 'loading') {
-              dispatch(setAuthStatus('anonymous'));
-              dispatch(clearUser());
-              // Notify other tabs about logout
-              notifyLogoutAllTabs();
-            }
-          }
-        } catch (error: unknown) {
-          // Handle network errors, 401, 500, etc.
-          // If queryFulfilled throws, it means the request failed (network error, 401, 500, etc.)
-          const currentState = getState() as RootState;
-          const currentStatus = currentState.auth.status;
-          
-          // Logout on any session check failure (401, 500, network error)
-          if (currentStatus !== 'otp-sent' && currentStatus !== 'loading') {
-            dispatch(setAuthStatus('anonymous'));
-            dispatch(clearUser());
-            // Notify other tabs about logout
-            notifyLogoutAllTabs();
-          }
-          
-          console.error('Session check failed:', {
-            error: error instanceof Error ? error.message : String(error),
-          });
-        } finally {
-          dispatch(setInitialized(true));
-        }
-      },
-    }),
-
     // Get user profile query
     getMe: builder.query<GetMeResponse, void>({
       query: () => ({
@@ -197,7 +127,7 @@ export const authApi = createApi({
       }),
       providesTags: ['User'],
       keepUnusedDataFor: 600, // Keep user data for 10 minutes
-      async onQueryStarted(arg, { dispatch, queryFulfilled, getState }) {
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
 
@@ -214,19 +144,13 @@ export const authApi = createApi({
             };
             dispatch(setUser(user));
             dispatch(setAuthStatus('authenticated'));
+            dispatch(setInitialized(true));
           }
         } catch (error: unknown) {
-          const currentState = getState() as RootState;
-          const currentStatus = currentState.auth.status;
-          
-          // If getting user profile fails with 401, user is not authenticated
-          if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
-            dispatch(clearUser());
-            dispatch(setAuthStatus('anonymous'));
-          } else if (currentStatus !== 'otp-sent') {
-            dispatch(clearUser());
-            dispatch(setAuthStatus('anonymous'));
-          }
+          // baseApi.ts handles 401 automatically → setAnonymous
+          // Just clear user data on any error
+          dispatch(clearUser());
+          dispatch(setInitialized(true));
         }
       },
     }),
@@ -250,9 +174,6 @@ export const authApi = createApi({
             dispatch(clearUser());
             dispatch(clearChallengeId());
             dispatch(setAuthStatus('anonymous'));
-            
-            // Notify all tabs about logout
-            notifyLogoutAllTabs();
           } else {
             dispatch(setAuthStatus('authenticated'));
             dispatch(setError(data?.errors?.[0] || 'Logout failed'));
@@ -262,9 +183,6 @@ export const authApi = createApi({
           dispatch(clearUser());
           dispatch(clearChallengeId());
           dispatch(setAuthStatus('anonymous'));
-          
-          // Notify all tabs about logout (even if server logout failed)
-          notifyLogoutAllTabs();
           
           const errorMessage = handleApiError(error);
           dispatch(setError(errorMessage));
@@ -303,12 +221,10 @@ export const authApi = createApi({
 export const {
   useSendOtpMutation,
   useVerifyOtpMutation,
-  useCheckSessionQuery,
   useGetMeQuery,
   useLogoutMutation,
   useRefreshTokenMutation,
   // Lazy query hooks
-  useLazyCheckSessionQuery,
   useLazyGetMeQuery,
 } = authApi;
 

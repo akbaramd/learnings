@@ -133,25 +133,42 @@ export default function CreateRequestPage({ params }: CreateRequestPageProps) {
       return;
     }
 
-    // Find selected price option from financialTerms.priceOptions
+    // Validate that selected price option exists
     const selectedOption = cycle.financialTerms?.priceOptions?.find(
       opt => opt?.id === selectedPriceOptionId
     );
 
-    if (!selectedOption || !selectedOption.amountRials) {
+    if (!selectedOption || !selectedOption.id) {
       showError('خطا', 'مبلغ انتخاب شده نامعتبر است');
       return;
     }
 
     try {
-      const result = await createRequest({
+      // Build request payload - only include defined values
+      const requestPayload: {
+        facilityCycleId: string;
+        priceOptionId: string;
+        description?: string | null;
+        metadata?: Record<string, string>;
+        idempotencyKey?: string | null;
+      } = {
         facilityCycleId: cycleIdFromParams,
-        requestedAmountRials: selectedOption.amountRials,
-        description: description.trim() || undefined,
-      }).unwrap();
+        priceOptionId: selectedOption.id,
+      };
 
-      if (result.isSuccess && result.data) {
-        success('موفق', 'درخواست با موفقیت ثبت شد');
+      // Add optional fields only if they have values
+      const trimmedDescription = description.trim();
+      if (trimmedDescription) {
+        requestPayload.description = trimmedDescription;
+      }
+
+      // metadata and idempotencyKey can be added later if needed
+      // For now, we omit them from the request
+
+      const result = await createRequest(requestPayload).unwrap();
+
+      if (result?.isSuccess && result?.data) {
+        success('موفق', result.message || 'درخواست با موفقیت ثبت شد');
         // Navigate to request detail page
         if (result.data.requestId) {
           router.push(`/facilities/requests/${result.data.requestId}`);
@@ -159,15 +176,57 @@ export default function CreateRequestPage({ params }: CreateRequestPageProps) {
           router.push('/facilities/requests');
         }
       } else {
-        showError('خطا', result.message || 'خطا در ثبت درخواست');
+        // Handle API error response
+        const errorMessages = result?.errors || [];
+        const errorMessage = errorMessages.length > 0 
+          ? errorMessages.join(', ')
+          : result?.message || 'خطا در ثبت درخواست';
+        showError('خطا', errorMessage);
       }
     } catch (err: unknown) {
-      console.error('Error creating request:', err);
-      const errorMessage = err && typeof err === 'object' && 'data' in err
-        ? (err as { data?: { message?: string; errors?: string[] } })?.data?.message || 
-          (err as { data?: { errors?: string[] } })?.data?.errors?.[0] ||
-          'خطا در ثبت درخواست'
-        : 'خطا در ثبت درخواست';
+      console.error('Error creating facility request:', {
+        error: err,
+        name: err instanceof Error ? err.name : 'Unknown',
+        message: err instanceof Error ? err.message : String(err),
+      });
+
+      // Extract error message from RTK Query error
+      let errorMessage = 'خطا در ثبت درخواست';
+      
+      if (err && typeof err === 'object') {
+        // RTK Query error structure
+        if ('data' in err) {
+          const errorData = (err as { data?: unknown }).data;
+          if (errorData && typeof errorData === 'object') {
+            const apiError = errorData as Record<string, unknown>;
+            
+            // Check for ApplicationResult format
+            if (Array.isArray(apiError.errors) && apiError.errors.length > 0) {
+              errorMessage = apiError.errors
+                .filter((e): e is string => typeof e === 'string')
+                .join(', ');
+            } else if (typeof apiError.message === 'string') {
+              errorMessage = apiError.message;
+            }
+          }
+        } else if ('error' in err) {
+          // Check for error object
+          const errorObj = (err as { error?: unknown }).error;
+          if (errorObj && typeof errorObj === 'object') {
+            const apiError = errorObj as Record<string, unknown>;
+            if (Array.isArray(apiError.errors) && apiError.errors.length > 0) {
+              errorMessage = apiError.errors
+                .filter((e): e is string => typeof e === 'string')
+                .join(', ');
+            } else if (typeof apiError.message === 'string') {
+              errorMessage = apiError.message;
+            }
+          }
+        } else if (err instanceof Error) {
+          errorMessage = err.message;
+        }
+      }
+
       showError('خطا', errorMessage);
     }
   }, [selectedPriceOptionId, description, cycleIdFromParams, cycle, validateForm, createRequest, router, success, showError]);

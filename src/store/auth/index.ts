@@ -47,16 +47,13 @@ export {
 export {
   useSendOtpMutation,
   useVerifyOtpMutation,
-  useCheckSessionQuery,
   useLogoutMutation,
   useRefreshTokenMutation,
   useGetMeQuery,
-  useLazyCheckSessionQuery,
   useLazyGetMeQuery,
 } from './auth.queries';
 
 // Export auth hooks
 export { useAuth } from '../../hooks/useAuth';
-export { useAuthGuard } from '../../hooks/useAuthGuard';
 
 

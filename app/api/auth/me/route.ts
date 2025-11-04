@@ -4,20 +4,26 @@ import { createApiInstance, handleApiError } from '@/app/api/generatedClient';
 import { GetMeResponse, UserRole } from '@/src/store/auth/auth.types';
 import { AxiosError } from 'axios';
 
+/**
+ * GET /api/auth/me
+ * Get current user profile
+ * Refresh token handling is done automatically in generatedClient.ts
+ */
 export async function GET(req: NextRequest) {
   try {
+    // Get API instance (handles refresh tokens automatically via generatedClient)
     const api = createApiInstance(req);
 
-    // استفاده از getCurrentUser برای دریافت پروفایل کامل
-    const upstream = await api.api.getCurrentUser({}); 
+    // Call upstream API - if 401, generatedClient will refresh token and retry
+    const upstream = await api.api.getCurrentUser({});
     const status = upstream.status ?? 200;
 
-    // Strongly typed response structure using ApplicationResult
+    // Transform to ApplicationResult<T> format
     const response: GetMeResponse = {
-      isSuccess: status === 200 && upstream.data?.isSuccess && !!upstream.data.data?.id || false,
-      message: upstream.data?.message || (status === 200 && upstream.data?.isSuccess ? 'User profile retrieved successfully' : 'Failed to get user profile'),
+      isSuccess: !!upstream.data?.isSuccess && !!upstream.data.data?.id,
+      message: upstream.data?.message || (upstream.data?.isSuccess ? 'User profile retrieved successfully' : 'Failed to get user profile'),
       errors: upstream.data?.errors || undefined,
-      data: status === 200 && upstream.data?.isSuccess && upstream.data.data?.id ? {
+      data: upstream.data?.isSuccess && upstream.data.data?.id ? {
         id: upstream.data.data.id,
         name: upstream.data.data.name || undefined,
         firstName: upstream.data.data.firstName || undefined,
@@ -30,20 +36,29 @@ export async function GET(req: NextRequest) {
       } : undefined
     };
 
+    // Create response with headers
     const res = NextResponse.json(response, { status });
-    
-    // Cache-Control برای اطلاعات حساس
     res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-    
+
+    // Forward Set-Cookie headers from upstream if present
+    const setCookie = upstream.headers?.['set-cookie'];
+    if (setCookie) {
+      if (Array.isArray(setCookie)) {
+        setCookie.forEach(c => res.headers.append('set-cookie', c));
+      } else {
+        res.headers.set('set-cookie', setCookie as string);
+      }
+    }
+
     return res;
   } catch (error) {
-    console.error('Get user profile BFF error:', {
+    console.error('[GetMe] BFF error:', {
       name: error instanceof Error ? error.name : 'Unknown',
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       type: typeof error,
     });
-    
+
     return handleApiError(error as AxiosError);
   }
 }

@@ -80,24 +80,42 @@ export async function POST(req: NextRequest) {
     const api = createApiInstance(req);
     const body = await req.json();
 
-    const { facilityCycleId, requestedAmountRials, description, metadata, idempotencyKey } = body;
+    const { facilityCycleId, priceOptionId, description, metadata, idempotencyKey } = body;
 
-    if (!facilityCycleId || !requestedAmountRials) {
+    // Validate required fields
+    if (!facilityCycleId || !priceOptionId) {
       return NextResponse.json({
         isSuccess: false,
-        message: 'Facility cycle ID and requested amount are required',
-        errors: ['Facility cycle ID and requested amount are required'],
+        message: 'Facility cycle ID and price option ID are required',
+        errors: ['Facility cycle ID and price option ID are required'],
         data: null,
       }, { status: 400 });
     }
 
-    const upstream = await api.api.createFacilityRequest({
+    // Build request payload - only include defined values
+    const requestPayload: {
+      facilityCycleId: string;
+      priceOptionId: string;
+      description?: string | null;
+      metadata?: Record<string, string>;
+      idempotencyKey?: string | null;
+    } = {
       facilityCycleId,
-      requestedAmountRials,
-      description,
-      metadata,
-      idempotencyKey,
-    }, {});
+      priceOptionId,
+    };
+
+    // Add optional fields only if provided
+    if (description !== undefined && description !== null) {
+      requestPayload.description = description;
+    }
+    if (metadata !== undefined && metadata !== null) {
+      requestPayload.metadata = metadata;
+    }
+    if (idempotencyKey !== undefined && idempotencyKey !== null) {
+      requestPayload.idempotencyKey = idempotencyKey;
+    }
+
+    const upstream = await api.api.createFacilityRequest(requestPayload, {});
     
     const status = upstream.status ?? 200;
 

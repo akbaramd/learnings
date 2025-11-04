@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import {
@@ -17,6 +17,11 @@ import {
   PiClock,
   PiXCircle,
   PiWarning,
+  PiWarningCircle,
+  PiListChecks,
+  PiArrowCounterClockwise,
+  PiBuilding,
+  PiCalendarCheck,
 } from 'react-icons/pi';
 
 interface RequestDetailPageProps {
@@ -56,45 +61,105 @@ function formatDateFa(date: Date | string | null | undefined): string {
   }
 }
 
-function getStatusIcon(status: string | null | undefined) {
-  switch (status) {
-    case 'Approved':
-      return <PiCheckCircle className="h-5 w-5 text-green-500" />;
-    case 'Pending':
-    case 'UnderReview':
-      return <PiClock className="h-5 w-5 text-amber-500" />;
-    case 'Rejected':
-    case 'Cancelled':
-      return <PiXCircle className="h-5 w-5 text-red-500" />;
-    case 'Expired':
-      return <PiWarning className="h-5 w-5 text-orange-500" />;
-    default:
-      return <PiWarning className="h-5 w-5 text-gray-500" />;
-  }
-}
-
-function getStatusLabel(status: string | null | undefined): string {
-  const labels: Record<string, string> = {
-    'Pending': 'در انتظار',
-    'UnderReview': 'در حال بررسی',
-    'Approved': 'تایید شده',
-    'Rejected': 'رد شده',
-    'Cancelled': 'لغو شده',
-    'Expired': 'منقضی شده'
+function getStatusInfo(status: string | null | undefined) {
+  const statusMap: Record<string, {
+    icon: React.ReactNode;
+    label: string;
+    badgeClass: string;
+    description: string;
+  }> = {
+    'RequestSent': {
+      icon: <PiFileText className="h-5 w-5 text-blue-500" />,
+      label: 'ارسال شده',
+      badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
+      description: 'درخواست شما با موفقیت ارسال شده و در انتظار بررسی اولیه است. لطفاً صبور باشید.',
+    },
+    'PendingApproval': {
+      icon: <PiClock className="h-5 w-5 text-amber-500" />,
+      label: 'در انتظار تایید',
+      badgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
+      description: 'درخواست شما در صف بررسی و تایید قرار دارد. این فرآیند ممکن است چند روز کاری طول بکشد.',
+    },
+    'PendingDocuments': {
+      icon: <PiFileText className="h-5 w-5 text-orange-500" />,
+      label: 'در انتظار مدارک',
+      badgeClass: 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300',
+      description: 'لطفاً مدارک مورد نیاز را ارسال کنید. درخواست شما پس از دریافت و بررسی مدارک، ادامه فرآیند بررسی را خواهد داشت.',
+    },
+    'Waitlisted': {
+      icon: <PiListChecks className="h-5 w-5 text-purple-500" />,
+      label: 'در لیست انتظار',
+      badgeClass: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300',
+      description: 'درخواست شما در لیست انتظار قرار دارد. در صورت آزاد شدن ظرفیت، درخواست شما بررسی خواهد شد.',
+    },
+    'ReturnedForAmendment': {
+      icon: <PiArrowCounterClockwise className="h-5 w-5 text-yellow-500" />,
+      label: 'بازگشت برای اصلاح',
+      badgeClass: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300',
+      description: 'درخواست شما نیاز به اصلاح دارد. لطفاً موارد اعلام شده را اصلاح کرده و مجدداً ارسال کنید.',
+    },
+    'UnderReview': {
+      icon: <PiClock className="h-5 w-5 text-indigo-500" />,
+      label: 'در حال بررسی',
+      badgeClass: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300',
+      description: 'درخواست شما در حال بررسی دقیق توسط کارشناسان است. نتیجه بررسی به زودی اعلام خواهد شد.',
+    },
+    'Approved': {
+      icon: <PiCheckCircle className="h-5 w-5 text-green-500" />,
+      label: 'تایید شده',
+      badgeClass: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
+      description: 'درخواست شما با موفقیت تایید شده است. مراحل بعدی به شما اطلاع‌رسانی خواهد شد.',
+    },
+    'QueuedForDispatch': {
+      icon: <PiCheckCircle className="h-5 w-5 text-teal-500" />,
+      label: 'در صف ارسال به بانک',
+      badgeClass: 'bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-300',
+      description: 'درخواست شما تایید شده و در صف ارسال به بانک قرار دارد. به زودی به بانک ارسال خواهد شد.',
+    },
+    'SentToBank': {
+      icon: <PiBuilding className="h-5 w-5 text-cyan-500" />,
+      label: 'ارسال شده به بانک',
+      badgeClass: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-300',
+      description: 'درخواست شما به بانک ارسال شده است. بانک در حال بررسی و پردازش درخواست شماست.',
+    },
+    'BankScheduled': {
+      icon: <PiCalendarCheck className="h-5 w-5 text-emerald-500" />,
+      label: 'زمان‌بندی شده در بانک',
+      badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300',
+      description: 'بانک زمان ویزیت را برای شما تعیین کرده است. لطفاً در زمان مشخص شده به بانک مراجعه کنید.',
+    },
+    'ProcessedByBank': {
+      icon: <PiCheckCircle className="h-5 w-5 text-green-600" />,
+      label: 'پردازش شده توسط بانک',
+      badgeClass: 'bg-green-200 text-green-900 dark:bg-green-800 dark:text-green-200',
+      description: 'بانک درخواست شما را پردازش کرده است. تسهیلات به زودی برای شما واریز خواهد شد.',
+    },
+    'Rejected': {
+      icon: <PiXCircle className="h-5 w-5 text-red-500" />,
+      label: 'رد شده',
+      badgeClass: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
+      description: 'متأسفانه درخواست شما رد شده است. در صورت نیاز می‌توانید مجدداً درخواست دهید.',
+    },
+    'Cancelled': {
+      icon: <PiXCircle className="h-5 w-5 text-gray-500" />,
+      label: 'لغو شده',
+      badgeClass: 'bg-gray-100 text-gray-600 dark:bg-gray-900/50 dark:text-gray-500',
+      description: 'این درخواست لغو شده است. در صورت نیاز می‌توانید درخواست جدیدی ثبت کنید.',
+    },
+    'Expired': {
+      icon: <PiWarningCircle className="h-5 w-5 text-orange-500" />,
+      label: 'منقضی شده',
+      badgeClass: 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300',
+      description: 'مهلت این درخواست به پایان رسیده است. در صورت نیاز می‌توانید درخواست جدیدی ثبت کنید.',
+    },
   };
-  return labels[status || ''] || status || 'نامشخص';
-}
 
-function getStatusBadgeClass(status: string | null | undefined) {
-  const badgeMap: Record<string, string> = {
-    'Approved': 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
-    'Pending': 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
-    'UnderReview': 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
-    'Rejected': 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
-    'Cancelled': 'bg-gray-100 text-gray-600 dark:bg-gray-900/50 dark:text-gray-500',
-    'Expired': 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300',
+  return statusMap[status || ''] || {
+    icon: <PiWarning className="h-5 w-5 text-gray-500" />,
+    label: status || 'نامشخص',
+    badgeClass: 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300',
+    description: 'وضعیت درخواست نامشخص است.',
   };
-  return badgeMap[status || ''] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300';
 }
 
 export default function RequestDetailPage({ params }: RequestDetailPageProps) {
@@ -122,13 +187,9 @@ export default function RequestDetailPage({ params }: RequestDetailPageProps) {
     }
   }, [requestIdFromParams, getRequestDetails]);
 
-  const handleBack = () => {
-    if (document.referrer && document.referrer.includes('/facilities')) {
-      router.back();
-    } else {
-      router.push('/facilities/requests');
-    }
-  };
+  const handleBack = useCallback(() => {
+    router.push('/facilities/requests');
+  }, [router]);
 
   if (isLoading && !request) {
     return (
@@ -177,21 +238,30 @@ export default function RequestDetailPage({ params }: RequestDetailPageProps) {
         <div className="p-2 space-y-2">
           {/* Status Card */}
           <Card variant="default" radius="lg" padding="md">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {getStatusIcon(request.status)}
-                <div>
-                  <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    {getStatusLabel(request.status)}
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {request.id?.substring(0, 8)}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {getStatusInfo(request.status).icon}
+                  <div>
+                    <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                      {getStatusInfo(request.status).label}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {request.id?.substring(0, 8)}
+                    </div>
                   </div>
                 </div>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusInfo(request.status).badgeClass}`}>
+                  {getStatusInfo(request.status).label}
+                </span>
               </div>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeClass(request.status)}`}>
-                {getStatusLabel(request.status)}
-              </span>
+              
+              {/* Status Description */}
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                  {getStatusInfo(request.status).description}
+                </p>
+              </div>
             </div>
           </Card>
 

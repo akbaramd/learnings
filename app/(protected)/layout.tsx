@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/src/hooks/useAuth';
+import { useGetMeQuery } from '@/src/store/auth';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { useTheme } from '@/src/hooks/useTheme';
 import { NotificationDot } from '@/src/components/ui/NotificationBadge';
 import { GetUnreadCountResponse, useGetUnreadCountQuery } from '@/src/store/notifications';
+import { BottomNavigation } from '@/src/components/navigation/BottomNavigation';
 import {
   PiBell,
   PiSun,
@@ -135,10 +137,55 @@ function BrandTitle() {
 
 export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const router = useRouter();
-  
-  // Auth is handled by AuthSyncProvider at root
-  // Only use auth state for data fetching (not for guards/redirects)
+  const pathname = usePathname();
+  const redirectedRef = useRef(false);
+  const checkingRef = useRef(false);
+  const pathnameRef = useRef(pathname);
+
+  // Update pathname ref whenever it changes (for use in redirect)
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
+
+  // Fetch user profile on mount (only for protected routes)
+  // Only fetch once - don't refetch on mount, focus, or reconnect
+  useGetMeQuery(undefined, {
+    refetchOnMountOrArgChange: false,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+  });
+
+  // Get auth state from Redux store
   const { isAuthenticated, isReady } = useAuth();
+
+  // Redirect to login if not authenticated
+  // Only check when auth state changes, not on pathname changes
+  useEffect(() => {
+    // Skip if already redirected or currently checking
+    if (redirectedRef.current || checkingRef.current) return;
+    
+    // Wait for auth state to be ready
+    if (!isReady) return;
+
+    // If authenticated, allow rendering and reset redirect flag
+    if (isAuthenticated) {
+      redirectedRef.current = false;
+      return;
+    }
+
+    // Not authenticated - redirect once
+    checkingRef.current = true;
+    redirectedRef.current = true;
+    const returnUrl = encodeURIComponent(pathnameRef.current || '/');
+    router.replace(`/login?r=${returnUrl}`);
+    
+    // Reset checking flag after navigation
+    const timeoutId = setTimeout(() => {
+      checkingRef.current = false;
+    }, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, [isReady, isAuthenticated, router]); // Only depend on auth state, not pathname
 
   // Auto-fetch notifications when authenticated and ready
   // Stop polling immediately when authentication fails
@@ -186,6 +233,12 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
           {children}
         </div>
       </main>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation 
+        unreadCountData={unreadCountData || { result: { totalCount: 0 }, errors: null }} 
+        notificationsLoading={notificationsLoading} 
+      />
     </div>
   );
 }

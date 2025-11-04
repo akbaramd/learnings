@@ -83,10 +83,10 @@ export interface GetFacilityRequestsRequest {
 
 export interface CreateFacilityRequestRequest {
   facilityCycleId: string;
-  requestedAmountRials: number;
-  description?: string;
+  priceOptionId: string;
+  description?: string | null;
   metadata?: Record<string, string>;
-  idempotencyKey?: string;
+  idempotencyKey?: string | null;
 }
 
 export interface ApproveFacilityRequestRequest {
