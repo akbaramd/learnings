@@ -48,7 +48,7 @@ export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, unkno
   // This only happens when server-side refresh failed definitively
   const got401 = (result?.error && 'status' in result.error && result.error.status === 401) || 
                  (result.meta?.response?.status === 401);
-  
+
   // If we get a 401, it means:
   // 1. Server tried to refresh token automatically
   // 2. Refresh failed (token expired, invalid, etc.)

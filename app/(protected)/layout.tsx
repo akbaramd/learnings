@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/src/hooks/useAuth';
-import { useGetMeQuery } from '@/src/store/auth';
+import { useSelector } from 'react-redux';
+import { selectAuthStatus, selectAuthReady, useGetMeQuery, useLogoutMutation } from '@/src/store/auth';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { useTheme } from '@/src/hooks/useTheme';
 import { NotificationDot } from '@/src/components/ui/NotificationBadge';
@@ -138,72 +138,74 @@ function BrandTitle() {
 export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const redirectedRef = useRef(false);
-  const checkingRef = useRef(false);
   const pathnameRef = useRef(pathname);
+  const prevStatusRef = useRef<string | null>(null);
 
-  // Update pathname ref whenever it changes (for use in redirect)
+  // Update pathname ref whenever it changes
   useEffect(() => {
     pathnameRef.current = pathname;
   }, [pathname]);
 
-  // Get auth state from Redux store
-  const { isAuthenticated, isReady } = useAuth();
+  // Get auth status directly from Redux store
+  const authStatus = useSelector(selectAuthStatus);
+  const isReady = useSelector(selectAuthReady);
+  const [logout] = useLogoutMutation();
 
-  // Fetch user profile on mount (only for protected routes)
-  // Only fetch when auth is ready - prevents unnecessary requests
-  // Server-side refresh token handling ensures tokens are valid before this runs
-  // This query updates auth state via onQueryStarted in auth.queries.ts
+  // Fetch user profile on mount - this will set isInitialized to true
+  // Don't skip based on isReady to avoid circular dependency
+  // The query will handle errors and set isInitialized appropriately
   useGetMeQuery(undefined, {
-    skip: !isReady, // Don't fetch until auth state is initialized
-    refetchOnMountOrArgChange: false, // Don't refetch on mount
-    refetchOnFocus: false, // Don't refetch on window focus
-    refetchOnReconnect: false, // Don't auto-refetch on reconnect
+    refetchOnMountOrArgChange: false,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
   });
 
-  // Redirect to login if not authenticated
-  // Only check when auth state changes, not on pathname changes
-  
+  // Single effect to handle all authentication status checks
+  // Only allow status changes and redirects when auth is ready
   useEffect(() => {
-    // Skip if already redirected or currently checking
-    if (redirectedRef.current || checkingRef.current) return;
-    
-    // Wait for auth state to be ready
-    if (!isReady) return;
-
-    // If authenticated, allow rendering and reset redirect flag
-    if (isAuthenticated) {
-      redirectedRef.current = false;
+    // Don't process anything until auth is ready
+    if (!isReady) {
       return;
     }
 
-    // Not authenticated - redirect once
-    // This happens when:
-    // 1. User has no valid tokens (no cookies)
-    // 2. Server-side refresh failed (401 after refresh attempt)
-    checkingRef.current = true;
-    redirectedRef.current = true;
-    const returnUrl = encodeURIComponent(pathnameRef.current || '/');
-    router.replace(`/login?r=${returnUrl}`);
-    
-    // Reset checking flag after navigation
-    const timeoutId = setTimeout(() => {
-      checkingRef.current = false;
-    }, 100);
-    
-    return () => clearTimeout(timeoutId);
-  }, [isReady, isAuthenticated, router]); // Only depend on auth state, not pathname
+    const isAuthenticated = authStatus === 'authenticated';
+    const wasAuthenticated = prevStatusRef.current === 'authenticated';
+
+    // If status changed from authenticated to unauthenticated, logout and redirect
+    if (wasAuthenticated && !isAuthenticated) {
+      const handleLogoutAndRedirect = async () => {
+        try {
+          await logout({ refreshToken: undefined }).unwrap();
+        } catch (error) {
+          console.warn('Logout failed:', error);
+        } finally {
+          const returnUrl = encodeURIComponent(pathnameRef.current || '/');
+          router.replace(`/login?r=${returnUrl}`);
+        }
+      };
+      handleLogoutAndRedirect();
+    }
+
+    // If not authenticated, redirect to login
+    if (!isAuthenticated) {
+      const returnUrl = encodeURIComponent(pathnameRef.current || '/');
+      router.replace(`/login?r=${returnUrl}`);
+    }
+
+    // Update previous status only when ready and processing
+    prevStatusRef.current = authStatus;
+  }, [isReady, authStatus, logout, router]);
 
   // Auto-fetch notifications when authenticated and ready
-  // Stop polling immediately when authentication fails
+  const isAuthenticated = authStatus === 'authenticated';
   const { data: unreadCountData, isLoading: notificationsLoading } = useGetUnreadCountQuery(
     undefined,
     {
-      skip: !isReady || !isAuthenticated, // Only fetch when ready and authenticated
-      pollingInterval: isReady && isAuthenticated ? 30000 : 0, // Stop polling when not authenticated
-      refetchOnMountOrArgChange: false, // Don't refetch on mount
-      refetchOnFocus: false, // Don't refetch on window focus
-      refetchOnReconnect: isReady && isAuthenticated, // Only refetch on reconnect when authenticated
+      skip: !isReady || !isAuthenticated,
+      pollingInterval: isReady && isAuthenticated ? 30000 : 0,
+      refetchOnMountOrArgChange: false,
+      refetchOnFocus: false,
+      refetchOnReconnect: isReady && isAuthenticated,
     }
   );
 
