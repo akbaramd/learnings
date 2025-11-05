@@ -16,7 +16,6 @@ import {
   PiFunnelSimple,
   PiX,
   PiCheckCircle,
-  PiXCircle,
 } from 'react-icons/pi';
 import { useFacilitiesPageHeader } from './FacilitiesPageHeaderContext';
 
@@ -30,25 +29,6 @@ function formatCurrencyFa(amount: number | null | undefined): string {
   } catch (error) {
     console.error('Error formatting currency:', error);
     return '0';
-  }
-}
-
-function formatDateFa(date: Date | string | null | undefined): string {
-  if (!date) return 'نامشخص';
-
-  try {
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-
-    if (isNaN(dateObj.getTime())) return 'نامشخص';
-
-    return new Intl.DateTimeFormat('fa-IR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }).format(dateObj);
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return 'نامشخص';
   }
 }
 
@@ -444,29 +424,38 @@ export default function FacilitiesPage() {
                       </div>
 
                       {facility.description && (
-                        <div className="px-4 pb-3">
+                        <div className="px-4 pb-2">
                           <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
                             {facility.description}
                           </p>
                         </div>
                       )}
 
-                      {facility.bankInfo && (
-                        <div className="px-4 pb-3">
-                          <div className="grid grid-cols-2 gap-2 text-sm">
-                            {facility.bankInfo.bankName && (
-                              <div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">بانک</div>
-                                <div className="font-medium text-gray-900 dark:text-gray-100">
-                                  {facility.bankInfo.bankName}
+                      {/* Cycle Statistics Info */}
+                      {facility.cycleStatistics && (facility.cycleStatistics.totalActiveQuota !== undefined || facility.cycleStatistics.totalAvailableQuota !== undefined || facility.cycleStatistics.totalCyclesCount !== undefined) && (
+                        <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-800 pt-2 mt-2">
+                          <div className="grid grid-cols-3 gap-2 text-center">
+                            {facility.cycleStatistics.totalActiveQuota !== undefined && (
+                              <div className="border-l border-gray-200 dark:border-gray-700">
+                                <div className="text-xs text-gray-500 dark:text-gray-400">ظرفیت فعال</div>
+                                <div className="font-semibold text-emerald-600 dark:text-emerald-400 text-sm">
+                                  {formatCurrencyFa(facility.cycleStatistics.totalActiveQuota)}
                                 </div>
                               </div>
                             )}
-                            {facility.bankInfo.bankAccountNumber && (
+                            {facility.cycleStatistics.totalAvailableQuota !== undefined && (
+                              <div className="border-l border-gray-200 dark:border-gray-700">
+                                <div className="text-xs text-gray-500 dark:text-gray-400">ظرفیت موجود</div>
+                                <div className="font-semibold text-blue-600 dark:text-blue-400 text-sm">
+                                  {formatCurrencyFa(facility.cycleStatistics.totalAvailableQuota)}
+                                </div>
+                              </div>
+                            )}
+                            {facility.cycleStatistics.totalCyclesCount !== undefined && (
                               <div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">شماره حساب</div>
-                                <div className="font-mono text-xs font-medium text-gray-900 dark:text-gray-100">
-                                  {facility.bankInfo.bankAccountNumber}
+                                <div className="text-xs text-gray-500 dark:text-gray-400">کل دوره‌ها</div>
+                                <div className="font-semibold text-amber-600 dark:text-amber-400 text-sm">
+                                  {formatCurrencyFa(facility.cycleStatistics.totalCyclesCount)}
                                 </div>
                               </div>
                             )}

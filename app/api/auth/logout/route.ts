@@ -80,36 +80,34 @@ export async function POST(req: NextRequest) {
       }
     };
 
-    // پاک‌سازی کوکی‌ها - فقط در صورت موفقیت logout
+    // Clear cookies only if logout API call was successful
     const res = NextResponse.json(response, { status });
+    res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     
     // Only clear cookies if logout API call was successful
     if (status === 200 && upstream.data?.isSuccess) {
-      console.log('Logout successful, clearing cookies');
-      
-      // پاک‌سازی کوکی‌های احراز هویت
+      // Clear access token cookie
       res.cookies.set('accessToken', '', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
         path: '/',
-        maxAge: 0
+        maxAge: 0,
       });
       
+      // Clear refresh token cookie
       res.cookies.set('refreshToken', '', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
         path: '/',
-        maxAge: 0
+        maxAge: 0,
       });
-    } else {
-      console.log('Logout failed, keeping cookies');
     }
 
     return res;
   } catch (error) {
-    console.error('Logout BFF error:', {
+    console.error('[Logout] BFF error:', {
       name: error instanceof Error ? error.name : 'Unknown',
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
@@ -122,6 +120,10 @@ export async function POST(req: NextRequest) {
       errors: [error instanceof Error ? error.message : String(error)],
       data: { isSuccess: false, message: 'Logout failed' }
     };
-    return NextResponse.json(errorResponse, { status: 400 });
+    
+    const result = NextResponse.json(errorResponse, { status: 400 });
+    result.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    
+    return result;
   }
 }

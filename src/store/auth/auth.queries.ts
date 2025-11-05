@@ -148,7 +148,10 @@ export const authApi = createApi({
           }
         } catch (error: unknown) {
           // baseApi.ts handles 401 automatically → setAnonymous
-          // Just clear user data on any error
+          // Server-side refresh token handling in generatedClient.ts means:
+          // - If we get here with 401, refresh definitively failed
+          // - User must re-authenticate
+          // - Clear user data and mark as initialized
           dispatch(clearUser());
           dispatch(setInitialized(true));
         }

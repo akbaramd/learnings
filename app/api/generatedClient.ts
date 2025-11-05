@@ -9,10 +9,17 @@ import { cookies } from 'next/headers';
 import { getServerEnvSync } from '@/src/config/env';
 
 // Get UPSTREAM lazily to avoid errors during build
-const getUpstream = () => getServerEnvSync().UPSTREAM_API_BASE_URL;
+const getUpstream = () => {
+  const env = getServerEnvSync();
+  if (!env.UPSTREAM_API_BASE_URL) {
+    throw new Error('UPSTREAM_API_BASE_URL is not configured');
+  }
+  return env.UPSTREAM_API_BASE_URL;
+};
 
 // Global refresh promise to handle concurrent 401 requests
 // Single-flight pattern: only one refresh request at a time
+// This prevents multiple simultaneous refresh attempts
 let globalRefreshPromise: Promise<{ success: boolean; accessToken?: string; refreshToken?: string }> | null = null;
 
 /**
@@ -76,11 +83,14 @@ async function refreshAccessToken(req: NextRequest): Promise<{ success: boolean;
         validateStatus: () => true,
       });
 
-      // Forward cookies from original request
+      // Forward cookies from original request for refresh call
       const cookie = req.headers.get('cookie');
       if (cookie) {
         refreshHttp.defaults.headers.common['cookie'] = cookie;
       }
+      
+      // Also set cookie header for the refresh request
+      refreshHttp.defaults.headers.common['Content-Type'] = 'application/json';
 
       // Call upstream refresh endpoint
       const refreshApi = new Api({});
@@ -237,9 +247,14 @@ export function createApiForRequest(req: NextRequest) {
       const clientAuth = req.headers.get('authorization');
 
       config.headers = config.headers ?? {};
-      if (cookie) config.headers['cookie'] = cookie;
+      
+      // Always forward cookies from client request
+      if (cookie) {
+        config.headers['cookie'] = cookie;
+      }
       
       // Prioritize client's authorization header, fallback to server cookies
+      // This allows client to override token if needed (e.g., for testing)
       if (clientAuth) {
         config.headers['authorization'] = clientAuth;
       } else {
@@ -305,15 +320,16 @@ export function createApiForRequest(req: NextRequest) {
 
             // Get fresh cookies after refresh (they were updated in refreshAccessToken)
             const cookieStore = await cookies();
-            const cookie = req.headers.get('cookie');
+            const accessToken = cookieStore.get('accessToken')?.value;
             
-            // Update authorization header with new token
+            // Update authorization header with new token (prefer from cookie, fallback to refresh result)
             originalRequest.headers = originalRequest.headers ?? {};
-            originalRequest.headers['authorization'] = `Bearer ${refreshResult.accessToken}`;
+            originalRequest.headers['authorization'] = `Bearer ${accessToken || refreshResult.accessToken}`;
             
-            // Update cookies in request for retry
-            if (cookie) {
-              originalRequest.headers['cookie'] = cookie;
+            // Update cookies in request for retry - get fresh cookie string
+            const freshCookie = req.headers.get('cookie');
+            if (freshCookie) {
+              originalRequest.headers['cookie'] = freshCookie;
             }
 
             // Retry the original request with new token
@@ -326,6 +342,22 @@ export function createApiForRequest(req: NextRequest) {
                 method: requestMethod,
                 hasData: !!retryResponse.data,
               });
+            }
+            
+            // Forward any new cookies from retry response
+            const retrySetCookie = retryResponse.headers?.['set-cookie'];
+            if (retrySetCookie) {
+              // Update response headers to forward cookies
+              if (Array.isArray(retrySetCookie)) {
+                retrySetCookie.forEach(c => {
+                  if (response.headers) {
+                    response.headers['set-cookie'] = response.headers['set-cookie'] || [];
+                    if (Array.isArray(response.headers['set-cookie'])) {
+                      response.headers['set-cookie'].push(c);
+                    }
+                  }
+                });
+              }
             }
             
             // If retry returns 200, return 200; otherwise return the status from retry
@@ -472,15 +504,17 @@ export function createApiForRequest(req: NextRequest) {
             }
 
             // Get fresh cookies after refresh
-            const cookie = req.headers.get('cookie');
+            const cookieStore = await cookies();
+            const accessToken = cookieStore.get('accessToken')?.value;
             
-            // Update authorization header with new token
+            // Update authorization header with new token (prefer from cookie, fallback to refresh result)
             originalRequest.headers = originalRequest.headers ?? {};
-            originalRequest.headers['authorization'] = `Bearer ${refreshResult.accessToken}`;
+            originalRequest.headers['authorization'] = `Bearer ${accessToken || refreshResult.accessToken}`;
             
-            // Update cookies in request for retry
-            if (cookie) {
-              originalRequest.headers['cookie'] = cookie;
+            // Update cookies in request for retry - get fresh cookie string
+            const freshCookie = req.headers.get('cookie');
+            if (freshCookie) {
+              originalRequest.headers['cookie'] = freshCookie;
             }
 
             // Retry the original request with new token
@@ -488,6 +522,22 @@ export function createApiForRequest(req: NextRequest) {
             
             if (isDev) {
               console.log('[RefreshToken] Retry response status:', retryResponse.status);
+            }
+            
+            // Forward any new cookies from retry response
+            const retrySetCookie = retryResponse.headers?.['set-cookie'];
+            if (retrySetCookie) {
+              // Update response headers to forward cookies
+              if (Array.isArray(retrySetCookie)) {
+                retrySetCookie.forEach(c => {
+                  if (error.response?.headers) {
+                    error.response.headers['set-cookie'] = error.response.headers['set-cookie'] || [];
+                    if (Array.isArray(error.response.headers['set-cookie'])) {
+                      error.response.headers['set-cookie'].push(c);
+                    }
+                  }
+                });
+              }
             }
             
             // If retry returns 200, return 200; otherwise return the status from retry

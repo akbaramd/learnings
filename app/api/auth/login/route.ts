@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
     };
 
     const result = NextResponse.json(response, { status });
+    result.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     
     // Apply CSRF cookie if set
     const csrfCookie = res.headers.get('set-cookie');
@@ -48,14 +49,18 @@ export async function POST(req: NextRequest) {
       result.headers.append('set-cookie', csrfCookie);
     }
     
-    // Forward upstream cookies
+    // Forward upstream cookies (e.g., refresh token from upstream)
     if (setCookie) {
-      if (Array.isArray(setCookie)) setCookie.forEach(c => result.headers.append('set-cookie', c));
-      else result.headers.set('set-cookie', setCookie as string);
-    } 
+      if (Array.isArray(setCookie)) {
+        setCookie.forEach(c => result.headers.append('set-cookie', c));
+      } else {
+        result.headers.set('set-cookie', setCookie as string);
+      }
+    }
+    
     return result;
   } catch (error) {
-    console.error('Send OTP BFF error:', {
+    console.error('[SendOTP] BFF error:', {
       name: error instanceof Error ? error.name : 'Unknown',
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
@@ -67,14 +72,18 @@ export async function POST(req: NextRequest) {
       message: error instanceof Error ? error.message : 'Failed to send OTP. Please try again.',
       errors: [error instanceof Error ? error.message : String(error)]
     };
+    
     const result = NextResponse.json(errorResponse, { status: 400 });
+    result.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    
     // Try to set CSRF cookie even on error
     const res = NextResponse.next();
     ensureCsrfCookie(req, res);
     const csrfCookie = res.headers.get('set-cookie');
     if (csrfCookie) {
-      result.headers.set('set-cookie', csrfCookie);
+      result.headers.append('set-cookie', csrfCookie);
     }
+    
     return result;
   }
 }

@@ -147,19 +147,23 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
     pathnameRef.current = pathname;
   }, [pathname]);
 
-  // Fetch user profile on mount (only for protected routes)
-  // Only fetch once - don't refetch on mount, focus, or reconnect
-  useGetMeQuery(undefined, {
-    refetchOnMountOrArgChange: false,
-    refetchOnFocus: false,
-    refetchOnReconnect: false,
-  });
-
   // Get auth state from Redux store
   const { isAuthenticated, isReady } = useAuth();
 
+  // Fetch user profile on mount (only for protected routes)
+  // Only fetch when auth is ready - prevents unnecessary requests
+  // Server-side refresh token handling ensures tokens are valid before this runs
+  // This query updates auth state via onQueryStarted in auth.queries.ts
+  useGetMeQuery(undefined, {
+    skip: !isReady, // Don't fetch until auth state is initialized
+    refetchOnMountOrArgChange: false, // Don't refetch on mount
+    refetchOnFocus: false, // Don't refetch on window focus
+    refetchOnReconnect: false, // Don't auto-refetch on reconnect
+  });
+
   // Redirect to login if not authenticated
   // Only check when auth state changes, not on pathname changes
+  
   useEffect(() => {
     // Skip if already redirected or currently checking
     if (redirectedRef.current || checkingRef.current) return;
@@ -174,6 +178,9 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
     }
 
     // Not authenticated - redirect once
+    // This happens when:
+    // 1. User has no valid tokens (no cookies)
+    // 2. Server-side refresh failed (401 after refresh attempt)
     checkingRef.current = true;
     redirectedRef.current = true;
     const returnUrl = encodeURIComponent(pathnameRef.current || '/');
