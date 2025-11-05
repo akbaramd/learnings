@@ -13,6 +13,8 @@ export type Tour = {
   title: string;
   photos: string[];
   isRegistrationOpen: boolean;
+  isFullyBooked?: boolean;        // Indicates if tour is completely full
+  isNearlyFull?: boolean;         // Indicates if tour is nearly full (≥80% utilized)
   price?: number;                 // ریال
   registrationStart?: string;     // ISO
   registrationEnd?: string;       // ISO
@@ -60,15 +62,6 @@ const durationFa = (start?: string, end?: string) => {
   if (isNaN(s) || isNaN(e)) return '—';
   const days = Math.max(1, Math.ceil((e - s) / (1000 * 60 * 60 * 24)));
   return `${faDigits(days)} روزه`;
-};
-
-
-const availDot = (max?: number, left?: number) => {
-  if (!max) return 'bg-gray-400';
-  const p = ((left ?? 0) / max) * 100;
-  if (p <= 10) return 'bg-red-500';
-  if (p <= 30) return 'bg-yellow-500';
-  return 'bg-green-500';
 };
 
 /* ===================== SafeImage ===================== */
@@ -191,7 +184,6 @@ export function TourCard({
   dir,
 }: TourCardProps) {
   const router = useRouter();
-  {console.log(tour)}
   if (loading) {
     return <TourCardSkeleton className={className} dir={dir} />;
   }
@@ -237,8 +229,8 @@ export function TourCard({
         {/* Gentle gradient overlay for visual polish (not for text) */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
 
-        {/* Registration Status Badge */}
-        <div className="absolute top-2 right-2">
+        {/* Registration Status Badges */}
+        <div className="absolute top-2 right-2 flex flex-col gap-1.5">
           <span
             className={[
               'px-2 py-1 text-xs font-medium rounded-full text-white shadow',
@@ -247,6 +239,16 @@ export function TourCard({
           >
             {tour.isRegistrationOpen ? 'ثبت‌نام باز' : 'ثبت‌نام بسته'}
           </span>
+          {tour.isFullyBooked && (
+            <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-700 text-white shadow">
+              تکمیل شده
+            </span>
+          )}
+          {tour.isNearlyFull && !tour.isFullyBooked && tour.isRegistrationOpen && (
+            <span className="px-2 py-1 text-xs font-medium rounded-full bg-amber-500 text-white shadow animate-pulse">
+              ⚠️ کم‌ظرفیت
+            </span>
+          )}
         </div>
 
         {/* Reservation Status at bottom of image */}
@@ -330,11 +332,11 @@ export function TourCard({
 
             {tour.isRegistrationOpen && tour.maxCapacity ? (
               <div className="flex items-center gap-1">
-                <span className={`w-2 h-2 rounded-full ${availDot(tour.maxCapacity, tour.remainingCapacity)}`} />
-                <span className="text-[11px] font-medium text-neutral-700 dark:text-neutral-300">
-                  {(tour.remainingCapacity ?? 0) <= 0
-                    ? 'تکمیل'
-                    : (tour.remainingCapacity ?? 0) <= 3
+                <span className={`w-2 h-2 rounded-full ${tour.isFullyBooked ? 'bg-red-500' : tour.isNearlyFull ? 'bg-amber-500' : 'bg-green-500'}`} />
+                <span className={`text-[11px] font-medium ${tour.isFullyBooked ? 'text-red-600 dark:text-red-400' : tour.isNearlyFull ? 'text-amber-600 dark:text-amber-400' : 'text-neutral-700 dark:text-neutral-300'}`}>
+                  {tour.isFullyBooked
+                    ? 'تکمیل شده'
+                    : tour.isNearlyFull
                     ? 'کم‌ظرفیت'
                     : 'ظرفیت موجود'}
                 </span>

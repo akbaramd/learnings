@@ -605,6 +605,9 @@ export interface CapacityDetailDto {
   isActive?: boolean;
   isSpecial?: boolean;
   capacityState?: string | null;
+  isRegistrationOpen?: boolean;
+  isFullyBooked?: boolean;
+  isNearlyFull?: boolean;
   description?: string | null;
 }
 
@@ -621,6 +624,9 @@ export interface CapacitySummaryDto {
   registrationEnd?: string;
   isActive?: boolean;
   capacityState?: string | null;
+  isRegistrationOpen?: boolean;
+  isFullyBooked?: boolean;
+  isNearlyFull?: boolean;
   description?: string | null;
 }
 
@@ -1337,6 +1343,7 @@ export interface FacilityRequestDetailsDto {
   isCompleted?: boolean;
   isRejected?: boolean;
   isCancelled?: boolean;
+  isLastRequest?: boolean;
   requestNumber?: string | null;
   description?: string | null;
   financialInfo?: RequestFinancialInfoDto;
@@ -1389,6 +1396,7 @@ export interface FacilityRequestDto {
   isCompleted?: boolean;
   isRejected?: boolean;
   isCancelled?: boolean;
+  isLastRequest?: boolean;
 }
 
 export interface FailedUpdate {
@@ -2675,6 +2683,16 @@ export interface RequestTimelineDto {
   processingTimeDays?: number | null;
 }
 
+export interface RequiredCapabilityDto {
+  capabilityId?: string | null;
+  name?: string | null;
+}
+
+export interface RequiredFeatureDto {
+  featureId?: string | null;
+  name?: string | null;
+}
+
 export interface ReservationDetailDto {
   /** @format uuid */
   id?: string;
@@ -3684,8 +3702,8 @@ export interface TourDetailWithUserReservationDto {
   maxAge?: number | null;
   /** @format int32 */
   maxGuestsPerReservation?: number | null;
-  requiredCapabilities?: string[] | null;
-  requiredFeatures?: string[] | null;
+  requiredCapabilities?: RequiredCapabilityDto[] | null;
+  requiredFeatures?: RequiredFeatureDto[] | null;
   capacities?: CapacityDetailDto[] | null;
   restrictedTours?: RestrictedTourSummaryDto[] | null;
   /** @format int32 */

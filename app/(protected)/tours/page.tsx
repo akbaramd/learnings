@@ -52,6 +52,8 @@ export default function ToursPage() {
       description: t.title ?? '',
       photos: t.photos?.map((p) => (p.url ? buildImageUrl(p.url) : '')) ?? [],
       isRegistrationOpen: t.isRegistrationOpen ?? false,
+      isFullyBooked: t.isFullyBooked ?? false,
+      isNearlyFull: t.isNearlyFull ?? false,
       difficultyLevel: 1,
       price: t.pricing?.[0]?.effectivePriceRials ?? t.lowestPriceRials ?? 0,
       registrationStart: t.registrationStart ?? '',

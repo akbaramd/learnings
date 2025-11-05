@@ -107,23 +107,8 @@ function BrandTitle() {
   }, []);
   
   const getTitle = () => {
-    if (!mounted) {
-      return 'سیستم رفاهی مهندسین'; // Default title during SSR
-    }
-    
-    if (pathname === '/dashboard' || pathname === '/') {
-      return 'سیستم رفاهی مهندسین';
-    }
-    if (pathname.startsWith('/bills')) {
-      return 'صورت حساب‌ها';
-    }
-    if (pathname.startsWith('/notifications')) {
-      return 'اعلان‌ها';
-    }
-    if (pathname.startsWith('/profile')) {
-      return 'پروفایل';
-    }
-    return 'سیستم رفاهی مهندسین';
+   
+    return 'سامانه خدمات رفاهی ';
   };
 
   return (

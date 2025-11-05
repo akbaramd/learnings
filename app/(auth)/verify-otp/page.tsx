@@ -178,7 +178,17 @@ export default function VerifyOtpPage() {
   }, [canResend, resendLoading, success, showError, sendOtpMutation]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center  p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      {/* Title above card */}
+      <div className="mb-8 text-center">
+        <h1 className="text-2xl font-bold text-emerald-700 dark:text-emerald-400 mb-2">
+          سامانه خدمات رفاهی   
+        </h1>
+        <p className="text-xs text-gray-500 dark:text-gray-500">
+          نظام مهندسی ساختمان آذربایجان غربی
+        </p>
+      </div>
+      
       <Card
         variant="elevated"
         padding="md"
@@ -186,7 +196,7 @@ export default function VerifyOtpPage() {
         className="w-full"
       >
           <div className="mb-6 text-center">
-            <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">تأیید کد</h1>
+            <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">تأیید کد</h2>
             <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
               کد ۶ رقمی ارسال شده به شماره تلفن خود را وارد کنید.
             </p>
