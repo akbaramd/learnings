@@ -9,6 +9,7 @@ import { paymentsReducer, paymentsApi } from './payments';
 import { discountsReducer, discountsApi } from './discounts';
 import { toursApi , toursReducer} from './tours';
 import { facilitiesApi, facilitiesReducer } from './facilities';
+import { surveysApi, surveysReducer } from './surveys';
 
 export const store = configureStore({
   reducer: {
@@ -21,6 +22,7 @@ export const store = configureStore({
     [discountsApi.reducerPath]: discountsApi.reducer,
     [toursApi.reducerPath]: toursApi.reducer,
     [facilitiesApi.reducerPath]: facilitiesApi.reducer,
+    [surveysApi.reducerPath]: surveysApi.reducer,
     auth: authReducer,
     notifications: notificationsReducer,
     wallets: walletsReducer,
@@ -29,6 +31,7 @@ export const store = configureStore({
     discounts: discountsReducer,
     tours: toursReducer,
     facilities: facilitiesReducer,
+    surveys: surveysReducer,
   },
   middleware: (getDefault) => 
     getDefault()
@@ -40,7 +43,8 @@ export const store = configureStore({
       .concat(paymentsApi.middleware)
       .concat(discountsApi.middleware)
       .concat(toursApi.middleware)
-      .concat(facilitiesApi.middleware),
+      .concat(facilitiesApi.middleware)
+      .concat(surveysApi.middleware),
   devTools: process.env.NODE_ENV !== 'production',
 });
 

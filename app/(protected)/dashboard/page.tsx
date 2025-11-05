@@ -149,7 +149,7 @@ function WalletCard() {
 const services = [
   { id: 'tour', title: 'تور', icon: <PiMapPinDuotone className="h-5 w-5" />, accent: 'blue', disabled: false },
   { id: 'facility', title: 'تسهیلات', icon: <PiMoney className="h-5 w-5" />, accent: 'emerald', disabled: false },
-  { id: 'hotel', title: 'هتل', icon: <PiBuildingOffice className="h-5 w-5" />, accent: 'amber', disabled: true },
+  { id: 'survey', title: 'نظرسنجی', icon: <PiBuildingOffice className="h-5 w-5" />, accent: 'amber', disabled: false },
   { id: 'flight', title: 'پرواز', icon: <PiDiamondDuotone className="h-5 w-5" />, accent: 'indigo', disabled: true },
   { id: 'insurance', title: 'بیمه', icon: <PiShieldCheck className="h-5 w-5" />, accent: 'rose', disabled: true },
   { id: 'car', title: 'خودرو', icon: <PiTruck className="h-5 w-5" />, accent: 'cyan', disabled: true },
@@ -203,6 +203,9 @@ export default function HomeDashboard() {
       router.push('/facilities');
     } else if (id === 'tour') {
       router.push('/tours');
+    }
+    else if (id === 'survey') {
+      router.push('/surveys');
     }
   }
 
