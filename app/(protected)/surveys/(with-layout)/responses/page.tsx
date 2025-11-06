@@ -23,15 +23,7 @@ import {
 } from 'react-icons/pi';
 import { useSurveysPageHeader } from '../SurveysPageHeaderContext';
 
-// Utility functions
-function shallowEqualArray<T>(a: T[], b: T[]): boolean {
-  if (a === b) return true;
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return false;
-  }
-  return true;
-}
+// Utility functions removed - no longer needed
 
 function formatDate(dateString: string | null | undefined): string {
   if (!dateString) return 'نامشخص';
@@ -87,7 +79,7 @@ export default function ResponsesPage() {
     try {
       setIsLoading(true);
       const result = await getSurveysWithResponses({
-        pageNumber: currentPage,
+        pageNumber: 1,
         pageSize,
         searchTerm: normalizedSearch || undefined,
         state: stateFilter,
@@ -96,7 +88,7 @@ export default function ResponsesPage() {
         includeUserLastResponse: true,
       });
       
-      if (result.data?.data) {
+      if (result.data?.isSuccess && result.data?.data) {
         const items = result.data.data.surveys || [];
         const pageInfo = result.data.data;
         const pageSizeFromApi = pageInfo.pageSize || pageSize;
@@ -106,24 +98,22 @@ export default function ResponsesPage() {
           : 1;
         
         setPagination({
-          pageNumber: pageInfo.pageNumber || currentPage,
+          pageNumber: pageInfo.pageNumber || 1,
           totalPages,
-          hasNextPage: (pageInfo.pageNumber || currentPage) < totalPages,
+          hasNextPage: (pageInfo.pageNumber || 1) < totalPages,
         });
         
-        if (currentPage === 1) {
-          setAllSurveys(prev => {
-            if (shallowEqualArray(prev, items)) return prev;
-            return items;
-          });
-        }
+        setAllSurveys(items);
+        setCurrentPage(1);
+      } else {
+        console.error('Failed to refresh responses:', result.data?.message || 'Unknown error');
       }
     } catch (err) {
       console.error('Failed to refresh responses:', err);
     } finally {
       setIsLoading(false);
     }
-  }, [getSurveysWithResponses, currentPage, pageSize, normalizedSearch, stateFilter, responseStatusFilter, isLoading]);
+  }, [getSurveysWithResponses, pageSize, normalizedSearch, stateFilter, responseStatusFilter, isLoading]);
 
   const onBack = useCallback(() => {
     if (document.referrer && document.referrer.includes('/dashboard')) {
@@ -161,58 +151,14 @@ export default function ResponsesPage() {
     });
   }, [setHeaderState, onBack, onToggleFilters, handleRefresh]);
 
-  // Reset and fetch first page when filters/search change
+  // Reset to page 1 when filters/search change
   useEffect(() => {
     setCurrentPage(1);
-    
-    const fetchFirstPage = async () => {
-      try {
-        setIsLoading(true);
-        const result = await getSurveysWithResponses({
-          pageNumber: 1,
-          pageSize,
-          searchTerm: normalizedSearch || undefined,
-          state: stateFilter,
-          userResponseStatus: responseStatusFilter,
-          includeUserResponses: true,
-          includeUserLastResponse: true,
-        });
-        
-        if (result.data?.data) {
-          const items = result.data.data.surveys || [];
-          const pageInfo = result.data.data;
-          const pageSizeFromApi = pageInfo.pageSize || pageSize;
-          const totalCount = pageInfo.totalCount || 0;
-          const totalPages = pageSizeFromApi > 0 
-            ? Math.max(1, Math.ceil(totalCount / pageSizeFromApi))
-            : 1;
-          
-          setPagination({
-            pageNumber: pageInfo.pageNumber || 1,
-            totalPages,
-            hasNextPage: (pageInfo.pageNumber || 1) < totalPages,
-          });
-          
-          setAllSurveys(prev => {
-            if (shallowEqualArray(prev, items)) return prev;
-            return items;
-          });
-        }
-      } catch (err) {
-        console.error('Failed to fetch responses:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  }, [normalizedSearch, stateFilter, responseStatusFilter]);
 
-    fetchFirstPage();
-  }, [normalizedSearch, stateFilter, responseStatusFilter, getSurveysWithResponses, pageSize]);
-
-  // Load more when currentPage changes
+  // Fetch data when filters/search change or page changes
   useEffect(() => {
-    if (currentPage === 1) return;
-
-    const loadMoreSurveys = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
         const result = await getSurveysWithResponses({
@@ -225,7 +171,7 @@ export default function ResponsesPage() {
           includeUserLastResponse: true,
         });
         
-        if (result.data?.data) {
+        if (result.data?.isSuccess && result.data?.data) {
           const items = result.data.data.surveys || [];
           const pageInfo = result.data.data;
           const pageSizeFromApi = pageInfo.pageSize || pageSize;
@@ -240,24 +186,35 @@ export default function ResponsesPage() {
             hasNextPage: (pageInfo.pageNumber || currentPage) < totalPages,
           });
           
-          setAllSurveys(prev => {
-            const existingIds = new Set(prev.map(s => s.id));
-            const newItems = items.filter(s => s.id && !existingIds.has(s.id));
-            if (newItems.length === 0) return prev;
-            const merged = [...prev, ...newItems];
-            if (merged.length === prev.length) return prev;
-            return merged;
-          });
+          if (currentPage === 1) {
+            setAllSurveys(items);
+          } else {
+            setAllSurveys(prev => {
+              const existingIds = new Set(prev.map(s => s.id));
+              const newItems = items.filter(s => s.id && !existingIds.has(s.id));
+              if (newItems.length === 0) return prev;
+              return [...prev, ...newItems];
+            });
+          }
+        } else {
+          console.error('Failed to fetch responses:', result.data?.message || 'Unknown error');
+          if (currentPage === 1) {
+            setAllSurveys([]);
+          }
         }
       } catch (err) {
-        console.error('Failed to load more responses:', err);
+        console.error('Failed to fetch responses:', err);
+        if (currentPage === 1) {
+          setAllSurveys([]);
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadMoreSurveys();
-  }, [currentPage, getSurveysWithResponses, pageSize, normalizedSearch, stateFilter, responseStatusFilter]);
+    fetchData();
+  }, [currentPage, normalizedSearch, stateFilter, responseStatusFilter, getSurveysWithResponses, pageSize]);
+
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
@@ -440,7 +397,8 @@ export default function ResponsesPage() {
                   const latestResponse = survey.userLastResponse;
                   const hasUserResponse = survey.hasUserResponse === true;
                   
-                  if (!hasUserResponse || responses.length === 0) {
+                  // Show survey if it has user response (either in userResponses array or userLastResponse)
+                  if (!hasUserResponse || (!latestResponse && responses.length === 0)) {
                     return null;
                   }
 
@@ -480,7 +438,7 @@ export default function ResponsesPage() {
 
                       {/* Responses List */}
                       <div className="space-y-2">
-                        {(latestResponse ? [latestResponse] : responses.slice(0, 3)).map((response) => {
+                        {(latestResponse ? [latestResponse] : responses.length > 0 ? responses.slice(0, 3) : []).map((response) => {
                           const isSubmitted = response.isSubmitted === true;
                           const isActive = response.isActive === true;
                           const completionPercentage = response.completionPercentage || 0;
@@ -532,15 +490,21 @@ export default function ResponsesPage() {
                           );
                         })}
                         
-                        {responses.length > 1 && survey.id && (
+                        {(responses.length > 1 || (latestResponse && responses.length > 0)) && survey.id && (
                           <Button
                             variant="secondary"
                             size="sm"
                             block
-                            onClick={() => router.push(`/surveys/${survey.id}/responses`)}
+                            onClick={() => {
+                              if (latestResponse?.id) {
+                                router.push(`/surveys/${survey.id}/responses/${latestResponse.id}`);
+                              } else if (responses.length > 0 && responses[0]?.id) {
+                                router.push(`/surveys/${survey.id}/responses/${responses[0].id}`);
+                              }
+                            }}
                             rightIcon={<PiArrowRight className="h-3 w-3" />}
                           >
-                            مشاهده همه پاسخ‌ها ({responses.length})
+                            مشاهده همه پاسخ‌ها ({responses.length || (latestResponse ? 1 : 0)})
                           </Button>
                         )}
                       </div>

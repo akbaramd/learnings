@@ -12,6 +12,7 @@ export * from './auth.types';
 export {
   setChallengeId,
   setMaskedPhoneNumber,
+  setNationalCode,
   clearChallengeId,
   setUser,
   clearUser,
@@ -36,6 +37,7 @@ export {
   selectUserRoles,
   selectChallengeId,
   selectMaskedPhone,
+  selectNationalCode,
   selectAuthError,
   selectAuthInfo,
   selectOtpFlowState,

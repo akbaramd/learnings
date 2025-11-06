@@ -14,6 +14,7 @@ import {
 import {
   setChallengeId,
   setMaskedPhoneNumber,
+  setNationalCode,
   clearChallengeId,
   setUser,
   clearUser,
@@ -74,6 +75,8 @@ export const authApi = createApi({
             if (data.data.maskedPhoneNumber) {
               dispatch(setMaskedPhoneNumber(data.data.maskedPhoneNumber));
             }
+            // Store national code for resending OTP
+            dispatch(setNationalCode(arg.nationalCode));
             dispatch(setAuthStatus('otp-sent'));
           } else {
             dispatch(setError(data?.errors?.[0] || 'No challengeId returned from server.'));

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import {
   useLazyGetResponseDetailsQuery,
+  useLazyGetCurrentQuestionQuery,
   selectSelectedResponse,
   selectSurveysLoading,
 } from '@/src/store/surveys';
@@ -56,6 +57,7 @@ export default function ResponseDetailsPage({ params }: ResponseDetailsPageProps
 
   // Query hooks
   const [getResponseDetails, { isLoading: isDetailsLoading }] = useLazyGetResponseDetailsQuery();
+  const [getCurrentQuestion, { isLoading: isGettingCurrentQuestion }] = useLazyGetCurrentQuestionQuery();
 
   // Get params from URL
   useEffect(() => {
@@ -84,10 +86,52 @@ export default function ResponseDetailsPage({ params }: ResponseDetailsPageProps
     }
   };
 
-  const handleContinueResponse = () => {
-    if (surveyIdFromParams && responseIdFromParams) {
-      // Navigate to current question or first unanswered question
-      router.push(`/surveys/${surveyIdFromParams}/responses/${responseIdFromParams}/questions/current`);
+  const handleContinueResponse = async () => {
+    if (!surveyIdFromParams || !responseIdFromParams) {
+      return;
+    }
+
+    try {
+      // Get current question
+      const result = await getCurrentQuestion({
+        surveyId: surveyIdFromParams,
+        responseId: responseIdFromParams,
+      });
+
+      if (result.data?.isSuccess && result.data?.data?.questionId) {
+        // Navigate to answer page for current question
+        router.push(
+          `/surveys/${surveyIdFromParams}/responses/${responseIdFromParams}/questions/${result.data.data.questionId}/answer`
+        );
+      } else {
+        // If no current question, try to find first unanswered question from response details
+        const questionAnswers = responseDetails?.questionAnswers || [];
+        const firstUnanswered = questionAnswers.find(
+          (qa) => !qa.isAnswered || !qa.isComplete
+        );
+        
+        if (firstUnanswered?.questionId) {
+          router.push(
+            `/surveys/${surveyIdFromParams}/responses/${responseIdFromParams}/questions/${firstUnanswered.questionId}/answer`
+          );
+        } else {
+          // No unanswered questions, go to done page
+          router.push(`/surveys/${surveyIdFromParams}/responses/${responseIdFromParams}/done`);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to get current question:', error);
+      // Fallback: try to find first unanswered question
+      const questionAnswers = responseDetails?.questionAnswers || [];
+      const firstUnanswered = questionAnswers.find(
+        (qa) => !qa.isAnswered || !qa.isComplete
+      );
+      
+      if (firstUnanswered?.questionId) {
+        router.push(
+          `/surveys/${surveyIdFromParams}/responses/${responseIdFromParams}/questions/${firstUnanswered.questionId}/answer`
+        );
+      }
     }
   };
 
@@ -178,9 +222,10 @@ export default function ResponseDetailsPage({ params }: ResponseDetailsPageProps
                     variant="primary"
                     size="sm"
                     onClick={handleContinueResponse}
+                    disabled={isGettingCurrentQuestion}
                     rightIcon={<PiArrowRight className="h-4 w-4" />}
                   >
-                    ادامه پاسخ
+                    {isGettingCurrentQuestion ? 'در حال بارگذاری...' : 'ادامه پاسخ'}
                   </Button>
                 </div>
               </div>

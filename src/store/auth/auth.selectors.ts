@@ -14,6 +14,7 @@ const selectAuthState = (state: RootState) => {
       user: null,
       challengeId: null,
       maskedPhoneNumber: null,
+      nationalCode: null,
       error: null,
       isInitialized: false,
     };
@@ -84,6 +85,11 @@ export const selectMaskedPhone = createSelector(
   (auth) => auth.maskedPhoneNumber  
 );
 
+export const selectNationalCode = createSelector(
+  [selectAuthState],
+  (auth) => auth.nationalCode
+);
+
 export const selectHasChallengeId = createSelector(
   [selectChallengeId],
   (challengeId) => !!challengeId
@@ -111,6 +117,7 @@ export const selectAuthInfo = createSelector(
     user: auth.user,
     challengeId: auth.challengeId,
     maskedPhone: auth.maskedPhoneNumber,
+    nationalCode: auth.nationalCode,
     error: auth.error,
   })
 );

@@ -18,7 +18,6 @@ import type {
 } from '@/src/services/Api';
 import { PageHeader } from '@/src/components/ui/PageHeader';
 import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
-import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
 import { TextAreaField } from '@/src/components/forms/TextAreaField';
 import {
@@ -27,6 +26,9 @@ import {
   PiCheckCircle,
   PiQuestion,
   PiWarning,
+  PiTextT,
+  PiListBullets,
+  PiCircle,
 } from 'react-icons/pi';
 
 interface QuestionAnswerPageProps {
@@ -338,190 +340,235 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
 
   // QuestionByIdResponse has flat structure
   const questionText = question.questionText || 'سوال بدون عنوان';
-  const questionNumber = question.order || 0;
+  const questionNumber = question.currentQuestionNumber || question.order || 0;
+  const totalQuestions = question.totalQuestions || 0;
   const hasPrevious = question.allowBackNavigation === true && !question.isFirstQuestion;
 
+  // Get question type info
+  const getQuestionTypeInfo = () => {
+    if (isTextQuestion) {
+      return {
+        icon: <PiTextT className="h-4 w-4" />,
+        text: 'متنی',
+        color: 'text-purple-600 dark:text-purple-400',
+      };
+    }
+    if (isMultiSelect) {
+      return {
+        icon: <PiListBullets className="h-4 w-4" />,
+        text: 'چند گزینه‌ای',
+        color: 'text-indigo-600 dark:text-indigo-400',
+      };
+    }
+    return {
+      icon: <PiCircle className="h-4 w-4" />,
+      text: 'تک گزینه‌ای',
+      color: 'text-blue-600 dark:text-blue-400',
+    };
+  };
+
+  const questionTypeInfo = getQuestionTypeInfo();
+
   return (
-    <div className="h-full flex flex-col" dir="rtl">
+    <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900" dir="rtl">
       <PageHeader
-        title={`سوال ${questionNumber}`}
-        titleIcon={<PiQuestion className="h-5 w-5 text-blue-600 dark:text-blue-400" />}
+        title="پاسخ به سوالات"
+        titleIcon={<PiQuestion className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
         showBackButton={true}
         onBack={handleBack}
       />
 
       <ScrollableArea className="flex-1" hideScrollbar={true}>
-        <div className="p-2 space-y-3">
-          {/* Question Card */}
-          <Card variant="default" radius="lg" padding="md">
-            <div className="space-y-4">
-              {/* Question Header */}
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                  <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+        <div className="p-4 space-y-4 pb-24">
+          {/* Question Info Card */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div className="space-y-3">
+              {/* Question Number and Type */}
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">سوال</span>
+                  <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
                     {questionNumber}
                   </span>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                    {questionText}
-                  </h3>
-                  {isRequired && (
-                    <span className="inline-flex items-center gap-1 text-xs text-red-600 dark:text-red-400 mt-1">
-                      <PiWarning className="h-3 w-3" />
-                      الزامی
-                    </span>
+                  {totalQuestions > 0 && (
+                    <>
+                      <span className="text-sm text-gray-500 dark:text-gray-500">از</span>
+                      <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                        {totalQuestions}
+                      </span>
+                    </>
                   )}
-                  {question.questionKind && (
-                    <span className="inline-block ml-2 px-2 py-0.5 rounded text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800">
-                      {question.questionKind}
-                    </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`flex items-center gap-1.5 ${questionTypeInfo.color}`}>
+                    {questionTypeInfo.icon}
+                    <span className="text-xs font-medium">{questionTypeInfo.text}</span>
+                  </div>
+                  {isRequired && (
+                    <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                      <PiWarning className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+                      <span className="text-xs font-semibold text-red-600 dark:text-red-400">
+                        الزامی
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
 
-
-              {/* Question Form */}
-              <div className="space-y-3">
-                {/* Text Answer Input */}
-                {isTextQuestion && (
-                  <div>
-                    <TextAreaField
-                      label="پاسخ شما"
-                      value={textAnswer}
-                      onChange={(e) => {
-                        setTextAnswer(e.target.value);
-                        setValidationError(null);
-                      }}
-                      placeholder="پاسخ خود را وارد کنید..."
-                      required={isRequired}
-                      rows={6}
-                      status={validationError ? 'danger' : 'default'}
-                    />
-                  </div>
-                )}
-
-                {/* Options Answer (Radio/Checkbox) */}
-                {!isTextQuestion && (
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      انتخاب گزینه
-                      {isRequired && <span className="text-red-600 dark:text-red-400 mr-1">*</span>}
-                    </label>
-                    <div className="space-y-2">
-                      {options.map((option: QuestionOptionDto) => {
-                        if (!option.id || !option.isActive) return null;
-                        const isSelected = selectedOptionIds.includes(option.id);
-                        
-                        return (
-                          <button
-                            key={option.id}
-                            type="button"
-                            onClick={() => handleOptionToggle(option.id!)}
-                            className={`
-                              w-full text-right p-4 rounded-lg border-2 transition-all
-                              ${
-                                isSelected
-                                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400'
-                                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
-                              }
-                            `}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3 flex-1">
-                                <div
-                                  className={`
-                                    w-5 h-5 rounded flex items-center justify-center flex-shrink-0
-                                    ${
-                                      isMultiSelect
-                                        ? isSelected
-                                          ? 'bg-blue-600 dark:bg-blue-500 border-2 border-blue-600 dark:border-blue-500'
-                                          : 'border-2 border-gray-400 dark:border-gray-500'
-                                        : isSelected
-                                          ? 'border-2 border-blue-600 dark:border-blue-500 bg-white dark:bg-gray-800'
-                                          : 'border-2 border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-800'
-                                    }
-                                  `}
-                                >
-                                  {isSelected && (
-                                    <>
-                                      {isMultiSelect ? (
-                                        <PiCheckCircle className="h-4 w-4 text-white" />
-                                      ) : (
-                                        <div className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400" />
-                                      )}
-                                    </>
-                                  )}
-                                </div>
-                                <span
-                                  className={`
-                                    text-base font-medium
-                                    ${isSelected
-                                      ? 'text-blue-700 dark:text-blue-300'
-                                      : 'text-gray-900 dark:text-gray-100'
-                                    }
-                                  `}
-                                >
-                                  {option.text || 'گزینه بدون عنوان'}
-                                </span>
-                              </div>
-                              {isSelected && (
-                                <PiCheckCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                              )}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Validation Error */}
-                {validationError && (
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                    <PiWarning className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0" />
-                    <p className="text-sm text-red-600 dark:text-red-400">{validationError}</p>
-                  </div>
-                )}
+              {/* Question Text */}
+              <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-2">
+                  عنوان سوال:
+                </label>
+                <h3 className="text- font-semibold text-gray-900 dark:text-gray-100 leading-relaxed">
+                  {questionText}
+                </h3>
               </div>
             </div>
-          </Card>
+          </div>
 
-          {/* Navigation Buttons */}
-          <div className="flex items-center gap-2">
-            {hasPrevious && (
-              <Button
-                variant="secondary"
-                size="md"
-                block
-                onClick={handlePrevious}
-                disabled={isNavigatingPrev || isAnswering || isNavigatingNext}
-                leftIcon={<PiArrowLeft className="h-4 w-4" />}
-              >
-                سوال قبلی
-              </Button>
-            )}
-            <Button
-              variant="secondary"
-              size="md"
-              onClick={handleSave}
-              disabled={isAnswering || isNavigatingNext || isNavigatingPrev}
-            >
-              ذخیره
-            </Button>
-            <Button
-              variant="primary"
-              size="md"
-              block
-              onClick={handleSaveAndNext}
-              disabled={isAnswering || isNavigatingNext || isNavigatingPrev}
-              rightIcon={<PiArrowRight className="h-4 w-4" />}
-            >
-              {isLastQuestion ? 'ذخیره و اتمام' : 'ذخیره و بعدی'}
-            </Button>
+          {/* Answer Form Card */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div className="space-y-4">
+              {/* Text Answer Input */}
+              {isTextQuestion && (
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    پاسخ شما:
+                  </label>
+                  <TextAreaField
+                    value={textAnswer}
+                    onChange={(e) => {
+                      setTextAnswer(e.target.value);
+                      setValidationError(null);
+                    }}
+                    placeholder="پاسخ خود را وارد کنید..."
+                    required={isRequired}
+                    rows={6}
+                    status={validationError ? 'danger' : 'default'}
+                  />
+                </div>
+              )}
+
+              {/* Options Answer (Radio/Checkbox) */}
+              {!isTextQuestion && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    انتخاب گزینه
+                    {isRequired && <span className="text-red-600 dark:text-red-400 mr-1">*</span>}
+                  </label>
+                  <div className="space-y-2">
+                    {options.map((option: QuestionOptionDto) => {
+                      if (!option.id || !option.isActive) return null;
+                      const isSelected = selectedOptionIds.includes(option.id);
+                      
+                      return (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => handleOptionToggle(option.id!)}
+                          className={`
+                            w-full text-right p-3 rounded-lg border transition-all
+                            ${
+                              isSelected
+                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-400'
+                                : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
+                            }
+                          `}
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <div
+                                className={`
+                                  flex-shrink-0 w-5 h-5 rounded flex items-center justify-center
+                                  ${
+                                    isMultiSelect
+                                      ? isSelected
+                                        ? 'bg-emerald-600 dark:bg-emerald-500 border-2 border-emerald-600 dark:border-emerald-500'
+                                        : 'border-2 border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-800'
+                                      : isSelected
+                                        ? 'border-2 border-emerald-600 dark:border-emerald-500 bg-white dark:bg-gray-800'
+                                        : 'border-2 border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-800'
+                                  }
+                                `}
+                              >
+                                {isSelected && (
+                                  <>
+                                    {isMultiSelect ? (
+                                      <PiCheckCircle className="h-3.5 w-3.5 text-white" />
+                                    ) : (
+                                      <div className="w-2 h-2 rounded-full bg-emerald-600 dark:bg-emerald-400" />
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                              <span
+                                className={`
+                                  text-sm font-medium truncate
+                                  ${isSelected
+                                    ? 'text-emerald-700 dark:text-emerald-300'
+                                    : 'text-gray-900 dark:text-gray-100'
+                                  }
+                                `}
+                              >
+                                {option.text || 'گزینه بدون عنوان'}
+                              </span>
+                            </div>
+                            {isSelected && (
+                              <PiCheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Validation Error */}
+              {validationError && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                  <PiWarning className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0" />
+                  <p className="text-sm text-red-600 dark:text-red-400">{validationError}</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </ScrollableArea>
+
+      {/* Sticky Navigation Buttons - Bottom of page */}
+      <div className="flex-shrink-0 sticky bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent dark:from-gray-900 dark:via-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)] z-10">
+        <div className="flex items-center gap-2 w-full">
+          <Button
+            variant="primary"
+            size="md"
+            className="flex-1"
+            onClick={handleSaveAndNext}
+            loading={isAnswering || isNavigatingNext}
+            loadingText="در حال ذخیره..."
+            disabled={isNavigatingPrev}
+            rightIcon={!isAnswering && !isNavigatingNext ? <PiArrowRight className="h-4 w-4" /> : undefined}
+          >
+            {isLastQuestion ? 'ذخیره و اتمام' : 'ذخیره و بعدی'}
+          </Button>
+
+          {hasPrevious && (
+            <Button
+              variant="secondary"
+              size="md"
+              className="flex-1"
+              onClick={handlePrevious}
+              loading={isNavigatingPrev}
+              loadingText="در حال بارگذاری..."
+              disabled={isAnswering || isNavigatingNext}
+              leftIcon={!isNavigatingPrev ? <PiArrowLeft className="h-4 w-4" /> : undefined}
+            >
+              قبلی
+            </Button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

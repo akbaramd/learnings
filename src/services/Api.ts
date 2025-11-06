@@ -190,6 +190,42 @@ export interface ApplicantInfoDto {
   isComplete?: boolean;
 }
 
+export interface MemberDetailDto {
+  /** @format uuid */
+  id?: string;
+  /** @format uuid */
+  externalUserId?: string;
+  nationalId?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  fullName?: string | null;
+  phoneNumber?: string | null;
+  email?: string | null;
+  isActive?: boolean;
+  membershipNumber?: string | null;
+  /** @format date-time */
+  createdAt?: string;
+  createdBy?: string | null;
+  /** @format date-time */
+  lastModifiedAt?: string | null;
+  lastModifiedBy?: string | null;
+  /** @format date-time */
+  lastSyncedAt?: string | null;
+  metadata?: Record<string, string>;
+  capabilityList?: Array<{ id?: string; title?: string | null }> | null;
+  featureList?: Array<{ id?: string; title?: string | null }> | null;
+  agencyList?: Array<{ id?: string; title?: string | null }> | null;
+  [key: string]: unknown; // Allow additional properties from external source
+}
+
+export interface MemberDetailDtoApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: MemberDetailDto;
+}
+
 export interface ApplicationResult {
   isSuccess?: boolean;
   status?: ResultStatus;
@@ -1750,6 +1786,14 @@ export interface NotificationDtoPaginatedResultApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: NotificationDtoPaginatedResult;
+}
+
+export interface ObjectApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: any;
 }
 
 export interface PaginationInfo {
@@ -5457,6 +5501,64 @@ export class Api<
       >({
         path: `/api/me/recreation/tours/${id}`,
         method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 🔒 Returns membership information for the currently authenticated user
+     *
+     * @tags Membership
+     * @name GetCurrentMember
+     * @summary Get current member info
+     * @request GET:/api/v1/membership/me/member
+     * @secure
+     */
+    getCurrentMember: (data: any, params: RequestParams = {}) =>
+      this.request<
+        ObjectApplicationResult,
+        {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/membership/me/member`,
+        method: "GET",
+        body: data,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 🔒 Synchronizes the current member from external source and returns MemberDto
+     *
+     * @tags Membership
+     * @name SyncCurrentMember
+     * @summary Sync current member
+     * @request POST:/api/v1/membership/me/member/sync
+     * @secure
+     */
+    syncCurrentMember: (data: any, params: RequestParams = {}) =>
+      this.request<
+        ObjectApplicationResult,
+        {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/membership/me/member/sync`,
+        method: "POST",
+        body: data,
         secure: true,
         format: "json",
         ...params,

@@ -1,83 +1,41 @@
 'use client';
 
-import { useState } from 'react';
-import { IconButton } from '@/src/components/ui/IconButton';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/hooks/useAuth';
+import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import {
   PiUser,
-  PiEnvelope,
-  PiPhone,
-  PiShieldCheck,
+  PiArrowClockwise,
+  PiSpinner,
   PiSignOut,
-  PiGear,
-  PiPen,
-  PiBell,
+  PiCaretLeft,
+  PiUserCircle,
 } from 'react-icons/pi';
-function ProfileCard() {
+
+function ProfileHeader() {
   const { user, userName } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
+  
+  // Use USER information, not member information
+  const displayName = userName || user?.firstName || 'کاربر';
+  const nationalId = user?.nationalId || null;
 
   return (
-    <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
-      <div className="flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900">
-          <PiUser className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
-        </div>
-        <div className="flex-1">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            {userName || 'کاربر'}
+    <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="px-4 py-8">
+        {/* Avatar Section - Instagram Style */}
+        <div className="flex flex-col items-center">
+          <div className="flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg mb-4 ring-4 ring-white dark:ring-gray-800">
+            <PiUser className="h-14 w-14 text-white" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-1">
+            {displayName}
           </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            عضو سیستم رفاهی مهندسین
-          </p>
-        </div>
-        <IconButton
-          aria-label="ویرایش پروفایل"
-          onClick={() => setIsEditing(!isEditing)}
-          variant="ghost"
-        >
-          <PiPen className="h-4 w-4" />
-        </IconButton>
-      </div>
-
-      {user && (
-        <div className="mt-6 space-y-4">
-          <div className="flex items-center gap-3">
-            <PiEnvelope className="h-4 w-4 text-gray-500" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {user.nationalId || 'کد ملی ثبت نشده'}
-            </span>
-          </div>
-          
-          {user.phone && (
-            <div className="flex items-center gap-3">
-              <PiPhone className="h-4 w-4 text-gray-500" />
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                {user.phone}
-              </span>
-            </div>
+          {nationalId && (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {nationalId}
+            </p>
           )}
-
-          <div className="flex items-center gap-3">
-            <PiShieldCheck className="h-4 w-4 text-gray-500" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              نقش: {user.roles?.join(', ') || 'کاربر عادی'}
-            </span>
-          </div>
         </div>
-      )}
-    </div>
-  );
-}
-
-function MenuSection({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="mt-6">
-      <h3 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
-        {title}
-      </h3>
-      <div className="space-y-2">
-        {children}
       </div>
     </div>
   );
@@ -87,97 +45,98 @@ function MenuItem({
   icon, 
   label, 
   onClick, 
-  variant = 'default' 
+  loading = false,
+  danger = false,
+  showArrow = true 
 }: { 
   icon: React.ReactNode; 
   label: string; 
   onClick: () => void;
-  variant?: 'default' | 'danger';
+  loading?: boolean;
+  danger?: boolean;
+  showArrow?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors ${
-        variant === 'danger'
-          ? 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20'
-          : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'
-      }`}
+      disabled={loading}
+      className={`
+        w-full flex items-center justify-between px-4 py-3.5
+        text-right transition-colors
+        ${danger 
+          ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20' 
+          : 'text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+        }
+        disabled:opacity-50 disabled:cursor-not-allowed
+        active:bg-gray-100 dark:active:bg-gray-700
+      `}
     >
-      <div className={`${variant === 'danger' ? 'text-red-600 dark:text-red-400' : 'text-gray-500'}`}>
-        {icon}
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className={`flex-shrink-0 ${danger ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
+          {loading ? <PiSpinner className="h-5 w-5 animate-spin" /> : icon}
+        </div>
+        <span className={`text-sm font-medium ${danger ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100'}`}>
+          {label}
+        </span>
       </div>
-      <span className="text-sm font-medium">{label}</span>
+      {showArrow && !loading && (
+        <PiCaretLeft className={`h-5 w-5 flex-shrink-0 ${danger ? 'text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'}`} />
+      )}
     </button>
   );
 }
 
-export default function ProfilePage() {
-  const { logout } = useAuth();
+function MenuSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`bg-white dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 ${className}`}>
+      {children}
+    </div>
+  );
+}
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  };
+export default function ProfilePage() {
+  const router = useRouter();
 
   return (
-    <div className="py-4 space-y-6">
-      {/* Profile Card */}
-      <ProfileCard />
-      
-      {/* Account Management Sections */}
-      <div className="space-y-6">
-        <MenuSection title="حساب کاربری">
-          <MenuItem
-            icon={<PiGear className="h-4 w-4" />}
-            label="تنظیمات"
-            onClick={() => console.log('Settings clicked')}
-          />
-          <MenuItem
-            icon={<PiShieldCheck className="h-4 w-4" />}
-            label="امنیت"
-            onClick={() => console.log('Security clicked')}
-          />
-        </MenuSection>
+    <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900" dir="rtl">
+      <ScrollableArea className="flex-1" hideScrollbar={true}>
+        {/* Profile Header - Instagram Style - Shows USER info */}
+        <ProfileHeader />
 
-        <MenuSection title="اطلاعات شخصی">
-          <MenuItem
-            icon={<PiUser className="h-4 w-4" />}
-            label="ویرایش پروفایل"
-            onClick={() => console.log('Edit profile clicked')}
-          />
-          <MenuItem
-            icon={<PiEnvelope className="h-4 w-4" />}
-            label="اطلاعات تماس"
-            onClick={() => console.log('Contact info clicked')}
-          />
-        </MenuSection>
+        {/* Menu Sections - Instagram Style */}
+        <div className="mt-2">
+          {/* Member Info Section */}
+          <MenuSection>
+            <MenuItem
+              icon={<PiUserCircle className="h-5 w-5" />}
+              label="اطلاعات عضو"
+              onClick={() => router.push('/profile/member-details')}
+            />
+          </MenuSection>
 
-        <MenuSection title="تنظیمات اعلان‌ها">
-          <MenuItem
-            icon={<PiBell className="h-4 w-4" />}
-            label="اعلان‌های سیستم"
-            onClick={() => console.log('System notifications clicked')}
-          />
-          <MenuItem
-            icon={<PiBell className="h-4 w-4" />}
-            label="اعلان‌های ایمیل"
-            onClick={() => console.log('Email notifications clicked')}
-          />
-        </MenuSection>
-      </div>
+          {/* Actions Section */}
+          <MenuSection className="mt-2">
+            <MenuItem
+              icon={<PiArrowClockwise className="h-5 w-5" />}
+              label="همگام‌سازی"
+              onClick={() => router.push('/profile/sync-details')}
+            />
+          </MenuSection>
 
-      {/* Logout Button - Fixed at bottom */}
-      <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-        <MenuItem
-          icon={<PiSignOut className="h-4 w-4" />}
-          label="خروج از حساب"
-          onClick={handleLogout}
-          variant="danger"
-        />
-      </div>
+          {/* Logout Section */}
+          <MenuSection className="mt-2">
+            <MenuItem
+              icon={<PiSignOut className="h-5 w-5" />}
+              label="خروج از حساب"
+              onClick={() => router.push('/profile/logout-details')}
+              danger={true}
+            />
+          </MenuSection>
+        </div>
+
+        {/* Spacer for bottom navigation */}
+        <div className="h-20" />
+      </ScrollableArea>
     </div>
   );
 }

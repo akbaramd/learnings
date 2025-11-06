@@ -39,6 +39,7 @@ export interface AuthState {
   user: User | null;
   challengeId: string | null;
   maskedPhoneNumber: string | null;
+  nationalCode: string | null; // Store national code for resending OTP
   error: string | null;
   isInitialized: boolean;
 }

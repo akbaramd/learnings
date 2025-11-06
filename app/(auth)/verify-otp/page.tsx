@@ -6,13 +6,10 @@ import Card from '@/src/components/ui/Card';
 import OtpField from '@/src/components/forms/OtpField';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/src/hooks/useToast';
-import { useSendOtpMutation, useVerifyOtpMutation, selectChallengeId, selectMaskedPhone, selectAuthStatus } from '@/src/store/auth';
+import { useSendOtpMutation, useVerifyOtpMutation, selectChallengeId, selectMaskedPhone, selectNationalCode, selectAuthStatus } from '@/src/store/auth';
 import { useAppSelector } from '@/src/hooks/store';
 
 type UiStatus = 'idle' | 'typing' | 'valid' | 'invalid';
-
-// Mock phone number - in real app, this would come from props or context
-const MOCK_PHONE = '09123456789';
 
 /**
  * Safe redirect URL resolver
@@ -40,9 +37,10 @@ export default function VerifyOtpPage() {
   const [sendOtpMutation, { isLoading: isSendingOtp, error: sendError }] = useSendOtpMutation();
   const [verifyOtpMutation, { isLoading: isVerifyingOtp, error: verifyError }] = useVerifyOtpMutation();
   
-  // دریافت challengeId و masked phone از Redux store
+  // دریافت challengeId، masked phone و national code از Redux store
   const challengeId = useAppSelector(selectChallengeId);
   const maskedPhone = useAppSelector(selectMaskedPhone);
+  const nationalCode = useAppSelector(selectNationalCode);
   const authStatus = useAppSelector(selectAuthStatus);
   
   const [otp, setOtp] = useState('');
@@ -86,22 +84,23 @@ export default function VerifyOtpPage() {
     });
   }, [challengeId, authStatus, maskedPhone, isLoading]);
 
-  // Redirect if no challengeId (should come from login)
+  // Redirect if no challengeId or nationalCode (should come from login)
   useEffect(() => {
-    console.log('Redirect check - challengeId:', challengeId, 'authStatus:', authStatus);
+    console.log('Redirect check - challengeId:', challengeId, 'nationalCode:', nationalCode, 'authStatus:', authStatus);
     
-    // Only redirect if we're absolutely sure there's no challengeId
+    // Redirect to login if we don't have the required data for OTP verification
+    // Only redirect if we're absolutely sure there's no challengeId or nationalCode
     // and we're not in any loading or OTP-related state
-    if (!challengeId && 
+    if ((!challengeId || !nationalCode) && 
         authStatus !== 'otp-sent' && 
         authStatus !== 'loading' && 
         authStatus !== 'idle') {
-      console.log('Redirecting to login - conditions met');
+      console.log('Redirecting to login - missing challengeId or nationalCode');
       router.push('/login');
     } else {
-      console.log('Not redirecting - challengeId exists or in valid state');
+      console.log('Not redirecting - challengeId and nationalCode exist or in valid state');
     }
-  }, [challengeId, authStatus, router]);
+  }, [challengeId, nationalCode, authStatus, router]);
 
   // Timer countdown effect
   useEffect(() => {
@@ -114,14 +113,6 @@ export default function VerifyOtpPage() {
       setTimeout(() => setCanResend(true), 0);
     }
   }, [timeLeft]);
-
-  // Format phone number for display (RTL)
-  const formatPhoneNumber = useCallback((phone: string) => {
-    if (phone.length === 11) {
-      return `${phone.slice(0, 4)} *** ${phone.slice(7)}`;
-    }
-    return phone;
-  }, []);
 
   // Format timer display
   const formatTime = useCallback((seconds: number) => {
@@ -151,9 +142,15 @@ export default function VerifyOtpPage() {
     setResendLoading(true);
     
     try {
-      // استفاده مستقیم از mutation hook
+      // اگر national code در store نباشد، به صفحه لاگین برگرد
+      if (!nationalCode) {
+        router.push('/login');
+        return;
+      }
+
+      // استفاده مستقیم از mutation hook با national code ذخیره شده
       await sendOtpMutation({
-        nationalCode: '1234567890', // This should come from the store or be passed as a prop
+        nationalCode: nationalCode,
         purpose: 'login',
         deviceId: 'web-browser'
       }).unwrap();
@@ -175,7 +172,7 @@ export default function VerifyOtpPage() {
         : 'ارسال مجدد کد ناموفق بود.';
       showError('خطا', errorMessage);
     }
-  }, [canResend, resendLoading, success, showError, sendOtpMutation]);
+  }, [canResend, resendLoading, success, showError, sendOtpMutation, nationalCode, router]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
@@ -203,7 +200,7 @@ export default function VerifyOtpPage() {
             <div className="mt-3 p-3 bg-neutral-50 dark:bg-gray-700 rounded-lg border border-neutral-200 dark:border-gray-600">
               <p className="text-sm text-neutral-700 dark:text-neutral-300">
                 <span className="font-medium">شماره تلفن:</span>
-                <span className="mr-2 font-mono text-base sm:ltr" dir="ltr">{maskedPhone || formatPhoneNumber(MOCK_PHONE)}</span>
+                <span className="mr-2 font-mono text-base sm:ltr" dir="ltr">{maskedPhone || 'در حال بارگذاری...'}</span>
               </p>
               {!canResend ? (
                 <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">

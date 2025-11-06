@@ -25,6 +25,7 @@ const initialState: AuthState = {
   user: null,
   challengeId: null,
   maskedPhoneNumber: null,
+  nationalCode: null,
   error: null,
   isInitialized: false,
 };
@@ -44,10 +45,16 @@ const authSlice = createSlice({
       state.maskedPhoneNumber = action.payload;
     },
     
-    // Clear challengeId and masked phone (after successful verification or logout)
+    // Store national code after successful OTP send (for resending)
+    setNationalCode: (state, action: PayloadAction<string | null>) => {
+      state.nationalCode = action.payload;
+    },
+    
+    // Clear challengeId, masked phone, and national code (after successful verification or logout)
     clearChallengeId: (state) => {
       state.challengeId = null;
-      state.maskedPhoneNumber  = null;
+      state.maskedPhoneNumber = null;
+      state.nationalCode = null;
     },
     
     // Set user data with validation
@@ -69,6 +76,7 @@ const authSlice = createSlice({
       state.status = 'anonymous';
       state.challengeId = null;
       state.maskedPhoneNumber = null;
+      state.nationalCode = null;
       state.error = null;
     },
     
@@ -79,7 +87,8 @@ const authSlice = createSlice({
         if (action.payload === 'anonymous') {
           state.user = null;
           state.challengeId = null;
-          state.maskedPhoneNumber = null; 
+          state.maskedPhoneNumber = null;
+          state.nationalCode = null;
         }
       } else {
         console.warn('Invalid auth status:', action.payload);
@@ -139,6 +148,7 @@ const authSlice = createSlice({
       state.user = null;
       state.challengeId = null;
       state.maskedPhoneNumber = null;
+      state.nationalCode = null;
       state.error = null;
     },
   },
@@ -147,6 +157,7 @@ const authSlice = createSlice({
 export const {
   setChallengeId,
   setMaskedPhoneNumber,
+  setNationalCode,
   clearChallengeId,
   setUser,
   clearUser,
