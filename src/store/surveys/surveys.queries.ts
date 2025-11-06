@@ -1072,6 +1072,61 @@ export const surveysApi = createApi({
         }
       },
     }),
+
+    // Public/Anonymous endpoints
+    // Get Public Survey Details
+    getPublicSurveyDetails: builder.query<GetSurveyDetailsResponse, string>({
+      query: (surveyId) => `/public/surveys/${surveyId}/details`,
+      providesTags: (result, error, surveyId) => [{ type: 'SurveyDetails', id: `public-${surveyId}` }],
+      keepUnusedDataFor: 300,
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          dispatch(setLoading(true));
+          dispatch(clearSelectedSurvey());
+          const { data } = await queryFulfilled;
+          if (data?.data) {
+            dispatch(setSelectedSurvey(data.data));
+            dispatch(setError(null));
+          }
+        } catch (error: unknown) {
+          const errorMessage = handleSurveysApiError(error);
+          dispatch(setError(errorMessage));
+        } finally {
+          dispatch(setLoading(false));
+        }
+      },
+    }),
+
+    // Get Public Survey Questions
+    getPublicSurveyQuestions: builder.query<GetSurveyQuestionsResponse, GetSurveyQuestionsRequest>({
+      query: (request) => {
+        const searchParams = new URLSearchParams();
+        if (request.includeUserAnswers !== undefined) {
+          searchParams.append('includeUserAnswers', request.includeUserAnswers.toString());
+        }
+        return {
+          url: `/public/surveys/${request.surveyId}/questions?${searchParams.toString()}`,
+          method: 'GET',
+        };
+      },
+      providesTags: (result, error, request) => [{ type: 'SurveyQuestions', id: `public-${request.surveyId}` }],
+      keepUnusedDataFor: 300,
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          dispatch(setLoading(true));
+          const { data } = await queryFulfilled;
+          if (data?.data) {
+            dispatch(setSurveyQuestions(data.data));
+            dispatch(setError(null));
+          }
+        } catch (error: unknown) {
+          const errorMessage = handleSurveysApiError(error);
+          dispatch(setError(errorMessage));
+        } finally {
+          dispatch(setLoading(false));
+        }
+      },
+    }),
   }),
 });
 
@@ -1122,6 +1177,10 @@ export const {
   useLazyGetSpecificQuestionQuery,
   useGetPreviousQuestionsQuery,
   useLazyGetPreviousQuestionsQuery,
+  useGetPublicSurveyDetailsQuery,
+  useLazyGetPublicSurveyDetailsQuery,
+  useGetPublicSurveyQuestionsQuery,
+  useLazyGetPublicSurveyQuestionsQuery,
 } = surveysApi;
 
 export default surveysApi;

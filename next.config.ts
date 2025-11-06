@@ -78,23 +78,7 @@ const nextConfig: NextConfig = {
     },
   },
 
-  // Webpack optimizations (fallback for non-Turbopack builds)
-  webpack: (config, { dev, isServer }) => {
-    if (!dev && !isServer) {
-      // Production client-side optimizations
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-          },
-        },
-      };
-    }
-    return config;
-  },
+  
 };
 
 export default nextConfig;

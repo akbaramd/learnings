@@ -48,12 +48,12 @@ export default function SurveysPage() {
   const [stateFilter, setStateFilter] = useState<string | undefined>(undefined);
   const [isAcceptingFilter, setIsAcceptingFilter] = useState<boolean | undefined>(undefined);
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // Redux State (from store)
   const allSurveys = useSelector(selectSurveysWithLastResponse);
   const pagination = useSelector(selectSurveysWithLastResponsePagination);
   const isLoading = useSelector(selectSurveysLoading);
-  
+
   const pageSize = 20;
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -64,10 +64,10 @@ export default function SurveysPage() {
 
   // Derived values
   const normalizedSearch = useMemo(() => search.trim(), [search]);
-  
+
   // Track which survey is being started
   const [startingSurveyId, setStartingSurveyId] = useState<string | null>(null);
-  
+
   // Derived pagination info
   const paginationInfo = useMemo(() => {
     if (!pagination) return null;
@@ -87,7 +87,7 @@ export default function SurveysPage() {
 
   const handleStartSurvey = useCallback(async (survey: SurveyDto) => {
     if (!survey.id || isStartingResponse || startingSurveyId) return;
-    
+
     try {
       setStartingSurveyId(survey.id);
       const result = await startSurveyResponse({
@@ -168,7 +168,7 @@ export default function SurveysPage() {
     [normalizedSearch, stateFilter, isAcceptingFilter]
   );
   const prevFilterKeyRef = useRef<string>(filterKey);
-  
+
   // Reset page when filters change (using startTransition to avoid warning)
   useEffect(() => {
     if (prevFilterKeyRef.current !== filterKey) {
@@ -193,7 +193,7 @@ export default function SurveysPage() {
   // Intersection Observer for infinite scroll
   useEffect(() => {
     if (!loadMoreRef.current || !paginationInfo) return;
-    
+
     const hasMore = paginationInfo.hasNextPage;
     if (!hasMore) return;
 
@@ -344,9 +344,34 @@ export default function SurveysPage() {
       <ScrollableArea className="flex-1" hideScrollbar={true}>
         <div className="pb-2">
           {isLoading && allSurveys.length === 0 ? (
-            <div className="flex justify-center items-center py-8">
-              <PiArrowClockwise className="h-6 w-6 animate-spin text-gray-400" />
-              <span className="mr-2 text-gray-500">در حال بارگذاری...</span>
+            <div className="space-y-2">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <Card
+                  key={idx}
+                  variant="default"
+                  radius="lg"
+                  padding="md"
+                  className="relative overflow-hidden items-start"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 animate-pulse" />
+                  <div className="relative space-y-3">
+                    <div className="space-y-2">
+                      <div className="h-3.5 w-20 rounded bg-white/80 dark:bg-slate-600" />
+                      <div className="h-4 w-3/4 rounded bg-white/70 dark:bg-slate-600" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <div className="h-3 w-1/2 rounded bg-white/70 dark:bg-slate-600" />
+                      <div className="h-3 w-1/3 rounded bg-white/70 dark:bg-slate-600" />
+                      <div className="h-3 w-1/4 rounded bg-white/60 dark:bg-slate-500" />
+                      <div className="h-3 w-1/2 rounded bg-white/60 dark:bg-slate-500" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <div className="h-8 rounded bg-white/80 dark:bg-slate-600" />
+                      <div className="h-8 rounded bg-white/70 dark:bg-slate-500" />
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
           ) : allSurveys && allSurveys.length > 0 ? (
             <>
@@ -371,7 +396,7 @@ export default function SurveysPage() {
                   const isAccepting = survey.isAcceptingResponses === true;
                   const hasUserResponse = survey.hasUserResponse === true;
                   const userCompletionPercentage = survey.userCompletionPercentage || 0;
-                  
+
                   return (
                     <Card
                       key={survey.id}
@@ -380,83 +405,46 @@ export default function SurveysPage() {
                       padding="md"
                       hover={true}
                       clickable={true}
+                      className="space-y-4"
                       onClick={() => handleSurveyClick(survey)}
                     >
-                      <div className="pb-2">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-3">
-                            <PiClipboardText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                            <div className="flex-1">
-                              <div className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                                {survey.title || 'بدون عنوان'}
-                              </div>
-                              {survey.stateText && (
-                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                  {survey.stateText}
-                                </div>
+                      <div className="">
+                        <div className="flex flex-col gap-4 items-start justify-between mb-2">
+                          <div className="flex items-center justify-between gap-3 flex-wrap">
+                            <div className="flex items-center gap-2">
+                              {isActive && (
+                                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/60 dark:text-green-300">
+                                  فعال
+                                </span>
+                              )}
+                              {isAccepting && (
+                                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300">
+                                  پذیرش پاسخ
+                                </span>
+                              )}
+                              {hasUserResponse && (
+                                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
+                                  پاسخ داده اید
+                                </span>
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {isActive && (
-                              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
-                                <PiCheckCircle className="h-3 w-3 inline ml-1" />
-                                فعال
-                              </span>
-                            )}
-                            {isAccepting && (
-                              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
-                                پذیرش پاسخ
-                              </span>
-                            )}
+                          <div className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                            {survey.title || 'بدون عنوان'}
                           </div>
                         </div>
                       </div>
 
                       {survey.description && (
-                        <div className="px-4 pb-2">
-                          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                            {survey.description}
-                          </p>
-                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                          {survey.description}
+                        </p>
                       )}
 
-                      {/* Survey Info */}
-                      <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-800 pt-2 mt-2">
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          {survey.startAt && (
-                            <div className="flex items-center gap-2">
-                              <PiCalendar className="h-4 w-4 text-gray-400" />
-                              <span className="text-xs text-gray-500 dark:text-gray-400">شروع:</span>
-                              <span className="text-xs text-gray-900 dark:text-gray-100">{formatDate(survey.startAt)}</span>
-                            </div>
-                          )}
-                          {survey.endAt && (
-                            <div className="flex items-center gap-2">
-                              <PiClock className="h-4 w-4 text-gray-400" />
-                              <span className="text-xs text-gray-500 dark:text-gray-400">پایان:</span>
-                              <span className="text-xs text-gray-900 dark:text-gray-100">{formatDate(survey.endAt)}</span>
-                            </div>
-                          )}
-                          {survey.totalQuestions !== undefined && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-gray-500 dark:text-gray-400">سوالات:</span>
-                              <span className="text-xs font-semibold text-gray-900 dark:text-gray-100">{survey.totalQuestions}</span>
-                            </div>
-                          )}
-                          {hasUserResponse && userCompletionPercentage > 0 && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-gray-500 dark:text-gray-400">پیشرفت:</span>
-                              <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">
-                                {Math.round(userCompletionPercentage)}%
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+
 
                       {survey.id && (
-                        <div className="px-4 pb-3 space-y-2">
+                        <div className="space-y-2">
                           {/* Start Survey Button - Show if survey is active, accepting, and user can participate */}
                           {isActive && isAccepting && survey.canUserParticipate === true && (
                             <Button
@@ -469,15 +457,15 @@ export default function SurveysPage() {
                               disabled={startingSurveyId === survey.id || isStartingResponse}
                               rightIcon={startingSurveyId === survey.id ? <PiArrowClockwise className="h-4 w-4 animate-spin" /> : <PiPlay className="h-4 w-4" />}
                             >
-                              {startingSurveyId === survey.id 
-                                ? 'در حال شروع...' 
-                                : hasUserResponse 
-                                  ? 'ادامه پاسخ' 
+                              {startingSurveyId === survey.id
+                                ? 'در حال شروع...'
+                                : hasUserResponse
+                                  ? 'ادامه پاسخ'
                                   : 'شروع نظرسنجی'
                               }
                             </Button>
                           )}
-                          
+
                           {/* View Details Button - Always show */}
                           <Button
                             className="w-full"

@@ -16,6 +16,7 @@ import { PageHeader } from '@/src/components/ui/PageHeader';
 import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
+import Drawer, { DrawerHeader, DrawerBody, DrawerFooter } from '@/src/components/overlays/Drawer';
 import {
   PiClipboardText,
   PiArrowRight,
@@ -23,6 +24,7 @@ import {
   PiFileText,
   PiPlay,
   PiList,
+  PiWarning,
 } from 'react-icons/pi';
 
 interface SurveyDetailPageProps {
@@ -41,6 +43,10 @@ function formatDate(dateString: string | null | undefined): string {
 export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
   const router = useRouter();
   const [surveyIdFromParams, setSurveyIdFromParams] = useState<string>('');
+  
+  // Modal states
+  const [showStartConfirm, setShowStartConfirm] = useState(false);
+  const [showStartNewConfirm, setShowStartNewConfirm] = useState(false);
 
   // Redux selectors
   const isLoading = useSelector(selectSurveysLoading);
@@ -107,6 +113,16 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
       console.error('Failed to start survey response:', error);
       // Optionally show error message to user
     }
+  };
+
+  const handleConfirmStart = async () => {
+    setShowStartConfirm(false);
+    await handleStartResponse();
+  };
+
+  const handleConfirmStartNew = async () => {
+    setShowStartNewConfirm(false);
+    await handleStartResponse();
   };
 
   const handleViewResponses = () => {
@@ -251,7 +267,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                           variant="secondary"
                           size="md"
                           block
-                          onClick={handleStartResponse}
+                          onClick={() => setShowStartNewConfirm(true)}
                           disabled={isStartingResponse}
                           rightIcon={<PiPlay className="h-4 w-4" />}
                         >
@@ -264,7 +280,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                         variant="primary"
                         size="md"
                         block
-                        onClick={handleStartResponse}
+                        onClick={() => setShowStartConfirm(true)}
                         disabled={isStartingResponse}
                         rightIcon={<PiPlay className="h-4 w-4" />}
                       >
@@ -509,6 +525,152 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
           )}
         </div>
       </ScrollableArea>
+
+      {/* Start Survey Confirmation Bottom Sheet */}
+      <Drawer
+        open={showStartConfirm}
+        onClose={(open) => setShowStartConfirm(open)}
+        side="bottom"
+        size="md"
+        closeOnBackdrop={true}
+        closeOnEsc={true}
+        panelClassName="rounded-t-2xl"
+      >
+        <DrawerHeader>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <PiPlay className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">
+                شروع نظرسنجی
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                آیا مطمئن هستید که می‌خواهید این نظرسنجی را شروع کنید؟
+              </p>
+            </div>
+          </div>
+        </DrawerHeader>
+        <DrawerBody>
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <PiWarning className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-6">
+                  با شروع این نظرسنجی، می‌توانید به سوالات پاسخ دهید. در صورت وجود پاسخ فعال قبلی، به آن ادامه خواهید داد.
+                </p>
+              </div>
+            </div>
+            {participationStatus?.totalAttempts !== undefined && participationStatus?.maxAllowedAttempts !== undefined && (
+              <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  تلاش‌های استفاده شده: <span className="font-semibold">{participationStatus.totalAttempts}</span> از <span className="font-semibold">{participationStatus.maxAllowedAttempts}</span>
+                </p>
+              </div>
+            )}
+          </div>
+        </DrawerBody>
+        <DrawerFooter className="pb-[max(env(safe-area-inset-bottom),1rem)]">
+          <div className="flex items-center gap-3">
+          <Button
+              variant="primary"
+              size="md"
+              block
+              onClick={handleConfirmStart}
+              loading={isStartingResponse}
+              disabled={isStartingResponse}
+              rightIcon={<PiPlay className="h-4 w-4" />}
+            >
+              شروع نظرسنجی
+            </Button>
+            <Button
+              variant="ghost"
+              size="md"
+              block
+              onClick={() => setShowStartConfirm(false)}
+              disabled={isStartingResponse}
+            >
+              لغو
+            </Button>
+        
+          </div>
+        </DrawerFooter>
+      </Drawer>
+
+      {/* Start New Response Confirmation Bottom Sheet */}
+      <Drawer
+        open={showStartNewConfirm}
+        onClose={(open) => setShowStartNewConfirm(open)}
+        side="bottom"
+        size="md"
+        closeOnBackdrop={true}
+        closeOnEsc={true}
+        panelClassName="rounded-t-2xl"
+      >
+        <DrawerHeader>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+              <PiWarning className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">
+                شروع پاسخ جدید
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                آیا مطمئن هستید که می‌خواهید یک پاسخ جدید شروع کنید؟
+              </p>
+            </div>
+          </div>
+        </DrawerHeader>
+        <DrawerBody>
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+              <PiWarning className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-6">
+                  شما در حال حاضر یک پاسخ فعال دارید. با شروع پاسخ جدید، یک تلاش جدید برای شما ثبت می‌شود. پاسخ قبلی شما همچنان قابل دسترسی خواهد بود.
+                </p>
+              </div>
+            </div>
+            {participationStatus?.totalAttempts !== undefined && participationStatus?.maxAllowedAttempts !== undefined && (
+              <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  تلاش‌های استفاده شده: <span className="font-semibold">{participationStatus.totalAttempts}</span> از <span className="font-semibold">{participationStatus.maxAllowedAttempts}</span>
+                </p>
+                {participationStatus.totalAttempts >= participationStatus.maxAllowedAttempts - 1 && (
+                  <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                    ⚠️ این آخرین تلاش شما خواهد بود
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </DrawerBody>
+        <DrawerFooter className="pb-[max(env(safe-area-inset-bottom),1rem)]">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="md"
+              block
+              onClick={() => setShowStartNewConfirm(false)}
+              disabled={isStartingResponse}
+            >
+              لغو
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              block
+              onClick={handleConfirmStartNew}
+              loading={isStartingResponse}
+              disabled={isStartingResponse}
+              rightIcon={<PiPlay className="h-4 w-4" />}
+            >
+              شروع پاسخ جدید
+            </Button>
+          </div>
+        </DrawerFooter>
+      </Drawer>
     </div>
   );
 }
