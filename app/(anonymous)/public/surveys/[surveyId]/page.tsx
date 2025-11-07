@@ -26,13 +26,18 @@ export async function generateMetadata({ params }: { params: Promise<{ surveyId:
   const encodedOrg = encodeURIComponent(orgName);
   const imageUrl = `${baseUrl}/api/og-image-canvas?text=${encodedTitle}&width=1200&height=630&org=${encodedOrg}`;
   
+  // Ensure image URL is absolute and HTTPS
+  const absoluteImageUrl = imageUrl.startsWith('http') 
+    ? imageUrl 
+    : `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+
   return {
-    title,
-    description,
+    title: `${title} — شرکت کنید`,
+    description: description || 'برای تکمیل نظرسنجی رسمی روی این لینک کلیک کنید.',
     keywords: ['نظرسنجی', 'نظرسنجی آنلاین', 'survey', 'poll'],
-    authors: [{ name: 'نظام' }],
-    creator: 'نظام',
-    publisher: 'نظام',
+    authors: [{ name: 'سازمان نظام مهندسی ساختمان آذربایجان غربی' }],
+    creator: 'سازمان نظام مهندسی ساختمان آذربایجان غربی',
+    publisher: 'سازمان نظام مهندسی ساختمان آذربایجان غربی',
     formatDetection: {
       email: false,
       address: false,
@@ -46,12 +51,12 @@ export async function generateMetadata({ params }: { params: Promise<{ surveyId:
       type: 'website',
       locale: 'fa_IR',
       url: pageUrl,
-      title,
-      description,
-      siteName: 'نظام',
+      title: `${title} — شرکت کنید`,
+      description: description || 'برای تکمیل نظرسنجی رسمی روی این لینک کلیک کنید.',
+      siteName: 'سازمان نظام مهندسی ساختمان آذربایجان غربی',
       images: [
         {
-          url: imageUrl,
+          url: absoluteImageUrl,
           width: 1200,
           height: 630,
           alt: title,
@@ -61,11 +66,9 @@ export async function generateMetadata({ params }: { params: Promise<{ surveyId:
     },
     twitter: {
       card: 'summary_large_image',
-      title,
-      description,
-      images: [imageUrl],
-      creator: '@nezam', // Update with your Twitter handle if available
-      site: '@nezam', // Update with your Twitter handle if available
+      title: `${title} — شرکت کنید`,
+      description: description || 'لطفاً فرم را تکمیل کنید.',
+      images: [absoluteImageUrl],
     },
     robots: {
       index: true,
@@ -78,15 +81,18 @@ export async function generateMetadata({ params }: { params: Promise<{ surveyId:
         'max-snippet': -1,
       },
     },
-    // Telegram-specific meta tags
+    // Additional meta tags for better Telegram support
     other: {
-      'telegram:channel': '@nezam', // Update with your Telegram channel if available
+      // Ensure OG image dimensions are explicit
       'og:image:width': '1200',
       'og:image:height': '630',
       'og:image:type': 'image/png',
+      'og:image:secure_url': absoluteImageUrl,
       'og:locale:alternate': 'en_US',
-      'article:author': 'نظام',
-      'theme-color': '#ffffff',
+      'article:author': 'سازمان نظام مهندسی ساختمان آذربایجان غربی',
+      'theme-color': '#2563eb',
+      // Additional tags for better compatibility
+      'format-detection': 'telephone=no',
     },
   };
 }

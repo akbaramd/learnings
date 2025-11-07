@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/hooks/useAuth';
 import type { SurveyDto } from '@/src/store/surveys';
 import Card from '@/src/components/ui/Card';
 import Button from '@/src/components/ui/Button';
+import { ShareMenu } from '@/src/components/ui/ShareButton';
+import Drawer from '@/src/components/overlays/Drawer';
 import {
   PiClipboardText,
   PiArrowRight,
@@ -16,6 +18,7 @@ import {
   PiCalendar,
   PiUser,
   PiInfo,
+  PiShareNetwork,
 } from 'react-icons/pi';
 import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 
@@ -41,6 +44,7 @@ export default function PublicSurveyDetailPageClient({ surveyId, survey }: Publi
   const router = useRouter();
   const hasRedirectedRef = useRef(false);
   const { isAuthenticated } = useAuth();
+  const [shareDrawerOpen, setShareDrawerOpen] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated || !surveyId || hasRedirectedRef.current) {
@@ -99,11 +103,20 @@ export default function PublicSurveyDetailPageClient({ surveyId, survey }: Publi
 
         <Card variant="default" padding="md" radius="md" className="w-full">
           <div className="flex flex-col items-start gap-4 mb-4">
-            <div className="flex-1 gap-2 flex flex-col">
-              <div className="flex items-center gap-4 mb-2">
+            <div className="flex-1 gap-2 flex flex-col w-full">
+              <div className="flex items-center justify-between gap-4 mb-2">
                 <span className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">
                   نظرسنجی
                 </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShareDrawerOpen(true)}
+                  leftIcon={<PiShareNetwork className="h-4 w-4" />}
+                  className="text-gray-600 dark:text-gray-400"
+                >
+                  اشتراک‌گذاری
+                </Button>
               </div>
               <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100 mb-2 leading-6">
                 {survey.title || 'نظرسنجی'}
@@ -238,6 +251,29 @@ export default function PublicSurveyDetailPageClient({ surveyId, survey }: Publi
           </div>
         </Card>
       </div>
+
+      {/* Share Drawer */}
+      <Drawer
+        open={shareDrawerOpen}
+        onClose={setShareDrawerOpen}
+        side="bottom"
+        size="sm"
+        rtlAware
+      >
+        <Drawer.Header>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            اشتراک‌گذاری نظرسنجی
+          </h3>
+        </Drawer.Header>
+        <Drawer.Body>
+          <ShareMenu
+            url={typeof window !== 'undefined' ? window.location.href : ''}
+            title={survey.title || 'نظرسنجی'}
+            description={survey.description || undefined}
+            onClose={() => setShareDrawerOpen(false)}
+          />
+        </Drawer.Body>
+      </Drawer>
     </ScrollableArea>
   );
 }

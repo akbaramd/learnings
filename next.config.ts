@@ -12,6 +12,54 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // Public routes - allow Telegram bot access, remove X-Frame-Options for preview
+        source: '/public/:path*',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin',
+          },
+          {
+            key: 'Content-Type',
+            value: 'text/html; charset=utf-8',
+          },
+          // Don't set X-Frame-Options for public routes (Telegram needs to fetch)
+        ],
+      },
+      {
+        // OG Image endpoint - public access
+        source: '/api/og-image/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, s-maxage=3600',
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+        ],
+      },
+      {
+        // OG Image Canvas endpoint - public access  
+        source: '/api/og-image-canvas/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, s-maxage=3600',
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+        ],
+      },
+      {
+        // All other routes - full security headers
         source: '/(.*)',
         headers: [
           {
@@ -60,7 +108,12 @@ const nextConfig: NextConfig = {
 
   // Image optimization for production
   images: {
-    domains: ['encrypted-tbn0.gstatic.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'encrypted-tbn0.gstatic.com',
+      },
+    ],
     formats: ['image/webp', 'image/avif'],
   },
 
