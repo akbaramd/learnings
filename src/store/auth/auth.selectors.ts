@@ -16,6 +16,7 @@ const selectAuthState = (state: RootState) => {
       maskedPhoneNumber: null,
       nationalCode: null,
       error: null,
+      errorType: null,
       isInitialized: false,
     };
   }
@@ -101,9 +102,32 @@ export const selectAuthError = createSelector(
   (auth) => auth.error
 );
 
+export const selectAuthErrorType = createSelector(
+  [selectAuthState],
+  (auth) => auth.errorType
+);
+
 export const selectHasAuthError = createSelector(
   [selectAuthError],
   (error) => !!error
+);
+
+export const selectIsUserNotFoundError = createSelector(
+  [selectAuthErrorType],
+  (errorType) => errorType === 'user_not_found'
+);
+
+export const selectAuthErrorInfo = createSelector(
+  [selectAuthError, selectAuthErrorType],
+  (error, errorType) => ({
+    message: error,
+    type: errorType,
+    isUserNotFound: errorType === 'user_not_found',
+    isInvalidCredentials: errorType === 'invalid_credentials',
+    isOtpFailed: errorType === 'otp_failed',
+    isNetworkError: errorType === 'network_error',
+    isServerError: errorType === 'server_error',
+  })
 );
 
 // Combined selectors for convenience
@@ -119,6 +143,7 @@ export const selectAuthInfo = createSelector(
     maskedPhone: auth.maskedPhoneNumber,
     nationalCode: auth.nationalCode,
     error: auth.error,
+    errorType: auth.errorType,
   })
 );
 

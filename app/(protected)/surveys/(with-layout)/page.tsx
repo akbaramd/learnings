@@ -9,7 +9,6 @@ import { Card } from '@/src/components/ui/Card';
 import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import {
   useLazyGetSurveysWithUserLastResponseQuery,
-  useStartSurveyResponseMutation,
   selectSurveysWithLastResponse,
   selectSurveysWithLastResponsePagination,
   selectSurveysLoading,
@@ -20,23 +19,9 @@ import {
   PiArrowClockwise,
   PiFunnelSimple,
   PiX,
-  PiCheckCircle,
-  PiCalendar,
-  PiClock,
   PiArrowRight,
-  PiPlay,
 } from 'react-icons/pi';
 import { useSurveysPageHeader } from './SurveysPageHeaderContext';
-
-// Utility functions
-function formatDate(dateString: string | null | undefined): string {
-  if (!dateString) return 'نامشخص';
-  try {
-    return new Date(dateString).toLocaleDateString('fa-IR');
-  } catch {
-    return 'نامشخص';
-  }
-}
 
 export default function SurveysPage() {
   const router = useRouter();
@@ -60,13 +45,9 @@ export default function SurveysPage() {
 
   // Query hook
   const [getSurveys] = useLazyGetSurveysWithUserLastResponseQuery();
-  const [startSurveyResponse, { isLoading: isStartingResponse }] = useStartSurveyResponseMutation();
 
   // Derived values
   const normalizedSearch = useMemo(() => search.trim(), [search]);
-
-  // Track which survey is being started
-  const [startingSurveyId, setStartingSurveyId] = useState<string | null>(null);
 
   // Derived pagination info
   const paginationInfo = useMemo(() => {
@@ -85,31 +66,6 @@ export default function SurveysPage() {
     }
   }, [router]);
 
-  const handleStartSurvey = useCallback(async (survey: SurveyDto) => {
-    if (!survey.id || isStartingResponse || startingSurveyId) return;
-
-    try {
-      setStartingSurveyId(survey.id);
-      const result = await startSurveyResponse({
-        surveyId: survey.id,
-        data: {
-          forceNewAttempt: false,
-          resumeActiveIfAny: true,
-        },
-      });
-
-      if (result.data?.isSuccess && result.data?.data?.responseId) {
-        // Redirect to response page to load questions
-        router.push(`/surveys/${survey.id}/responses/${result.data.data.responseId}`);
-      } else {
-        console.error('Failed to start survey response:', result.data?.message || 'Unknown error');
-        setStartingSurveyId(null);
-      }
-    } catch (error) {
-      console.error('Failed to start survey response:', error);
-      setStartingSurveyId(null);
-    }
-  }, [startSurveyResponse, router, isStartingResponse, startingSurveyId]);
 
   const handleRefresh = useCallback(async () => {
     if (isLoading) return;
@@ -395,7 +351,6 @@ export default function SurveysPage() {
                   const isActive = survey.isActive === true;
                   const isAccepting = survey.isAcceptingResponses === true;
                   const hasUserResponse = survey.hasUserResponse === true;
-                  const userCompletionPercentage = survey.userCompletionPercentage || 0;
 
                   return (
                     <Card
@@ -445,27 +400,6 @@ export default function SurveysPage() {
 
                       {survey.id && (
                         <div className="space-y-2">
-                          {/* Start Survey Button - Show if survey is active, accepting, and user can participate */}
-                          {isActive && isAccepting && survey.canUserParticipate === true && (
-                            <Button
-                              className="w-full"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleStartSurvey(survey);
-                              }}
-                              variant="primary"
-                              disabled={startingSurveyId === survey.id || isStartingResponse}
-                              rightIcon={startingSurveyId === survey.id ? <PiArrowClockwise className="h-4 w-4 animate-spin" /> : <PiPlay className="h-4 w-4" />}
-                            >
-                              {startingSurveyId === survey.id
-                                ? 'در حال شروع...'
-                                : hasUserResponse
-                                  ? 'ادامه پاسخ'
-                                  : 'شروع نظرسنجی'
-                              }
-                            </Button>
-                          )}
-
                           {/* View Details Button - Always show */}
                           <Button
                             className="w-full"
@@ -473,7 +407,7 @@ export default function SurveysPage() {
                               e.stopPropagation();
                               router.push(`/surveys/${survey.id}`);
                             }}
-                            variant={isActive && isAccepting && survey.canUserParticipate === true ? "secondary" : "primary"}
+                            variant="primary"
                             rightIcon={<PiArrowRight className="h-4 w-4" />}
                           >
                             مشاهده جزئیات

@@ -190,42 +190,6 @@ export interface ApplicantInfoDto {
   isComplete?: boolean;
 }
 
-export interface MemberDetailDto {
-  /** @format uuid */
-  id?: string;
-  /** @format uuid */
-  externalUserId?: string;
-  nationalId?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  fullName?: string | null;
-  phoneNumber?: string | null;
-  email?: string | null;
-  isActive?: boolean;
-  membershipNumber?: string | null;
-  /** @format date-time */
-  createdAt?: string;
-  createdBy?: string | null;
-  /** @format date-time */
-  lastModifiedAt?: string | null;
-  lastModifiedBy?: string | null;
-  /** @format date-time */
-  lastSyncedAt?: string | null;
-  metadata?: Record<string, string>;
-  capabilityList?: Array<{ id?: string; title?: string | null }> | null;
-  featureList?: Array<{ id?: string; title?: string | null }> | null;
-  agencyList?: Array<{ id?: string; title?: string | null }> | null;
-  [key: string]: unknown; // Allow additional properties from external source
-}
-
-export interface MemberDetailDtoApplicationResult {
-  isSuccess?: boolean;
-  status?: ResultStatus;
-  message?: string | null;
-  errors?: string[] | null;
-  data?: MemberDetailDto;
-}
-
 export interface ApplicationResult {
   isSuccess?: boolean;
   status?: ResultStatus;
@@ -4156,6 +4120,26 @@ export interface UserSurveyResponsesResponseApplicationResult {
   data?: UserSurveyResponsesResponse;
 }
 
+export interface ValidateNationalCodeRequest {
+  nationalCode?: string | null;
+}
+
+export interface ValidateNationalCodesResponse {
+  nationalCode?: string | null;
+  isValidFormat?: boolean;
+  exists?: boolean;
+  fullName?: string | null;
+  membershipNumber?: string | null;
+}
+
+export interface ValidateNationalCodesResponseApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: ValidateNationalCodesResponse;
+}
+
 export interface VerifyOtpRequest {
   challengeId?: string | null;
   otpCode?: string | null;
@@ -4570,7 +4554,7 @@ export class Api<
 > extends HttpClient<SecurityDataType> {
   api = {
     /**
-     * @description 🌐 🌐 Sends an OTP (One-Time Password) code to the user's phone number for authentication purposes
+     * @description 🌐 🌐 🌐 🌐 🌐 🌐 Sends an OTP (One-Time Password) code to the user's phone number for authentication purposes
      *
      * @tags Authentication
      * @name SendOtp
@@ -4598,7 +4582,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 Verifies an OTP code and returns authentication tokens if successful
+     * @description 🌐 🌐 🌐 🌐 🌐 🌐 Verifies an OTP code and returns authentication tokens if successful
      *
      * @tags Authentication
      * @name VerifyOtp
@@ -4626,7 +4610,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 RefreshToken an OTP code and returns authentication tokens if successful
+     * @description 🌐 🌐 🌐 🌐 🌐 🌐 RefreshToken an OTP code and returns authentication tokens if successful
      *
      * @tags Authentication
      * @name RefreshToken
@@ -4654,7 +4638,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Retrieves the profile information of the currently authenticated user
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Retrieves the profile information of the currently authenticated user
      *
      * @tags Authentication
      * @name GetCurrentUser
@@ -4683,7 +4667,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Logs out the user and revokes both access and refresh tokens
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Logs out the user and revokes both access and refresh tokens
      *
      * @tags Authentication
      * @name Logout
@@ -4713,7 +4697,38 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns a paginated list of BillDto for the current user with filtering and sorting.
+     * @description 🌐 🌐 🌐 🌐 🌐 🌐 Validates a national code format and checks if a member exists with this national code
+     *
+     * @tags Authentication
+     * @name ValidateNationalCode
+     * @summary Validate National Code
+     * @request POST:/api/v1/auth/validate-national-code
+     */
+    validateNationalCode: (
+      data: ValidateNationalCodeRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ValidateNationalCodesResponseApplicationResult,
+        {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/auth/validate-national-code`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns a paginated list of BillDto for the current user with filtering and sorting.
      *
      * @tags Bills
      * @name GetMyBills
@@ -4765,7 +4780,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Admin/operator variant. Requires explicit externalUserId.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Admin/operator variant. Requires explicit externalUserId.
      *
      * @tags Discount Codes
      * @name ValidateDiscountCodeForUser
@@ -4799,7 +4814,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns BillDetailDto including items, payments, and refunds. User can only access their own bills.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns BillDetailDto including items, payments, and refunds. User can only access their own bills.
      *
      * @tags Bills
      * @name GetBillDetailsById
@@ -4832,7 +4847,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns a paginated list of payments (PaymentDto) associated with a given bill ID. Supports search, sorting, and pagination.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns a paginated list of payments (PaymentDto) associated with a given bill ID. Supports search, sorting, and pagination.
      *
      * @tags Payments
      * @name GetBillPayments
@@ -4875,7 +4890,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns BillDetailDto including items, payments, and refunds.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns BillDetailDto including items, payments, and refunds.
      *
      * @tags Bills
      * @name GetBillDetailsByNumber
@@ -4908,7 +4923,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Resolves a bill by tracking code (reference) and bill type; returns BillDetailDto.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Resolves a bill by tracking code (reference) and bill type; returns BillDetailDto.
      *
      * @tags Bills
      * @name GetBillDetailsByTrackingCode
@@ -4941,7 +4956,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Transitions a draft bill to the issued state.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Transitions a draft bill to the issued state.
      *
      * @tags Bills
      * @name IssueBill
@@ -4970,7 +4985,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Cancels an active bill; returns operation result.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Cancels an active bill; returns operation result.
      *
      * @tags Bills
      * @name CancelBill
@@ -5004,7 +5019,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns a list of all distinct claims from registered claim providers.
+     * @description 🔒 🔒 🔒 🔒 🔒 Returns a list of all distinct claims from registered claim providers.
      *
      * @tags Claims
      * @name GetClaims
@@ -5507,7 +5522,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns membership information for the currently authenticated user
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns membership information for the currently authenticated user
      *
      * @tags Membership
      * @name GetCurrentMember
@@ -5536,7 +5551,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Synchronizes the current member from external source and returns MemberDto
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Synchronizes the current member from external source and returns MemberDto
      *
      * @tags Membership
      * @name SyncCurrentMember
@@ -5565,7 +5580,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns a paginated list of notifications for a specific user with optional filtering.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns a paginated list of notifications for a specific user with optional filtering.
      *
      * @tags Notifications
      * @name GetUserNotificationsPaginated
@@ -5607,7 +5622,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns all notifications for a specific user with optional filtering.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns all notifications for a specific user with optional filtering.
      *
      * @tags Notifications
      * @name GetAllUserNotifications
@@ -5645,7 +5660,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Gets the count of unread notifications for a specific user.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Gets the count of unread notifications for a specific user.
      *
      * @tags Notifications
      * @name GetUnreadCount
@@ -5674,7 +5689,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Gets the count of unread notifications grouped by context for a specific user.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Gets the count of unread notifications grouped by context for a specific user.
      *
      * @tags Notifications
      * @name GetUnreadCountByContext
@@ -5703,7 +5718,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Gets the count of unread notifications grouped by action for a specific user.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Gets the count of unread notifications grouped by action for a specific user.
      *
      * @tags Notifications
      * @name GetUnreadCountByAction
@@ -5732,7 +5747,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Marks a specific notification as read for a user.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Marks a specific notification as read for a user.
      *
      * @tags Notifications
      * @name MarkAsRead
@@ -5764,7 +5779,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Marks all notifications as read for a specific user.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Marks all notifications as read for a specific user.
      *
      * @tags Notifications
      * @name MarkAllAsRead
@@ -5792,7 +5807,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Marks all notifications of a specific context as read for a user.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Marks all notifications of a specific context as read for a user.
      *
      * @tags Notifications
      * @name MarkByContextAsRead
@@ -5824,7 +5839,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Marks all notifications of a specific action as read for a user.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Marks all notifications of a specific action as read for a user.
      *
      * @tags Notifications
      * @name MarkByActionAsRead
@@ -6110,7 +6125,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetActiveOffices
@@ -6137,7 +6152,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name CreateOffice
@@ -6166,7 +6181,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetAllOffices
@@ -6193,7 +6208,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetOfficeById
@@ -6220,7 +6235,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name UpdateOffice
@@ -6253,7 +6268,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name DeleteOffice
@@ -6280,7 +6295,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetOfficeByCode
@@ -6307,7 +6322,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetOfficeByExternalCode
@@ -6337,7 +6352,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns all roles with optional filtering and includes.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns all roles with optional filtering and includes.
      *
      * @tags Roles
      * @name GetAllRoles
@@ -6375,7 +6390,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Creates a new role in the system.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Creates a new role in the system.
      *
      * @tags Roles
      * @name CreateRole
@@ -6404,7 +6419,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns a paginated list of roles with optional search and filtering.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns a paginated list of roles with optional search and filtering.
      *
      * @tags Roles
      * @name GetRolesPaginated
@@ -6447,7 +6462,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns a role by its unique identifier with claims and user count.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns a role by its unique identifier with claims and user count.
      *
      * @tags Roles
      * @name GetRoleById
@@ -6475,7 +6490,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Updates an existing role's details.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Updates an existing role's details.
      *
      * @tags Roles
      * @name UpdateRole
@@ -6508,7 +6523,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Deletes a role or deactivates it if users are assigned (with forceDelete=true).
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Deletes a role or deactivates it if users are assigned (with forceDelete=true).
      *
      * @tags Roles
      * @name DeleteRole
@@ -6544,7 +6559,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Adds claims to an existing role.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Adds claims to an existing role.
      *
      * @tags Roles
      * @name AddClaimsToRole
@@ -6577,7 +6592,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Removes claims from an existing role.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Removes claims from an existing role.
      *
      * @tags Roles
      * @name RemoveClaimsFromRole
@@ -6610,7 +6625,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name CreateSection
@@ -6628,7 +6643,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name CreateCategory
@@ -6646,7 +6661,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name SetSetting
@@ -6664,7 +6679,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name GetSettings
@@ -6696,7 +6711,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name BulkUpdateSettings
@@ -6717,7 +6732,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name UpdateSetting
@@ -6739,7 +6754,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name GetSettingsBySection
@@ -6763,7 +6778,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name GetSettingByKey
@@ -8036,7 +8051,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns a paginated list of tours with optional search and filtering.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns a paginated list of tours with optional search and filtering.
      *
      * @tags Tours
      * @name GetToursPaginated
@@ -8104,7 +8119,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns a paginated list of users with optional search filter.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns a paginated list of users with optional search filter.
      *
      * @tags Users
      * @name GetUsersPaginated
@@ -8144,7 +8159,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Creates a new user with the provided information.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Creates a new user with the provided information.
      *
      * @tags Users
      * @name CreateUser
@@ -8175,7 +8190,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns full UserDetail DTO with roles, claims, preferences and tokens.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Returns full UserDetail DTO with roles, claims, preferences and tokens.
      *
      * @tags Users
      * @name GetUserDetail
@@ -8205,7 +8220,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Updates an existing user with the provided information.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Updates an existing user with the provided information.
      *
      * @tags Users
      * @name UpdateUser
@@ -8240,7 +8255,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Deletes a user. By default performs soft delete, but can perform hard delete if specified.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Deletes a user. By default performs soft delete, but can perform hard delete if specified.
      *
      * @tags Users
      * @name DeleteUser
@@ -8279,7 +8294,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Adds the specified claims to a user. Claims are validated against available claim providers.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Adds the specified claims to a user. Claims are validated against available claim providers.
      *
      * @tags Users
      * @name AddClaimsToUser
@@ -8314,7 +8329,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Removes the specified claims from a user. Claims are soft-deleted by deactivating them.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Removes the specified claims from a user. Claims are soft-deleted by deactivating them.
      *
      * @tags Users
      * @name DeleteClaimsFromUser
@@ -8349,7 +8364,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Assigns a role to a user with optional expiration and audit information.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Assigns a role to a user with optional expiration and audit information.
      *
      * @tags Users
      * @name AddRoleToUser
@@ -8384,7 +8399,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Removes a role assignment from a user with optional audit information.
+     * @description 🔒 🔒 🔒 🔒 🔒 🔒 Removes a role assignment from a user with optional audit information.
      *
      * @tags Users
      * @name RemoveRoleFromUser

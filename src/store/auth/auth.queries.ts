@@ -9,6 +9,8 @@ import {
   LogoutResponse,
   RefreshResponse,
   GetMeResponse,
+  ValidateNationalCodeRequest,
+  ValidateNationalCodeResponse,
   UserProfile,
 } from './auth.types';
 import {
@@ -20,28 +22,54 @@ import {
   clearUser,
   setAuthStatus,
   setError,
+  setErrorWithType,
   setInitialized,
 } from './auth.slice';
+import type { AuthErrorType } from './auth.types';
 import { baseQueryWithReauth } from '@/src/store/api/baseApi';
 
-// Error handling utility
-export const handleApiError = (error: unknown): string => {
+// Error handling utility - categorize errors
+export const categorizeAuthError = (error: unknown): { message: string; type: AuthErrorType } => {
+  let message = 'An unexpected error occurred';
+  let type: AuthErrorType = 'unknown';
+
   if (error && typeof error === 'object') {
     const apiError = error as Record<string, unknown>;
+    
+    // Check if it's an ApplicationResult with error data
     if (apiError?.data && typeof apiError.data === 'object') {
       const data = apiError.data as Record<string, unknown>;
+      
+      // Get error message
       if (Array.isArray(data.errors) && data.errors[0]) {
-        return String(data.errors[0]);
+        message = String(data.errors[0]);
+      } else if (data.message) {
+        message = String(data.message);
       }
-      if (data.message) {
-        return String(data.message);
+      
+      // Categorize error based on message content
+      const messageLower = message.toLowerCase();
+      if (messageLower.includes('یافت نشد') || messageLower.includes('not found') || messageLower.includes('کاربری با کد ملی')) {
+        type = 'user_not_found';
+      } else if (messageLower.includes('invalid') || messageLower.includes('نامعتبر') || messageLower.includes('credentials')) {
+        type = 'invalid_credentials';
+      } else if (messageLower.includes('otp') || messageLower.includes('کد')) {
+        type = 'otp_failed';
+      } else if (messageLower.includes('network') || messageLower.includes('timeout') || messageLower.includes('fetch')) {
+        type = 'network_error';
+      } else if (messageLower.includes('server') || messageLower.includes('500') || messageLower.includes('503')) {
+        type = 'server_error';
       }
-    }
-    if (apiError.message) {
-      return String(apiError.message);
+    } else if (apiError.message) {
+      message = String(apiError.message);
+      // Check network errors
+      if (message.toLowerCase().includes('network') || message.toLowerCase().includes('fetch')) {
+        type = 'network_error';
+      }
     }
   }
-  return 'An unexpected error occurred';
+
+  return { message, type };
 };
 
 // Auth API slice with reauth support
@@ -70,7 +98,8 @@ export const authApi = createApi({
 
           const { data } = await queryFulfilled;
 
-          if (data?.isSuccess && data?.data?.challengeId) {
+          // Check isSuccess flag - must be true for success
+          if (data?.isSuccess === true && data?.data?.challengeId) {
             dispatch(setChallengeId(data.data.challengeId));
             if (data.data.maskedPhoneNumber) {
               dispatch(setMaskedPhoneNumber(data.data.maskedPhoneNumber));
@@ -79,12 +108,16 @@ export const authApi = createApi({
             dispatch(setNationalCode(arg.nationalCode));
             dispatch(setAuthStatus('otp-sent'));
           } else {
-            dispatch(setError(data?.errors?.[0] || 'No challengeId returned from server.'));
+            // Handle failure response - check if it's user not found
+            const errorMessage = data?.message || data?.errors?.[0] || 'No challengeId returned from server.';
+            const { message, type } = categorizeAuthError({ data });
+            dispatch(setErrorWithType({ message: errorMessage || message, type }));
             dispatch(setAuthStatus('error'));
           }
         } catch (error: unknown) {
-          const errorMessage = handleApiError(error);
-          dispatch(setError(errorMessage));
+          // Handle network/exception errors
+          const { message, type } = categorizeAuthError(error);
+          dispatch(setErrorWithType({ message, type }));
           dispatch(setAuthStatus('error'));
         }
       },
@@ -105,18 +138,21 @@ export const authApi = createApi({
 
           const { data } = await queryFulfilled;
 
-          if (data?.isSuccess && data?.data?.userId) {
+          // Check isSuccess flag - must be true for success
+          if (data?.isSuccess === true && data?.data?.userId) {
             dispatch(clearChallengeId());
             dispatch(setAuthStatus('authenticated'));
             // Fetch user profile after successful verification
             dispatch(authApi.endpoints.getMe.initiate());
           } else {
-            dispatch(setError(data?.errors?.[0] || 'OTP verification failed.'));
+            const errorMessage = data?.message || data?.errors?.[0] || 'OTP verification failed.';
+            const { message, type } = categorizeAuthError({ data });
+            dispatch(setErrorWithType({ message: errorMessage || message, type }));
             dispatch(setAuthStatus('error'));
           }
         } catch (error: unknown) {
-          const errorMessage = handleApiError(error);
-          dispatch(setError(errorMessage));
+          const { message, type } = categorizeAuthError(error);
+          dispatch(setErrorWithType({ message, type }));
           dispatch(setAuthStatus('error'));
         }
       },
@@ -134,7 +170,8 @@ export const authApi = createApi({
         try {
           const { data } = await queryFulfilled;
 
-          if (data?.data) {
+          // Check isSuccess flag
+          if (data?.isSuccess === true && data?.data) {
             const userProfile: UserProfile = data.data;
             const user = {
               id: userProfile.id,
@@ -147,6 +184,12 @@ export const authApi = createApi({
             };
             dispatch(setUser(user));
             dispatch(setAuthStatus('authenticated'));
+            dispatch(setInitialized(true));
+          } else {
+            // Handle failure response
+            const errorMessage = data?.message || data?.errors?.[0] || 'Failed to fetch user profile.';
+            const { message, type } = categorizeAuthError({ data });
+            dispatch(setErrorWithType({ message: errorMessage || message, type }));
             dispatch(setInitialized(true));
           }
         } catch (error: unknown) {
@@ -176,13 +219,19 @@ export const authApi = createApi({
 
           const { data } = await queryFulfilled;
 
-          if (data?.isSuccess && data?.data?.isSuccess) {
+          // Check isSuccess flag
+          if (data?.isSuccess === true && data?.data?.isSuccess) {
             dispatch(clearUser());
             dispatch(clearChallengeId());
             dispatch(setAuthStatus('anonymous'));
           } else {
-            dispatch(setAuthStatus('authenticated'));
-            dispatch(setError(data?.errors?.[0] || 'Logout failed'));
+            // Even if logout fails on server, clear local state for security
+            dispatch(clearUser());
+            dispatch(clearChallengeId());
+            dispatch(setAuthStatus('anonymous'));
+            const errorMessage = data?.message || data?.errors?.[0] || 'Logout failed';
+            const { message, type } = categorizeAuthError({ data });
+            dispatch(setErrorWithType({ message: errorMessage || message, type }));
           }
         } catch (error: unknown) {
           // Even if logout fails on server, clear local state
@@ -190,8 +239,8 @@ export const authApi = createApi({
           dispatch(clearChallengeId());
           dispatch(setAuthStatus('anonymous'));
           
-          const errorMessage = handleApiError(error);
-          dispatch(setError(errorMessage));
+          const { message, type } = categorizeAuthError(error);
+          dispatch(setErrorWithType({ message, type }));
         }
       },
     }),
@@ -207,18 +256,37 @@ export const authApi = createApi({
         try {
           const { data } = await queryFulfilled;
 
-          if (data?.isSuccess && data?.data?.isSuccess) {
+          // Check isSuccess flag
+          if (data?.isSuccess === true && data?.data?.isSuccess) {
             dispatch(setAuthStatus('authenticated'));
           } else {
             dispatch(setAuthStatus('anonymous'));
             dispatch(clearUser());
+            const errorMessage = data?.message || data?.errors?.[0] || 'Token refresh failed.';
+            const { message, type } = categorizeAuthError({ data });
+            dispatch(setErrorWithType({ message: errorMessage || message, type }));
           }
-        } catch {
+        } catch (error: unknown) {
           dispatch(setAuthStatus('anonymous'));
           dispatch(clearUser());
-          dispatch(setError('Session expired. Please login again.'));
+          const { message, type } = categorizeAuthError(error);
+          dispatch(setErrorWithType({ 
+            message: message || 'Session expired. Please login again.', 
+            type: type === 'unknown' ? 'invalid_credentials' : type 
+          }));
         }
       },
+    }),
+
+    // Validate national code query
+    validateNationalCode: builder.query<ValidateNationalCodeResponse, ValidateNationalCodeRequest>({
+      query: ({ nationalCode }) => ({
+        url: '/auth/validate-national-code',
+        method: 'POST',
+        body: { nationalCode },
+      }),
+      providesTags: ['Auth'],
+      keepUnusedDataFor: 60, // Keep validation result for 1 minute
     }),
   }),
 });
@@ -230,8 +298,10 @@ export const {
   useGetMeQuery,
   useLogoutMutation,
   useRefreshTokenMutation,
+  useValidateNationalCodeQuery,
   // Lazy query hooks
   useLazyGetMeQuery,
+  useLazyValidateNationalCodeQuery,
 } = authApi;
 
 // Export the API slice

@@ -1,6 +1,6 @@
 // src/store/auth/auth.slice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { AuthState, User, AuthStatus } from './auth.types';
+import { AuthState, User, AuthStatus, AuthErrorType } from './auth.types';
 
 // Type guards for runtime validation
 const isValidAuthStatus = (status: string): status is AuthStatus => {
@@ -27,6 +27,7 @@ const initialState: AuthState = {
   maskedPhoneNumber: null,
   nationalCode: null,
   error: null,
+  errorType: null,
   isInitialized: false,
 };
 
@@ -38,6 +39,7 @@ const authSlice = createSlice({
     setChallengeId: (state, action: PayloadAction<string | null>) => {
       state.challengeId = action.payload;
       state.error = null; // Clear any previous errors
+      state.errorType = null;
     },
     
     // Store masked phone after successful OTP send
@@ -63,9 +65,11 @@ const authSlice = createSlice({
         state.user = action.payload;
         state.status = 'authenticated';
         state.error = null;
+        state.errorType = null;
       } else {
         console.warn('Invalid user data:', action.payload);
         state.error = 'Invalid user data';
+        state.errorType = 'unknown';
         state.status = 'error';
       }
     },
@@ -78,6 +82,7 @@ const authSlice = createSlice({
       state.maskedPhoneNumber = null;
       state.nationalCode = null;
       state.error = null;
+      state.errorType = null;
     },
     
     // Set authentication status with validation
@@ -89,11 +94,14 @@ const authSlice = createSlice({
           state.challengeId = null;
           state.maskedPhoneNumber = null;
           state.nationalCode = null;
+          state.error = null;
+          state.errorType = null;
         }
       } else {
         console.warn('Invalid auth status:', action.payload);
         state.status = 'error';
         state.error = 'Invalid authentication status';
+        state.errorType = 'unknown';
       }
     },
     
@@ -103,17 +111,28 @@ const authSlice = createSlice({
         state.error = action.payload;
         if (action.payload) {
           state.status = 'error';
+        } else {
+          state.errorType = null;
         }
       } else {
         console.warn('Invalid error message:', action.payload);
         state.error = 'Invalid error message';
+        state.errorType = 'unknown';
         state.status = 'error';
       }
+    },
+    
+    // Set error with type
+    setErrorWithType: (state, action: PayloadAction<{ message: string; type: AuthErrorType }>) => {
+      state.error = action.payload.message;
+      state.errorType = action.payload.type;
+      state.status = 'error';
     },
     
     // Clear error message
     clearError: (state) => {
       state.error = null;
+      state.errorType = null;
     },
     
     // Set initialization status
@@ -128,18 +147,21 @@ const authSlice = createSlice({
     setLoading: (state) => {
       state.status = 'loading';
       state.error = null;
+      state.errorType = null;
     },
     
     // Set OTP sent state (redundant with setAuthStatus, but kept for convenience)
     setOtpSent: (state) => {
       state.status = 'otp-sent';
       state.error = null;
+      state.errorType = null;
     },
     
     // Set authenticated state (redundant with setAuthStatus, but kept for convenience)
     setAuthenticated: (state) => {
       state.status = 'authenticated';
       state.error = null;
+      state.errorType = null;
     },
     
     // Set anonymous state (redundant with setAuthStatus, but kept for convenience)
@@ -150,6 +172,7 @@ const authSlice = createSlice({
       state.maskedPhoneNumber = null;
       state.nationalCode = null;
       state.error = null;
+      state.errorType = null;
     },
   },
 });
@@ -163,6 +186,7 @@ export const {
   clearUser,
   setAuthStatus,
   setError,
+  setErrorWithType,
   clearError,
   setInitialized,
   reset,

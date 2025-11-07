@@ -10,13 +10,15 @@ import {
   PiArrowClockwise,
   PiCheckCircle,
   PiXCircle,
-  PiSpinner,
-  PiArrowRight,
 } from 'react-icons/pi';
 
 export default function SyncDetailsPage() {
   const router = useRouter();
-  const { data: memberData, refetch } = useGetCurrentMemberQuery();
+  const { data: memberData, refetch } = useGetCurrentMemberQuery(undefined, {
+    refetchOnMountOrArgChange: false,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+  });
   const [syncMember, { isLoading: isSyncing, isSuccess: syncSuccess, isError: syncError }] = useSyncCurrentMemberMutation();
   
   const member = memberData?.data;

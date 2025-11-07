@@ -13,13 +13,15 @@ interface PublicSurveyDetailPageProps {
 export async function generateMetadata({ params }: { params: Promise<{ surveyId: string }> }) {
   const { surveyId } = await params;
   const survey = await fetchSurveyDetails(surveyId);
-  
-  const title = survey?.title ?? 'نظرسنجی';
-  const description = survey?.description ?? 'نظرسنجی';
+
+  // همه تگ‌ها با "نظرسنجی: " شروع شوند
+  const baseSurveyTitle = survey?.title ?? 'نظرسنجی';
+  const baseSurveyDescription = survey?.description ?? 'نظرسنجی';
+  const title = `${baseSurveyTitle}`;
+  const description = `${baseSurveyDescription}`;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'localhost:3000';
   const baseUrl = appUrl.startsWith('http') ? appUrl : `https://${appUrl}`;
   const pageUrl = `${baseUrl}/public/surveys/${surveyId}`;
-  
   // Generate dynamic OG image URL with survey title and organization name
   // Using dynamic endpoint - ensure it's public and accessible
   const encodedTitle = encodeURIComponent(title);
@@ -34,7 +36,7 @@ export async function generateMetadata({ params }: { params: Promise<{ surveyId:
 
   // Standard OG metadata - only property= (Next.js generates property= automatically)
   return {
-    title: `${title} — شرکت کنید`,
+    title: `نظر سنجی: ${title} — شرکت کنید`,
     description: description || 'برای تکمیل نظرسنجی رسمی روی این لینک کلیک کنید.',
     keywords: ['نظرسنجی', 'نظرسنجی آنلاین', 'survey', 'poll'],
     authors: [{ name: 'سازمان نظام مهندسی ساختمان آذربایجان غربی' }],
@@ -53,7 +55,7 @@ export async function generateMetadata({ params }: { params: Promise<{ surveyId:
       type: 'website',
       locale: 'fa_IR',
       url: pageUrl,
-      title: `${title} — شرکت کنید`,
+      title: `نظر سنجی: ${title} — شرکت کنید`,
       description: description || 'برای تکمیل نظرسنجی رسمی روی این لینک کلیک کنید.',
       siteName: 'سازمان نظام مهندسی ساختمان آذربایجان غربی',
       images: [
@@ -61,14 +63,14 @@ export async function generateMetadata({ params }: { params: Promise<{ surveyId:
           url: absoluteImageUrl,
           width: 1200,
           height: 630,
-          alt: title,
+          alt: `نظر سنجی: ${title}`,
           type: 'image/png',
         },
       ],
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${title} — شرکت کنید`,
+      title: `نظر سنجی: ${title} — شرکت کنید`,
       description: description || 'لطفاً فرم را تکمیل کنید.',
       images: [absoluteImageUrl],
     },

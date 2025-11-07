@@ -20,7 +20,6 @@ import Drawer, { DrawerHeader, DrawerBody, DrawerFooter } from '@/src/components
 import {
   PiClipboardText,
   PiArrowRight,
-  PiCheckCircle,
   PiFileText,
   PiPlay,
   PiList,
@@ -147,6 +146,8 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
   const totalAttempts = userSurveyResponses?.totalAttempts || 0;
   const completedAttempts = userSurveyResponses?.completedAttempts || 0;
   const activeAttempts = userSurveyResponses?.activeAttempts || 0;
+  const canceledAttempts = userSurveyResponses?.canceledAttempts || 0;
+  const expiredAttempts = userSurveyResponses?.expiredAttempts || 0;
   
   // Check if latest response is completed (submitted)
   const isLatestResponseCompleted = latestResponse?.isSubmitted === true;
@@ -211,217 +212,160 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
 
       <ScrollableArea className="flex-1" hideScrollbar={true}>
         <div className="p-2 space-y-3">
-          {/* Call to Action / Guide Section - Start Survey Buttons */}
+          {/* Simple Start Button */}
           {canStart && hasAttemptsAvailable && (
-            <Card variant="default" radius="lg" padding="md" className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 mt-0.5">
-                  <PiPlay className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <Card variant="default" radius="lg" padding="md">
+              {hasActiveResponse && !isLatestResponseCompleted ? (
+                <div className="space-y-3">
+                  <Button
+                    variant="primary"
+                    size="md"
+                    block
+                    onClick={() => {
+                      if (surveyIdFromParams && latestResponse?.id) {
+                        router.push(`/surveys/${surveyIdFromParams}/responses/${latestResponse.id}`);
+                      }
+                    }}
+                    rightIcon={<PiArrowRight className="h-4 w-4" />}
+                  >
+                    ادامه پاسخ فعال
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    block
+                    onClick={() => setShowStartNewConfirm(true)}
+                    disabled={isStartingResponse}
+                    rightIcon={<PiPlay className="h-4 w-4" />}
+                  >
+                    {isStartingResponse ? 'در حال شروع...' : 'شروع پاسخ جدید'}
+                  </Button>
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                    {hasActiveResponse && !isLatestResponseCompleted
-                      ? 'ادامه یا شروع جدید نظرسنجی'
-                      : responses.length > 0 && isLatestResponseCompleted
-                      ? 'شروع نظرسنجی جدید'
+              ) : (
+                <Button
+                  variant="primary"
+                  size="md"
+                  block
+                  onClick={() => setShowStartConfirm(true)}
+                  disabled={isStartingResponse}
+                  rightIcon={<PiPlay className="h-4 w-4" />}
+                >
+                  {isStartingResponse 
+                    ? 'در حال شروع...' 
+                    : responses.length > 0 && isLatestResponseCompleted
+                      ? 'شروع پاسخ جدید'
                       : 'شروع نظرسنجی'
-                    }
-                  </h3>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed mb-3">
-                    {hasActiveResponse && !isLatestResponseCompleted
-                      ? 'می‌توانید پاسخ‌های قبلی خود را ادامه دهید یا پاسخ جدیدی شروع کنید.'
-                      : responses.length > 0 && isLatestResponseCompleted
-                      ? 'پاسخ‌های قبلی شما قابل مشاهده است. می‌توانید یک پاسخ جدید شروع کنید.'
-                      : 'برای شرکت در این نظرسنجی، روی دکمه شروع کلیک کنید.'
-                    }
-                    {participationStatus?.totalAttempts !== undefined && participationStatus?.maxAllowedAttempts !== undefined && (
-                      <span className="block mt-1 text-xs">
-                        تلاش‌های استفاده شده: {participationStatus.totalAttempts} / {participationStatus.maxAllowedAttempts}
-                      </span>
-                    )}
-                    {totalAttempts > 0 && (
-                      <span className="block mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        کل تلاش‌ها: {totalAttempts} | تکمیل شده: {completedAttempts} | فعال: {activeAttempts}
-                      </span>
-                    )}
-                  </p>
-                  <div className="space-y-2">
-                    {/* Start/Continue Button */}
-                    {hasActiveResponse && !isLatestResponseCompleted ? (
-                      // Has active response - show continue button
-                      <>
-                        <Button
-                          variant="primary"
-                          size="md"
-                          block
-                          onClick={() => {
-                            if (surveyIdFromParams && latestResponse?.id) {
-                              router.push(`/surveys/${surveyIdFromParams}/responses/${latestResponse.id}`);
-                            }
-                          }}
-                          rightIcon={<PiArrowRight className="h-4 w-4" />}
-                        >
-                          ادامه پاسخ فعال
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          size="md"
-                          block
-                          onClick={() => setShowStartNewConfirm(true)}
-                          disabled={isStartingResponse}
-                          rightIcon={<PiPlay className="h-4 w-4" />}
-                        >
-                          {isStartingResponse ? 'در حال شروع...' : 'شروع پاسخ جدید'}
-                        </Button>
-                      </>
-                    ) : (
-                      // No active response or all completed - show start new button
-                      <Button
-                        variant="primary"
-                        size="md"
-                        block
-                        onClick={() => setShowStartConfirm(true)}
-                        disabled={isStartingResponse}
-                        rightIcon={<PiPlay className="h-4 w-4" />}
-                      >
-                        {isStartingResponse 
-                          ? 'در حال شروع...' 
-                          : responses.length > 0 && isLatestResponseCompleted
-                          ? 'شروع پاسخ جدید'
-                          : 'شروع نظرسنجی'
-                        }
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
+                  }
+                </Button>
+              )}
             </Card>
           )}
 
-          {/* Basic Info */}
-          <Card variant="default" radius="lg" padding="md">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
-              اطلاعات کلی
-            </h3>
-            <div className="space-y-2">
+          {/* Basic Info - With Title */}
+          {(surveyTitle || surveyDescription) && (
+            <Card variant="default" radius="lg" padding="md">
+              {surveyTitle && (
+                <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2 leading-6">
+                  {surveyTitle}
+                </h3>
+              )}
               {surveyDescription && (
-                <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">توضیحات</div>
-                  <div className="text-sm text-gray-900 dark:text-gray-100">
+                <div className={surveyTitle ? 'mt-3' : ''}>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 leading-6">توضیحات</div>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-6">
                     {surveyDescription}
-                  </div>
+                  </p>
                 </div>
               )}
-              <div className="flex items-center gap-2 flex-wrap pt-1">
-                {canStart && (
-                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
-                    <PiCheckCircle className="h-3 w-3 inline ml-1" />
-                    قابل شروع
-                  </span>
-                )}
-                {hasActiveResponse && (
-                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
-                    پاسخ فعال
-                  </span>
-                )}
-              </div>
-            </div>
-          </Card>
+            </Card>
+          )}
 
-          {/* Attempts Statistics */}
-          {(totalAttempts > 0 || completedAttempts > 0 || activeAttempts > 0) && (
+          {/* Compact Stats Card */}
+          {(totalAttempts > 0 || participationStatus?.totalAttempts !== undefined || hasActiveResponse) && (
             <Card variant="default" radius="lg" padding="md">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                آمار تلاش‌ها
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 leading-6">
+                آمار مشارکت شما
               </h3>
               <div className="grid grid-cols-2 gap-3">
-                {totalAttempts > 0 && (
-                  <div>
+                {/* Total Attempts */}
+                {(totalAttempts > 0 || participationStatus?.totalAttempts !== undefined) && (
+                  <div className="p-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                     <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">کل تلاش‌ها</div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                      {totalAttempts}
+                    <div className="text-base font-bold text-gray-900 dark:text-gray-100">
+                      {participationStatus?.totalAttempts ?? totalAttempts}
+                      {participationStatus?.maxAllowedAttempts && (
+                        <span className="text-sm font-normal text-gray-500 dark:text-gray-400 mr-1">
+                          از {participationStatus.maxAllowedAttempts}
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}
+
+                {/* Completed Attempts */}
                 {completedAttempts > 0 && (
-                  <div>
+                  <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
                     <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">تکمیل شده</div>
-                    <div className="text-sm font-semibold text-green-600 dark:text-green-400">
+                    <div className="text-base font-bold text-green-600 dark:text-green-400">
                       {completedAttempts}
                     </div>
                   </div>
                 )}
+
+                {/* Active Attempts */}
                 {activeAttempts > 0 && (
-                  <div>
+                  <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                     <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">فعال</div>
-                    <div className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                    <div className="text-base font-bold text-blue-600 dark:text-blue-400">
                       {activeAttempts}
                     </div>
                   </div>
                 )}
-                {userSurveyResponses?.canceledAttempts !== undefined && userSurveyResponses.canceledAttempts > 0 && (
-                  <div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">لغو شده</div>
-                    <div className="text-sm font-semibold text-red-600 dark:text-red-400">
-                      {userSurveyResponses.canceledAttempts}
-                    </div>
-                  </div>
-                )}
-                {userSurveyResponses?.expiredAttempts !== undefined && userSurveyResponses.expiredAttempts > 0 && (
-                  <div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">منقضی شده</div>
-                    <div className="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                      {userSurveyResponses.expiredAttempts}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Card>
-          )}
 
-          {/* Participation Status */}
-          {participationStatus && (
-            <Card variant="default" radius="lg" padding="md">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                وضعیت مشارکت
-              </h3>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">وضعیت:</span>
-                  <span className={`text-sm font-semibold ${
-                    participationStatus.canStartNewAttempt 
-                      ? 'text-green-600 dark:text-green-400' 
-                      : 'text-gray-600 dark:text-gray-400'
-                  }`}>
-                    {participationStatus.canStartNewAttempt ? 'قابل شروع' : 'غیرقابل شروع'}
-                  </span>
-                </div>
-                {participationStatus.totalAttempts !== undefined && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">تعداد تلاش‌ها:</span>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                      {participationStatus.totalAttempts} / {participationStatus.maxAllowedAttempts || 'نامحدود'}
-                    </span>
+                {/* Remaining Attempts */}
+                {participationStatus?.maxAllowedAttempts !== undefined && participationStatus?.totalAttempts !== undefined && (
+                  <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">باقی‌مانده</div>
+                    <div className="text-base font-bold text-amber-600 dark:text-amber-400">
+                      {Math.max(0, participationStatus.maxAllowedAttempts - participationStatus.totalAttempts)}
+                    </div>
                   </div>
                 )}
-                {participationStatus.currentResponseId && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">پاسخ فعلی:</span>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        if (surveyIdFromParams && participationStatus.currentResponseId) {
-                          router.push(`/surveys/${surveyIdFromParams}/responses/${participationStatus.currentResponseId}`);
-                        }
-                      }}
-                      rightIcon={<PiArrowRight className="h-3 w-3" />}
-                    >
-                      مشاهده
-                    </Button>
+
+                {/* Status Badge */}
+                {hasActiveResponse && (
+                  <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">وضعیت</div>
+                    <div className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+                      پاسخ فعال دارید
+                    </div>
+                  </div>
+                )}
+
+                {/* Can Start Badge */}
+                {canStart && !hasActiveResponse && (
+                  <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">وضعیت</div>
+                    <div className="text-xs font-semibold text-green-600 dark:text-green-400">
+                      قابل شروع
+                    </div>
                   </div>
                 )}
               </div>
+
+              {/* Additional Info Row */}
+              {(canceledAttempts > 0 || expiredAttempts > 0) && (
+                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                    {canceledAttempts > 0 && (
+                      <span>لغو شده: <span className="font-semibold text-gray-700 dark:text-gray-300">{canceledAttempts}</span></span>
+                    )}
+                    {expiredAttempts > 0 && (
+                      <span>منقضی شده: <span className="font-semibold text-gray-700 dark:text-gray-300">{expiredAttempts}</span></span>
+                    )}
+                  </div>
+                </div>
+              )}
             </Card>
           )}
 
@@ -429,7 +373,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
           {responses.length > 0 && (
             <Card variant="default" radius="lg" padding="md">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 leading-6">
                   <PiFileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   پاسخ‌های شما
                 </h3>
@@ -496,37 +440,10 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
             </Card>
           )}
 
-          {/* Latest Response Progress */}
-          {latestResponse && latestResponse.completionPercentage !== undefined && latestResponse.completionPercentage > 0 && (
-            <Card variant="default" radius="lg" padding="md">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                پیشرفت آخرین پاسخ
-              </h3>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">درصد تکمیل:</span>
-                  <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-                    {Math.round(latestResponse.completionPercentage)}%
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 dark:bg-blue-400 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${latestResponse.completionPercentage}%` }}
-                  />
-                </div>
-                {latestResponse.answeredQuestions !== undefined && latestResponse.totalQuestions !== undefined && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                    {latestResponse.answeredQuestions} از {latestResponse.totalQuestions} سوال پاسخ داده شده
-                  </div>
-                )}
-              </div>
-            </Card>
-          )}
         </div>
       </ScrollableArea>
 
-      {/* Start Survey Confirmation Bottom Sheet */}
+      {/* Start Survey - Step by Step Guide */}
       <Drawer
         open={showStartConfirm}
         onClose={(open) => setShowStartConfirm(open)}
@@ -543,27 +460,79 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
             </div>
             <div>
               <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">
-                شروع نظرسنجی
+                راهنمای پاسخ به نظرسنجی
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                آیا مطمئن هستید که می‌خواهید این نظرسنجی را شروع کنید؟
+                مراحل پاسخ به سوالات
               </p>
             </div>
           </div>
         </DrawerHeader>
         <DrawerBody>
           <div className="space-y-4">
-            <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <PiWarning className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+            {/* Step 1 */}
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">1</span>
+              </div>
               <div className="flex-1">
-                <p className="text-sm text-gray-700 dark:text-gray-300 leading-6">
-                  با شروع این نظرسنجی، می‌توانید به سوالات پاسخ دهید. در صورت وجود پاسخ فعال قبلی، به آن ادامه خواهید داد.
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1 leading-6">
+                  شروع نظرسنجی
+                </h4>
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-6">
+                  با کلیک روی دکمه شروع، نظرسنجی برای شما فعال می‌شود.
                 </p>
               </div>
             </div>
+
+            {/* Step 2 */}
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">2</span>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1 leading-6">
+                  پاسخ به سوالات
+                </h4>
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-6">
+                  به هر سوال به ترتیب پاسخ دهید. می‌توانید بین سوالات جابجا شوید.
+                </p>
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">3</span>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1 leading-6">
+                  بررسی پاسخ‌ها
+                </h4>
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-6">
+                  قبل از ارسال نهایی، تمام پاسخ‌های خود را بررسی کنید.
+                </p>
+              </div>
+            </div>
+
+            {/* Step 4 */}
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <span className="text-sm font-semibold text-green-600 dark:text-green-400">4</span>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1 leading-6">
+                  تایید و ارسال
+                </h4>
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-6">
+                  در پایان، پاسخ‌های خود را تایید کرده و ارسال کنید.
+                </p>
+              </div>
+            </div>
+
             {participationStatus?.totalAttempts !== undefined && participationStatus?.maxAllowedAttempts !== undefined && (
-              <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                <p className="text-xs text-gray-600 dark:text-gray-400">
+              <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg mt-4">
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-6">
                   تلاش‌های استفاده شده: <span className="font-semibold">{participationStatus.totalAttempts}</span> از <span className="font-semibold">{participationStatus.maxAllowedAttempts}</span>
                 </p>
               </div>
@@ -572,7 +541,16 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
         </DrawerBody>
         <DrawerFooter className="pb-[max(env(safe-area-inset-bottom),1rem)]">
           <div className="flex items-center gap-3">
-          <Button
+            <Button
+              variant="ghost"
+              size="md"
+              block
+              onClick={() => setShowStartConfirm(false)}
+              disabled={isStartingResponse}
+            >
+              لغو
+            </Button>
+            <Button
               variant="primary"
               size="md"
               block
@@ -583,21 +561,11 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
             >
               شروع نظرسنجی
             </Button>
-            <Button
-              variant="ghost"
-              size="md"
-              block
-              onClick={() => setShowStartConfirm(false)}
-              disabled={isStartingResponse}
-            >
-              لغو
-            </Button>
-        
           </div>
         </DrawerFooter>
       </Drawer>
 
-      {/* Start New Response Confirmation Bottom Sheet */}
+      {/* Start New Response - Step by Step Guide */}
       <Drawer
         open={showStartNewConfirm}
         onClose={(open) => setShowStartNewConfirm(open)}
@@ -617,7 +585,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                 شروع پاسخ جدید
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                آیا مطمئن هستید که می‌خواهید یک پاسخ جدید شروع کنید؟
+                شما یک پاسخ فعال دارید
               </p>
             </div>
           </div>
@@ -632,9 +600,57 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                 </p>
               </div>
             </div>
+
+            {/* Step by Step Guide */}
+            <div className="space-y-3 pt-2">
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                  <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">1</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-6">
+                    شروع پاسخ جدید
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                  <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">2</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-6">
+                    پاسخ به سوالات به ترتیب
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                  <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">3</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-6">
+                    بررسی پاسخ‌ها
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                  <span className="text-sm font-semibold text-green-600 dark:text-green-400">4</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-6">
+                    تایید و ارسال نهایی
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {participationStatus?.totalAttempts !== undefined && participationStatus?.maxAllowedAttempts !== undefined && (
-              <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                <p className="text-xs text-gray-600 dark:text-gray-400">
+              <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg mt-4">
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-6">
                   تلاش‌های استفاده شده: <span className="font-semibold">{participationStatus.totalAttempts}</span> از <span className="font-semibold">{participationStatus.maxAllowedAttempts}</span>
                 </p>
                 {participationStatus.totalAttempts >= participationStatus.maxAllowedAttempts - 1 && (

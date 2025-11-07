@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { selectAuthStatus, selectAuthReady, useGetMeQuery, useLogoutMutation } from '@/src/store/auth';
@@ -35,7 +35,8 @@ function ThemeIconButton() {
     if (mounted && theme === 'system') {
       setTheme('light');
     }
-  }, [mounted, theme, setTheme]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted, theme]); // Removed setTheme from deps - it's stable
 
   const handleToggleTheme = () => {
     // Only toggle between light and dark
@@ -97,24 +98,10 @@ function NotificationButton({ unreadCountData, notificationsLoading }: {
 
 
 function BrandTitle() {
-  const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
-  
-  // Prevent hydration mismatch by only rendering after mount
-  useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 0);
-    return () => clearTimeout(timer);
-  }, []);
-  
-  const getTitle = () => {
-   
-    return 'سامانه خدمات رفاهی ';
-  };
-
   return (
     <div className="flex flex-col items-center leading-none">
       <h1 className="text-base font-semibold tracking-tight text-emerald-700 dark:text-emerald-400">
-        {getTitle()}
+        سامانه خدمات رفاهی
       </h1>
     </div>
   );
@@ -137,9 +124,9 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const [logout] = useLogoutMutation();
 
   // Fetch user profile on mount - this will set isInitialized to true
-  // Don't skip based on isReady to avoid circular dependency
-  // The query will handle errors and set isInitialized appropriately
+  // Skip if not ready to prevent infinite loops
   useGetMeQuery(undefined, {
+    skip: !isReady, // Only fetch when auth is ready
     refetchOnMountOrArgChange: false,
     refetchOnFocus: false,
     refetchOnReconnect: false,
@@ -169,28 +156,34 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
         }
       };
       handleLogoutAndRedirect();
+      return; // Exit early to prevent double redirect
     }
 
     // If not authenticated, redirect to login
     if (!isAuthenticated) {
       const returnUrl = encodeURIComponent(pathnameRef.current || '/');
       router.replace(`/login?r=${returnUrl}`);
+      return; // Exit early after redirect
     }
 
     // Update previous status only when ready and processing
     prevStatusRef.current = authStatus;
-  }, [isReady, authStatus, logout, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReady, authStatus]); // Removed router and logout from deps to prevent loops
 
   // Auto-fetch notifications when authenticated and ready
-  const isAuthenticated = authStatus === 'authenticated';
+  // Memoize authentication check to prevent unnecessary recalculations
+  const isAuthenticated = useMemo(() => authStatus === 'authenticated', [authStatus]);
+  const shouldPollNotifications = useMemo(() => isReady && isAuthenticated, [isReady, isAuthenticated]);
+  
   const { data: unreadCountData, isLoading: notificationsLoading } = useGetUnreadCountQuery(
     undefined,
     {
-      skip: !isReady || !isAuthenticated,
-      pollingInterval: isReady && isAuthenticated ? 30000 : 0,
+      skip: !shouldPollNotifications,
+      pollingInterval: shouldPollNotifications ? 30000 : 0,
       refetchOnMountOrArgChange: false,
       refetchOnFocus: false,
-      refetchOnReconnect: isReady && isAuthenticated,
+      refetchOnReconnect: shouldPollNotifications,
     }
   );
 

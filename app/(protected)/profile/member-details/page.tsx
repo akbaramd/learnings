@@ -97,7 +97,11 @@ function ListSection<T>({
 export default function MemberDetailsPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { data: memberData, isLoading: isLoadingMember, error: memberError } = useGetCurrentMemberQuery();
+  const { data: memberData, isLoading: isLoadingMember, error: memberError } = useGetCurrentMemberQuery(undefined, {
+    refetchOnMountOrArgChange: false,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+  });
   
   const member = memberData?.data;
   const hasError = !!memberError;

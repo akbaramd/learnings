@@ -6,6 +6,15 @@ import { ApplicationResult } from '@/src/store/api/api.types';
 // Auth status type with better type safety
 export type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'anonymous' | 'error' | 'otp-sent';
 
+// Error types for better error handling
+export type AuthErrorType = 
+  | 'user_not_found' 
+  | 'invalid_credentials' 
+  | 'otp_failed' 
+  | 'network_error' 
+  | 'server_error' 
+  | 'unknown';
+
 // User roles type for better type safety
 export type UserRole = 'admin' | 'super_admin' | 'user_manager' | 'reporter' | 'user';
 
@@ -41,6 +50,7 @@ export interface AuthState {
   maskedPhoneNumber: string | null;
   nationalCode: string | null; // Store national code for resending OTP
   error: string | null;
+  errorType: AuthErrorType | null; // Error category for better error handling
   isInitialized: boolean;
 }
 
@@ -60,10 +70,22 @@ export interface RefreshTokenRequest {
   refreshToken?: string;
 }
 
+export interface ValidateNationalCodeRequest {
+  nationalCode: string;
+}
+
 // Data types for API responses
 export interface SendOtpData {
   challengeId: string;
   maskedPhoneNumber?: string;
+}
+
+export interface ValidateNationalCodeData {
+  nationalCode?: string | null;
+  isValidFormat?: boolean;
+  exists?: boolean;
+  fullName?: string | null;
+  membershipNumber?: string | null;
 }
 
 export interface VerifyOtpData {
@@ -92,3 +114,4 @@ export type SessionResponse = ApplicationResult<SessionData>;
 export type LogoutResponse = ApplicationResult<LogoutData>;
 export type RefreshResponse = ApplicationResult<RefreshData>;
 export type GetMeResponse = ApplicationResult<UserProfile>;
+export type ValidateNationalCodeResponse = ApplicationResult<ValidateNationalCodeData>;

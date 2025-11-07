@@ -18,6 +18,7 @@ export {
   clearUser,
   setAuthStatus,
   setError,
+  setErrorWithType,
   clearError,
   setInitialized,
   reset,
@@ -39,6 +40,9 @@ export {
   selectMaskedPhone,
   selectNationalCode,
   selectAuthError,
+  selectAuthErrorType,
+  selectIsUserNotFoundError,
+  selectAuthErrorInfo,
   selectAuthInfo,
   selectOtpFlowState,
   selectAuthSummary,
@@ -52,7 +56,9 @@ export {
   useLogoutMutation,
   useRefreshTokenMutation,
   useGetMeQuery,
+  useValidateNationalCodeQuery,
   useLazyGetMeQuery,
+  useLazyValidateNationalCodeQuery,
 } from './auth.queries';
 
 // Export auth hooks

@@ -202,24 +202,6 @@ export default function VerifyOtpPage() {
                 <span className="font-medium">شماره تلفن:</span>
                 <span className="mr-2 font-mono text-base sm:ltr" dir="ltr">{maskedPhone || 'در حال بارگذاری...'}</span>
               </p>
-              {!canResend ? (
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                  زمان باقی‌مانده: <span className="font-mono text-red-600 dark:text-red-400 sm:ltr" dir="ltr">{formatTime(timeLeft)}</span>
-                </p>
-              ) : (
-                <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                  می‌توانید کد جدید درخواست کنید
-                </p>
-              )}
-              <div className="mt-2">
-                <button
-                  type="button"
-                  onClick={() => router.push('/login')}
-                  className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline"
-                >
-                  تغییر شماره ملی
-                </button>
-              </div>
             </div>
           </div>
 
@@ -266,70 +248,100 @@ export default function VerifyOtpPage() {
             }
           }}
         >
-          <OtpField
-            name="otp"
-            label="رمز یکبار مصرف"
-            description={errorText ?? '۶ رقم دریافتی را وارد کنید. فقط کاراکترهای عددی پذیرفته می‌شود.'}
-            length={6}
-            value={otp}
-            onChange={(v) => {
-              setOtp(v);
-              setStatus(v.length === 0 ? 'idle' : v.length < 6 ? 'typing' : 'valid');
-              if (touched) setErrorText(explain(v));
-            }}
-            onComplete={(v) => {
-              const err = explain(v);
-              if (err) {
-                setStatus('invalid');
-                setErrorText(err);
-              } else {
-                setStatus('valid');
-                // No toast - UI status change is enough
-              }
-            }}
-                    disabled={isLoading}
-            variant="outline"
-            size="md"
-            status={fieldStatus}
-            fullWidth
-            numericOnly
-            mask={false}
-            autoFocus
-            focusStrategy="start"
-            showLabel={true}
-            labelPosition="center"
-          />
+          <div className="space-y-3">
+            <OtpField
+              name="otp"
+              label="رمز یکبار مصرف"
+              description={errorText ?? '۶ رقم دریافتی را وارد کنید. فقط کاراکترهای عددی پذیرفته می‌شود.'}
+              length={6}
+              value={otp}
+              onChange={(v) => {
+                setOtp(v);
+                setStatus(v.length === 0 ? 'idle' : v.length < 6 ? 'typing' : 'valid');
+                if (touched) setErrorText(explain(v));
+              }}
+              onComplete={(v) => {
+                const err = explain(v);
+                if (err) {
+                  setStatus('invalid');
+                  setErrorText(err);
+                } else {
+                  setStatus('valid');
+                  // No toast - UI status change is enough
+                }
+              }}
+              disabled={isLoading}
+              variant="outline"
+              size="md"
+              status={fieldStatus}
+              fullWidth
+              numericOnly
+              mask={false}
+              autoFocus
+              focusStrategy="start"
+              showLabel={true}
+              labelPosition="center"
+            />
+            
+            {/* Timer and Resend button in a row */}
+            <div className="flex items-center justify-between gap-3">
+              {!canResend ? (
+                <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+                  <span>زمان باقی‌مانده:</span>
+                  <span className="font-mono text-red-600 dark:text-red-400 sm:ltr" dir="ltr">{formatTime(timeLeft)}</span>
+                </div>
+              ) : null}
+              
+              {canResend && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  radius="xs"
+                  loading={resendLoading}
+                  loadingText="در حال ارسال..."
+                  onClick={handleResendOtp}
+                  disabled={resendLoading}
+                  className="mr-0"
+                >
+                  ارسال مجدد کد
+                </Button>
+              )}
+            </div>
+          </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             <Button
               type="submit"
               variant="primary"
               size="md"
               radius="xs"
               block
-                      loading={isLoading}
-                      loadingText="در حال تأیید..."
+              loading={isLoading}
+              loadingText="در حال تأیید..."
               shimmer
               disabled={!canSubmit}
             >
               تأیید کد
             </Button>
             
-            {canResend && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="md"
-                radius="xs"
-                block
-                loading={resendLoading}
-                loadingText="در حال ارسال..."
-                onClick={handleResendOtp}
-                disabled={resendLoading}
-              >
-                ارسال مجدد کد
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="md"
+              radius="xs"
+              block
+              onClick={() => router.push('/login')}
+            >
+              تغییر شماره ملی
+            </Button>
+          </div>
+          
+          {/* Info message about organization phone numbers at bottom */}
+          <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800/50">
+            <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed text-center">
+              کد تأیید به شماره تلفن ثبت‌شده در سیستم سازمان ارسال شده است.
+            </p>
           </div>
         </form>
       </Card>
