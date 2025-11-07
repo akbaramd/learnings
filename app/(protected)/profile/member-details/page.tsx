@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useGetCurrentMemberQuery } from '@/src/store/members';
+import { MemberDetailDto } from '@/src/store/members/members.types';
 import { useAuth } from '@/src/hooks/useAuth';
 import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import { PageHeader } from '@/src/components/ui/PageHeader';
@@ -103,7 +104,7 @@ export default function MemberDetailsPage() {
     refetchOnReconnect: false,
   });
   
-  const member = memberData?.data;
+  const member = memberData?.data as MemberDetailDto | undefined;
   const hasError = !!memberError;
 
   const handleBack = () => {

@@ -53,7 +53,7 @@ export const membersApi = createApi({
       }),
       providesTags: ['Member'],
       keepUnusedDataFor: 300,
-      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
           dispatch(setLoading(true));
           dispatch(clearError());
@@ -84,7 +84,7 @@ export const membersApi = createApi({
         body: request,
       }),
       invalidatesTags: ['Member'],
-      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
           dispatch(setLoading(true));
           dispatch(clearError());

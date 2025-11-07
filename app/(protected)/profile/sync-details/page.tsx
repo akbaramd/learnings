@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSelector } from 'react-redux';
 import { useGetCurrentMemberQuery, useSyncCurrentMemberMutation } from '@/src/store/members';
+import { RootState } from '@/src/store';
 import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import { PageHeader } from '@/src/components/ui/PageHeader';
 import { Button } from '@/src/components/ui/Button';
@@ -14,14 +16,16 @@ import {
 
 export default function SyncDetailsPage() {
   const router = useRouter();
-  const { data: memberData, refetch } = useGetCurrentMemberQuery(undefined, {
+  const { refetch } = useGetCurrentMemberQuery(undefined, {
     refetchOnMountOrArgChange: false,
     refetchOnFocus: false,
     refetchOnReconnect: false,
   });
   const [syncMember, { isLoading: isSyncing, isSuccess: syncSuccess, isError: syncError }] = useSyncCurrentMemberMutation();
   
-  const member = memberData?.data;
+  // Get lastSynced from Redux state
+  const lastSynced = useSelector((state: RootState) => state.members?.lastSynced);
+  
   const [lastSyncAttempt, setLastSyncAttempt] = useState<Date | null>(null);
 
   const handleBack = () => {
@@ -55,20 +59,20 @@ export default function SyncDetailsPage() {
           {/* Info Card */}
           <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">همگام‌سازی اطلاعات عضو</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+            <p className="text-xs text-gray-500 dark:text-gray-400 leading-6">
               با استفاده از این قابلیت می‌توانید اطلاعات عضو خود را با سیستم اصلی همگام‌سازی کنید. این عملیات اطلاعات شما را از منبع اصلی به‌روزرسانی می‌کند.
             </p>
           </div>
 
           {/* Last Sync Info */}
-          {member?.lastSyncedAt && (
+          {lastSynced && (
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-3">
                 <PiCheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0" />
                 <div className="flex-1">
                   <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">آخرین همگام‌سازی</div>
                   <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {new Date(String(member.lastSyncedAt)).toLocaleDateString('fa-IR', {
+                    {new Date(lastSynced).toLocaleDateString('fa-IR', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
@@ -137,7 +141,7 @@ export default function SyncDetailsPage() {
 
           {/* Help Text */}
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <div className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+            <div className="text-xs text-blue-700 dark:text-blue-300 leading-6">
               <strong>نکته:</strong> همگام‌سازی ممکن است چند لحظه طول بکشد. لطفاً صبر کنید.
             </div>
           </div>

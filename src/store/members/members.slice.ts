@@ -11,11 +11,8 @@ const isValidMember = (member: unknown): member is MemberDetailDto => {
 
   const memberObj = member as Record<string, unknown>;
 
-  // At minimum, should have an id or externalUserId
-  return (
-    ('id' in memberObj && typeof memberObj.id === 'string') ||
-    ('externalUserId' in memberObj && typeof memberObj.externalUserId === 'string')
-  );
+  // At minimum, should have an id
+  return 'id' in memberObj && typeof memberObj.id === 'string';
 };
 
 const initialState: MembersState = {
@@ -50,7 +47,6 @@ const membersSlice = createSlice({
         state.currentMember = {
           ...state.currentMember,
           ...action.payload,
-          lastModifiedAt: new Date().toISOString(),
         };
       }
     },
