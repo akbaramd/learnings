@@ -1,7 +1,7 @@
 // src/store/members/members.types.ts
 // Member types - re-exported from Api.ts to maintain consistency
 
-import { MemberDetailDto as ApiMemberDetailDto, MemberDetailDtoApplicationResult } from '@/src/services/Api';
+import { UserDetailDto as ApiMemberDetailDto, UserDetailDtoApplicationResult } from '@/src/services/Api';
 
 /**
  * Member Detail DTO - represents a detailed member entity
@@ -12,12 +12,12 @@ export type MemberDetailDto = ApiMemberDetailDto;
 /**
  * Get current member response - uses MemberDetailDto
  */
-export type GetCurrentMemberResponse = MemberDetailDtoApplicationResult;
+export type GetCurrentMemberResponse = UserDetailDtoApplicationResult;
 
 /**
  * Sync current member response - uses MemberDetailDto
  */
-export type SyncCurrentMemberResponse = MemberDetailDtoApplicationResult;
+export type SyncCurrentMemberResponse = UserDetailDtoApplicationResult;
 
 /**
  * Legacy MemberDto type alias for backward compatibility
