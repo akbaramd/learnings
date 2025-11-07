@@ -282,12 +282,14 @@ export async function GET(req: NextRequest) {
         );
       }
       
-      // Return PNG
+      // Return PNG with proper headers for Telegram/crawlers
       return new NextResponse(buffer as unknown as BodyInit, {
         status: 200,
         headers: {
           'Content-Type': 'image/png',
-          'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+          'Cache-Control': 'public, max-age=31536000, immutable', // Long cache for static-like images
+          'Access-Control-Allow-Origin': '*', // Allow cross-origin access
+          'X-Content-Type-Options': 'nosniff',
         },
       });
       

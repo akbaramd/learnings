@@ -21,8 +21,9 @@ export async function generateMetadata({ params }: { params: Promise<{ surveyId:
   const pageUrl = `${baseUrl}/public/surveys/${surveyId}`;
   
   // Generate dynamic OG image URL with survey title and organization name
+  // Using dynamic endpoint - ensure it's public and accessible
   const encodedTitle = encodeURIComponent(title);
-  const orgName = 'سازمان نظام مهندسی ساختمان آذربایجان غربی'; // نام سازمان
+  const orgName = 'سازمان نظام مهندسی ساختمان آذربایجان غربی';
   const encodedOrg = encodeURIComponent(orgName);
   const imageUrl = `${baseUrl}/api/og-image-canvas?text=${encodedTitle}&width=1200&height=630&org=${encodedOrg}`;
   
@@ -31,6 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ surveyId:
     ? imageUrl 
     : `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
 
+  // Standard OG metadata - only property= (Next.js generates property= automatically)
   return {
     title: `${title} — شرکت کنید`,
     description: description || 'برای تکمیل نظرسنجی رسمی روی این لینک کلیک کنید.',
@@ -81,19 +83,8 @@ export async function generateMetadata({ params }: { params: Promise<{ surveyId:
         'max-snippet': -1,
       },
     },
-    // Additional meta tags for better Telegram support
-    other: {
-      // Ensure OG image dimensions are explicit
-      'og:image:width': '1200',
-      'og:image:height': '630',
-      'og:image:type': 'image/png',
-      'og:image:secure_url': absoluteImageUrl,
-      'og:locale:alternate': 'en_US',
-      'article:author': 'سازمان نظام مهندسی ساختمان آذربایجان غربی',
-      'theme-color': '#2563eb',
-      // Additional tags for better compatibility
-      'format-detection': 'telephone=no',
-    },
+    // No 'other' field - Next.js generates proper property= tags automatically
+    // All OG tags will be property=, not name=
   };
 }
 async function fetchSurveyDetails(surveyId: string): Promise<SurveyDto | null> {
@@ -114,12 +105,20 @@ async function fetchSurveyDetails(surveyId: string): Promise<SurveyDto | null> {
     }
 
     const cookie = headersList.get('cookie');
+    const userAgent = headersList.get('user-agent') || '';
     const origin = `${protocol}://${host}`;
+    
+    // Check if it's a bot/crawler (they don't need cookies)
+    const isBot = /TelegramBot|facebookexternalhit|TwitterBot|LinkedInBot|WhatsApp|Slackbot|bot|crawler/i.test(userAgent);
+    
     const response = await fetch(`${origin}/api/public/surveys/${surveyId}/details`, {
       method: 'GET',
       headers: {
         Accept: 'application/json',
-        ...(cookie ? { cookie } : {}),
+        // Only send cookies for real users, not bots
+        ...(cookie && !isBot ? { cookie } : {}),
+        // Add user-agent for debugging
+        'User-Agent': userAgent,
       },
       cache: 'no-store',
     });
