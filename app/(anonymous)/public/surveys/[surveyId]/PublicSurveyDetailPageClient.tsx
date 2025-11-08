@@ -90,7 +90,7 @@ export default function PublicSurveyDetailPageClient({ surveyId, survey }: Publi
           </div>
           <div className="flex items-center gap-2">
             <Button
-              variant="ghost"
+              variant="subtle"
               size="sm"
               onClick={() => setVideoDrawerOpen(true)}
               leftIcon={<PiPlayCircle className="h-4 w-4" />}
@@ -99,7 +99,7 @@ export default function PublicSurveyDetailPageClient({ surveyId, survey }: Publi
               آموزش ویدویی
             </Button>
             <Button
-              variant="primary"
+              variant="solid"
               size="sm"
               onClick={handleLogin}
               rightIcon={<PiArrowRight className="h-4 w-4" />}
@@ -121,7 +121,7 @@ export default function PublicSurveyDetailPageClient({ surveyId, survey }: Publi
                   نظرسنجی
                 </span>
                 <Button
-                  variant="ghost"
+                  variant="subtle"
                   size="sm"
                   onClick={() => setShareDrawerOpen(true)}
                   leftIcon={<PiShareNetwork className="h-4 w-4" />}
@@ -247,7 +247,7 @@ export default function PublicSurveyDetailPageClient({ surveyId, survey }: Publi
               </div>
             </div>
             <Button
-              variant="primary"
+              variant="solid"
               size="lg"
               block
               onClick={handleLogin}

@@ -425,7 +425,7 @@ export default function RequestsPage() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">جستجو و فیلتر</h3>
               <Button
-                variant="ghost"
+                variant="subtle"
                 size="sm"
                 onClick={() => setShowFilters(false)}
                 className="p-1"
@@ -450,7 +450,7 @@ export default function RequestsPage() {
                 {normalizedSearch && (
                   <Button
                     onClick={() => setSearch('')}
-                    variant="secondary"
+                    variant="outline"
                     title="پاک کردن جستجو"
                     size="sm"
                   >
@@ -467,56 +467,64 @@ export default function RequestsPage() {
               </label>
               <div className="flex gap-2 flex-wrap">
                 <Button
-                  variant={statusFilter === 'all' ? 'primary' : 'secondary'}
+                  variant={statusFilter === 'all' ? 'solid' : 'outline'}
+                  color={statusFilter === 'all' ? 'primary' : 'secondary'}
                   size="sm"
                   onClick={() => setStatusFilter('all')}
                 >
                   همه
                 </Button>
                 <Button
-                  variant={statusFilter === 'RequestSent' ? 'primary' : 'secondary'}
+                  variant={statusFilter === 'RequestSent' ? 'solid' : 'outline'}
+                  color={statusFilter === 'RequestSent' ? 'primary' : 'secondary'}
                   size="sm"
                   onClick={() => setStatusFilter('RequestSent')}
                 >
                   ارسال شده
                 </Button>
                 <Button
-                  variant={statusFilter === 'PendingApproval' ? 'primary' : 'secondary'}
+                  variant={statusFilter === 'PendingApproval' ? 'solid' : 'outline'}
+                  color={statusFilter === 'PendingApproval' ? 'primary' : 'secondary'}
                   size="sm"
                   onClick={() => setStatusFilter('PendingApproval')}
                 >
                   در انتظار تایید
                 </Button>
                 <Button
-                  variant={statusFilter === 'PendingDocuments' ? 'primary' : 'secondary'}
+                  variant={statusFilter === 'PendingDocuments' ? 'solid' : 'outline'}
+                  color={statusFilter === 'PendingDocuments' ? 'primary' : 'secondary'}
                   size="sm"
                   onClick={() => setStatusFilter('PendingDocuments')}
                 >
                   در انتظار مدارک
                 </Button>
                 <Button
-                  variant={statusFilter === 'UnderReview' ? 'primary' : 'secondary'}
+                  variant={statusFilter === 'UnderReview' ? 'solid' : 'outline'}
+                  color={statusFilter === 'UnderReview' ? 'primary' : 'secondary'}
                   size="sm"
                   onClick={() => setStatusFilter('UnderReview')}
                 >
                   در حال بررسی
                 </Button>
                 <Button
-                  variant={statusFilter === 'Approved' ? 'primary' : 'secondary'}
+                  variant={statusFilter === 'Approved' ? 'solid' : 'outline'}
+                  color={statusFilter === 'Approved' ? 'primary' : 'secondary'}
                   size="sm"
                   onClick={() => setStatusFilter('Approved')}
                 >
                   تایید شده
                 </Button>
                 <Button
-                  variant={statusFilter === 'SentToBank' ? 'primary' : 'secondary'}
+                  variant={statusFilter === 'SentToBank' ? 'solid' : 'outline'}
+                  color={statusFilter === 'SentToBank' ? 'primary' : 'secondary'}
                   size="sm"
                   onClick={() => setStatusFilter('SentToBank')}
                 >
                   ارسال به بانک
                 </Button>
                 <Button
-                  variant={statusFilter === 'Rejected' ? 'primary' : 'secondary'}
+                  variant={statusFilter === 'Rejected' ? 'solid' : 'outline'}
+                  color={statusFilter === 'Rejected' ? 'primary' : 'secondary'}
                   size="sm"
                   onClick={() => setStatusFilter('Rejected')}
                 >
@@ -542,7 +550,7 @@ export default function RequestsPage() {
                 <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                   <div className="flex items-center justify-between">
                     <Button
-                      variant="ghost"
+                      variant="subtle"
                       size="sm"
                       onClick={() => setSearch('')}
                       className="text-xs"
@@ -630,7 +638,7 @@ export default function RequestsPage() {
                     </div>
                   ) : (
                     <Button
-                      variant="secondary"
+                      variant="outline"
                       onClick={handleLoadMore}
                       disabled={isLoading}
                       className="min-w-[120px]"

@@ -349,7 +349,7 @@ export default function PaymentDetailPage({ params }: PaymentDetailPageProps) {
         <div className="flex gap-3">
           {payment?.bill && (
             <Button
-              variant="primary"
+              variant="solid"
               onClick={handleViewBill}
               leftIcon={<PiReceipt className="h-5 w-5" />}
               className="flex-1 py-3 text-base font-medium"
@@ -360,7 +360,7 @@ export default function PaymentDetailPage({ params }: PaymentDetailPageProps) {
           
           {canNavigateToReference() && (
             <Button
-              variant="secondary"
+              variant="outline"
               onClick={handleNavigateToReference}
               leftIcon={<PiArrowLeft className="h-5 w-5" />}
               className="flex-1 py-3 text-base font-medium"

@@ -49,7 +49,7 @@ function ThemeIconButton() {
   if (!mounted) {
     // Return a placeholder that matches the expected size
     return (
-      <IconButton aria-label="Loading theme" variant="ghost">
+      <IconButton aria-label="Loading theme" variant="solid" color="secondary">
         <PiSun className="h-4 w-4" />
       </IconButton>
     );
@@ -61,7 +61,7 @@ function ThemeIconButton() {
   const label = currentTheme === 'light' ? 'Switch to dark mode' : 'Switch to light mode';
 
   return (
-    <IconButton aria-label={label} onClick={handleToggleTheme} variant="ghost">
+    <IconButton aria-label={label} onClick={handleToggleTheme} variant="solid" color="secondary">
       {icon}
     </IconButton>
   );

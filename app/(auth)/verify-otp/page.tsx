@@ -512,7 +512,7 @@ export default function VerifyOtpPage() {
               {canResend && (
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="subtle"
                   size="sm"
                   radius="xs"
                   loading={resendLoading}
@@ -530,7 +530,7 @@ export default function VerifyOtpPage() {
           <div className="flex flex-col gap-3">
             <Button
               type="submit"
-              variant="primary"
+              variant="solid"
               size="md"
               radius="xs"
               block
@@ -544,7 +544,7 @@ export default function VerifyOtpPage() {
             
             <Button
               type="button"
-              variant="ghost"
+              variant="subtle"
               size="md"
               radius="xs"
               block

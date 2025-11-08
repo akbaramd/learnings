@@ -62,88 +62,103 @@
 }
 
 /* ============================================
-   COLOR SYSTEM
+   BACKGROUND SYSTEM
    ============================================ */
 
 @layer components {
-  /* Primary Background - Main CTAs, links, primary buttons (Emerald) */
-  /* Light colors in both dark and light mode */
-  /* Note: Text color should be applied via text-on-primary utility */
+  /* ============================================
+     BASE BACKGROUNDS
+     ============================================ */
+
+  /* Application Base Background - Base background of application */
+  .bg-body {
+    @apply bg-gray-50 dark:bg-gray-900 transition-colors duration-200;
+  }
+
+  /* Surface Background - Background of containers and large areas like cards and containers */
+  .bg-surface {
+    @apply bg-white dark:bg-gray-800 transition-colors duration-200;
+  }
+
+  /* ============================================
+     PRIMARY BACKGROUNDS
+     ============================================ */
+
+  /* Primary Background - Primary call to actions UI like buttons and other things */
   .bg-primary {
     @apply bg-emerald-600 dark:bg-emerald-500 transition-colors duration-200;
   }
 
   /* Primary Hover State */
   .bg-primary-hover {
-    @apply bg-emerald-500 dark:bg-emerald-500;
+    @apply bg-emerald-700 dark:bg-emerald-400;
   }
 
   /* Primary Active State */
   .bg-primary-active {
-    @apply bg-emerald-400 dark:bg-emerald-400;
+    @apply bg-emerald-800 dark:bg-emerald-300;
   }
 
-  /* Secondary Background - Neutral or secondary buttons */
-  /* Dark/negative colors in both dark and light mode */
-  /* Note: Text color should be applied via text-on-secondary utility */
+  /* Primary Subtle - Subtle variant for primary elements */
+  .bg-primary-subtle {
+    @apply bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800;
+  }
+
+  /* ============================================
+     SECONDARY BACKGROUNDS
+     ============================================ */
+
+  /* Secondary Background - Not primary components like CTA but in second orders */
   .bg-secondary {
-    @apply bg-gray-500 dark:bg-gray-300 transition-colors duration-200;
+    @apply bg-gray-500 dark:bg-gray-400 transition-colors duration-200;
   }
 
   /* Secondary Hover State */
   .bg-secondary-hover {
-    @apply bg-gray-600 dark:bg-gray-200;
+    @apply bg-gray-600 dark:bg-gray-300;
   }
 
   /* Secondary Active State */
   .bg-secondary-active {
-    @apply bg-gray-700 dark:bg-gray-100;
+    @apply bg-gray-700 dark:bg-gray-200;
   }
 
-  /* Subtle Background - Cards, surfaces, info panels */
-  .bg-subtle {
-    @apply bg-gray-100 border border-gray-200 dark:bg-gray-800 dark:border-gray-700;
+  /* Secondary Subtle - Subtle variant for secondary elements */
+  .bg-secondary-subtle {
+    @apply bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700;
   }
 
-  /* On Subtle Text - Text/icons on subtle background */
-  .text-on-subtle {
-    @apply text-gray-900 dark:text-gray-100;
+  /* ============================================
+     ACCENT BACKGROUNDS
+     ============================================ */
+
+  /* Accent Background - For other UI concepts */
+  .bg-accent {
+    @apply bg-blue-600 dark:bg-blue-500 transition-colors duration-200;
   }
 
-  /* Surface Background - Main containers, cards, big components */
-  .bg-surface {
-    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors duration-200;
+  /* Accent Hover State */
+  .bg-accent-hover {
+    @apply bg-blue-700 dark:bg-blue-400;
   }
 
-  /* On Surface Text - Text/icons on surface background */
-  .text-on-surface {
-    @apply text-gray-900 dark:text-gray-100;
+  /* Accent Active State */
+  .bg-accent-active {
+    @apply bg-blue-800 dark:bg-blue-300;
   }
 
-  /* Ghost Background - Icon buttons, low-emphasis links */
-  /* Dark/negative colors in both dark and light mode */
-  .bg-ghost {
-    @apply bg-transparent text-gray-700 dark:bg-transparent dark:text-gray-300;
+  /* Accent Subtle - Subtle variant for accent elements */
+  .bg-accent-subtle {
+    @apply bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800;
   }
 
-  /* Ghost Hover State */
-  .bg-ghost-hover {
-    @apply bg-black/5 dark:bg-white/10;
-  }
+  /* ============================================
+     DANGER BACKGROUNDS
+     ============================================ */
 
-  /* Ghost Active State */
-  .bg-ghost-active {
-    @apply bg-black/10 dark:bg-white/15;
-  }
-
-  /* Danger Background - Error/destructive actions (not in main design system but needs disabled state) */
+  /* Danger Background - Error/destructive actions */
   .bg-danger {
     @apply bg-red-600 dark:bg-red-500 transition-colors duration-200;
-  }
-
-  /* On Danger Text - Text/icons on danger background */
-  .text-on-danger {
-    @apply text-white;
   }
 
   /* Danger Hover State */
@@ -156,12 +171,21 @@
     @apply bg-red-800 dark:bg-red-300;
   }
 
+  /* Danger Subtle - Subtle variant for danger elements */
+  .bg-danger-subtle {
+    @apply bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800;
+  }
+
+  /* ============================================
+     DISABLED STATE
+     ============================================ */
+
   /* Universal Disabled State - Used by all variants when disabled */
   /* Handles all states: hover, focus, active - all disabled */
   .bg-disabled {
     @apply bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 opacity-70 cursor-not-allowed;
   }
-  
+
   .bg-disabled:hover,
   .bg-disabled:focus,
   .bg-disabled:active,
@@ -170,33 +194,127 @@
     @apply bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 opacity-70 cursor-not-allowed;
   }
 
-  /* Primary Text - Important links or accent text (Emerald) */
-  /* Light colors in both dark and light mode */
-  .text-primary {
-    @apply text-emerald-500 dark:text-emerald-400;
+  /* ============================================
+     TEXT COLORS ON BACKGROUNDS (3:1 CONTRAST)
+     ============================================ */
+
+  /* ============================================
+     BODY TEXT COLORS - For base content on body backgrounds
+     ============================================ */
+
+  /* Body Text - Primary text on body backgrounds */
+  .text-body {
+    @apply text-gray-900 dark:text-gray-100;
   }
 
-  /* On Primary Text - Text/icons on primary background */
-  /* Light text in both modes for 3:1 contrast with emerald backgrounds */
+  /* Body Secondary - Secondary text on body backgrounds */
+  .text-body-secondary {
+    @apply text-gray-700 dark:text-gray-300;
+  }
+
+  /* Body Muted - Low-emphasis text on body backgrounds */
+  .text-body-muted {
+    @apply text-gray-500 dark:text-gray-400;
+  }
+
+  /* ============================================
+     SURFACE TEXT COLORS - For content on surface backgrounds
+     ============================================ */
+
+  /* Surface Text - Primary text on surface backgrounds */
+  .text-surface {
+    @apply text-gray-900 dark:text-gray-100;
+  }
+
+  /* Surface Secondary - Secondary text on surface backgrounds */
+  .text-surface-secondary {
+    @apply text-gray-700 dark:text-gray-300;
+  }
+
+  /* Surface Muted - Low-emphasis text on surface backgrounds */
+  .text-surface-muted {
+    @apply text-gray-500 dark:text-gray-400;
+  }
+
+  /* ============================================
+     ON-PRIMARY TEXT COLORS - Text on primary backgrounds (3:1 contrast)
+     ============================================ */
+
+  /* On Primary - Text/icons on primary backgrounds */
   .text-on-primary {
     @apply text-white dark:text-white;
   }
 
-  /* Secondary Text - Neutral body text or secondary info */
-  /* Dark/negative colors in both dark and light mode */
-  .text-secondary {
-    @apply text-gray-900 dark:text-gray-100;
+  /* On Primary Secondary - Secondary text on primary backgrounds */
+  .text-on-primary-secondary {
+    @apply text-emerald-100 dark:text-emerald-100;
   }
 
-  /* On Secondary Text - Text/icons on secondary background */
+  /* On Primary Muted - Low-emphasis text on primary backgrounds */
+  .text-on-primary-muted {
+    @apply text-emerald-200 dark:text-emerald-200;
+  }
+
+  /* ============================================
+     ON-SECONDARY TEXT COLORS - Text on secondary backgrounds (3:1 contrast)
+     ============================================ */
+
+  /* On Secondary - Text/icons on secondary backgrounds */
   .text-on-secondary {
     @apply text-white dark:text-gray-900;
   }
 
-  /* Muted Text - Low-contrast or supporting text */
-  .text-muted {
-    @apply text-gray-500 dark:text-gray-400;
+  /* On Secondary Secondary - Secondary text on secondary backgrounds */
+  .text-on-secondary-secondary {
+    @apply text-gray-200 dark:text-gray-700;
   }
+
+  /* On Secondary Muted - Low-emphasis text on secondary backgrounds */
+  .text-on-secondary-muted {
+    @apply text-gray-300 dark:text-gray-500;
+  }
+
+  /* ============================================
+     ON-ACCENT TEXT COLORS - Text on accent backgrounds (3:1 contrast)
+     ============================================ */
+
+  /* On Accent - Text/icons on accent backgrounds */
+  .text-on-accent {
+    @apply text-white dark:text-white;
+  }
+
+  /* On Accent Secondary - Secondary text on accent backgrounds */
+  .text-on-accent-secondary {
+    @apply text-blue-100 dark:text-blue-100;
+  }
+
+  /* On Accent Muted - Low-emphasis text on accent backgrounds */
+  .text-on-accent-muted {
+    @apply text-blue-200 dark:text-blue-200;
+  }
+
+  /* ============================================
+     ON-DANGER TEXT COLORS - Text on danger backgrounds (3:1 contrast)
+     ============================================ */
+
+  /* On Danger - Text/icons on danger backgrounds */
+  .text-on-danger {
+    @apply text-white dark:text-white;
+  }
+
+  /* On Danger Secondary - Secondary text on danger backgrounds */
+  .text-on-danger-secondary {
+    @apply text-red-100 dark:text-red-100;
+  }
+
+  /* On Danger Muted - Low-emphasis text on danger backgrounds */
+  .text-on-danger-muted {
+    @apply text-red-200 dark:text-red-200;
+  }
+
+  /* ============================================
+     BORDER COLORS
+     ============================================ */
 
   /* Subtle Border - Divider lines, card borders */
   .border-subtle {
@@ -211,6 +329,16 @@
   /* Secondary Border - UI section dividers */
   .border-secondary {
     @apply border-gray-300 dark:border-gray-600;
+  }
+
+  /* Accent Border - Accent UI element outlines */
+  .border-accent {
+    @apply border-blue-600 dark:border-blue-400;
+  }
+
+  /* Danger Border - Error state outlines */
+  .border-danger {
+    @apply border-red-600 dark:border-red-400;
   }
 }
 

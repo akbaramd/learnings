@@ -291,7 +291,7 @@ export default function FacilitiesPage() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">جستجو و فیلتر</h3>
               <Button
-                variant="ghost"
+                variant="subtle"
                 size="sm"
                 onClick={() => setShowFilters(false)}
                 className="p-1"
@@ -316,7 +316,7 @@ export default function FacilitiesPage() {
                 {normalizedSearch && (
                   <Button
                     onClick={() => setSearch('')}
-                    variant="secondary"
+                    variant="outline"
                     title="پاک کردن جستجو"
                     size="sm"
                   >
@@ -333,21 +333,24 @@ export default function FacilitiesPage() {
               </label>
               <div className="flex gap-2 flex-wrap">
                 <Button
-                  variant={onlyActiveFilter === undefined ? 'primary' : 'secondary'}
+                  variant={onlyActiveFilter === undefined ? 'solid' : 'outline'}
+                  color={onlyActiveFilter === undefined ? 'primary' : 'secondary'}
                   size="sm"
                   onClick={() => setOnlyActiveFilter(undefined)}
                 >
                   همه
                 </Button>
                 <Button
-                  variant={onlyActiveFilter === true ? 'primary' : 'secondary'}
+                  variant={onlyActiveFilter === true ? 'solid' : 'outline'}
+                  color={onlyActiveFilter === true ? 'primary' : 'secondary'}
                   size="sm"
                   onClick={() => setOnlyActiveFilter(true)}
                 >
                   فعال
                 </Button>
                 <Button
-                  variant={onlyActiveFilter === false ? 'primary' : 'secondary'}
+                  variant={onlyActiveFilter === false ? 'solid' : 'outline'}
+                  color={onlyActiveFilter === false ? 'primary' : 'secondary'}
                   size="sm"
                   onClick={() => setOnlyActiveFilter(false)}
                 >
@@ -373,7 +376,7 @@ export default function FacilitiesPage() {
                 <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                   <div className="flex items-center justify-between">
                     <Button
-                      variant="ghost"
+                      variant="subtle"
                       size="sm"
                       onClick={() => setSearch('')}
                       className="text-xs"
@@ -473,7 +476,7 @@ export default function FacilitiesPage() {
                                 router.push(`/facilities/${facility.id}`);
                               }
                             }}
-                            variant="primary"
+                            variant="solid"
                           >
                             مشاهده جزئیات و درخواست
                           </Button>
@@ -494,7 +497,7 @@ export default function FacilitiesPage() {
                     </div>
                   ) : (
                     <Button
-                      variant="secondary"
+                      variant="outline"
                       onClick={handleLoadMore}
                       disabled={isLoading}
                       className="min-w-[120px]"

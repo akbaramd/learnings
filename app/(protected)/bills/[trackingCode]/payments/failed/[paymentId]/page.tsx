@@ -170,7 +170,7 @@ export default function PaymentFailedPage({ params }: PaymentFailedPageProps) {
                     <div className="flex gap-3">
                         {canNavigateToReference() && (
                             <Button
-                                variant="primary"
+                                variant="solid"
                                 onClick={handleNavigateToReference}
                                 leftIcon={<PiArrowLeft className="h-5 w-5" />}
                                 className="flex-1 py-3 text-base font-medium"
@@ -180,7 +180,8 @@ export default function PaymentFailedPage({ params }: PaymentFailedPageProps) {
                         )}
 
                         <Button
-                            variant={canNavigateToReference() ? "secondary" : "primary"}
+                            variant={canNavigateToReference() ? "solid" : "outline"}
+                            color={canNavigateToReference() ? "secondary" : "primary"}
                             onClick={printReceipt}
                             leftIcon={<PiReceipt className="h-4 w-4" />}
                             className="flex-1 py-3 text-base font-medium"
@@ -189,7 +190,7 @@ export default function PaymentFailedPage({ params }: PaymentFailedPageProps) {
                         </Button>
                         
                         <Button
-                            variant="ghost"
+                            variant="subtle"
                             onClick={handleDashboard}
                             className="flex-1 py-3 text-base font-medium"
                         >

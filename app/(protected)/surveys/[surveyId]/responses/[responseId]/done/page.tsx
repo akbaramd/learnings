@@ -305,7 +305,7 @@ export default function ResponseDonePage({ params }: ResponseDonePageProps) {
           {/* Submit Button */}
           <div className="flex items-center gap-2">
             <Button
-              variant="secondary"
+              variant="outline"
               size="md"
               block
               onClick={handleBack}
@@ -314,8 +314,9 @@ export default function ResponseDonePage({ params }: ResponseDonePageProps) {
               بازگشت
             </Button>
             <Button
-              variant="primary"
+              variant="solid"
               size="md"
+              color="primary"
               block
               onClick={handleOpenConfirm}
               disabled={isSubmitting || isSubmitted}
@@ -392,7 +393,7 @@ export default function ResponseDonePage({ params }: ResponseDonePageProps) {
         </DrawerBody>
         <DrawerFooter className="pt-3 px-5 pb-[max(env(safe-area-inset-bottom),1rem)] flex items-center gap-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
         <Button
-            variant="primary"
+            variant="solid"
             size="md"
             block
             onClick={handleFinalizeSubmit}
@@ -403,7 +404,7 @@ export default function ResponseDonePage({ params }: ResponseDonePageProps) {
             ثبت نهایی پاسخ
           </Button>
           <Button
-            variant="secondary"
+            variant="outline"
             size="md"
             block
             onClick={handleCloseConfirm}

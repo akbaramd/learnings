@@ -725,7 +725,7 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
                   <Button
                     onClick={handleAddGuest}
                     size="sm"
-                    variant="primary"
+                    variant="solid"
                     leftIcon={<PiUserPlus className="h-4 w-4" />}
                   >
                     افزودن عضو
@@ -767,7 +767,8 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
                             {details.status === 'Draft' && participant.isGuest && (
                               <IconButton
                                 onClick={() => handleRemoveGuest(participant.id || '')}
-                                variant="ghost"
+                                variant="solid"
+                                color="accent"
                                 aria-label="حذف عضو"
                                 disabled={isRemoving}
                                 className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
@@ -794,7 +795,7 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
                     <Button
                       onClick={handleAddGuest}
                       size="sm"
-                      variant="primary"
+                      variant="solid"
                       leftIcon={<PiUserPlus className="h-4 w-4" />}
                       className="mt-4"
                     >
@@ -874,7 +875,7 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
         {(expired || status === 'Expired') && (
           <div className="flex-shrink-0 sticky bottom-0 left-0 right-0 p-4 bg-surface border-t border-subtle z-10">
             <Button
-              variant="primary"
+              variant="solid"
               onClick={handleReactivate}
               disabled={isReactivating}
               loading={isReactivating}

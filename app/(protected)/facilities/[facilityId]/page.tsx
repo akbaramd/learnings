@@ -220,7 +220,7 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
               </h3>
               {cyclesData?.data?.totalCount && cyclesData.data.totalCount > cycles.length && (
                 <Button
-                  variant="secondary"
+                  variant="outline"
                   size="sm"
                   onClick={handleViewCycles}
                 >
@@ -418,7 +418,7 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
                           {canClick && (
                             <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-800">
                               <Button
-                                variant="primary"
+                                variant="solid"
                                 size="md"
                                 block
                                 onClick={() => handleCycleClick(cycle)}

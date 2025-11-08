@@ -83,7 +83,8 @@ export default function LogoutDetailsPage() {
               loading={isLoggingOut}
               loadingText="در حال خروج..."
               block
-              variant="danger"
+              variant="solid"
+              color="accent"
               size="md"
               leftIcon={!isLoggingOut && <PiSignOut className="h-5 w-5" />}
             >
@@ -93,7 +94,7 @@ export default function LogoutDetailsPage() {
             <Button
               onClick={handleCancel}
               block
-              variant="ghost"
+              variant="subtle"
               size="md"
               disabled={isLoggingOut}
             >

@@ -223,7 +223,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
               {hasActiveResponse && !isLatestResponseCompleted ? (
                 <div className="space-y-3">
                   <Button
-                    variant="primary"
+                    variant="solid"
                     size="md"
                     block
                     onClick={() => {
@@ -236,7 +236,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                     ادامه پاسخ فعال
                   </Button>
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     size="md"
                     block
                     onClick={() => setShowStartNewConfirm(true)}
@@ -248,7 +248,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                 </div>
               ) : (
                 <Button
-                  variant="primary"
+                  variant="solid"
                   size="md"
                   block
                   onClick={() => setShowStartConfirm(true)}
@@ -264,7 +264,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                 </Button>
               )}
                 <Button
-              variant="ghost"
+              variant="subtle"
               size="md"
               block
               onClick={() => setShowVideoTutorial(true)}
@@ -394,7 +394,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                 </h3>
                 {responses.length > 1 && (
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     size="sm"
                     onClick={handleViewResponses}
                   >
@@ -557,7 +557,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
         <DrawerFooter className="pb-[max(env(safe-area-inset-bottom),1rem)]">
           <div className="flex items-center gap-3">
             <Button
-              variant="ghost"
+              variant="subtle"
               size="md"
               block
               onClick={() => setShowStartConfirm(false)}
@@ -566,7 +566,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
               لغو
             </Button>
             <Button
-              variant="primary"
+              variant="solid"
               size="md"
               block
               onClick={handleConfirmStart}
@@ -680,7 +680,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
         <DrawerFooter className="pb-[max(env(safe-area-inset-bottom),1rem)]">
           <div className="flex items-center gap-3">
             <Button
-              variant="ghost"
+              variant="subtle"
               size="md"
               block
               onClick={() => setShowStartNewConfirm(false)}
@@ -689,7 +689,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
               لغو
             </Button>
             <Button
-              variant="primary"
+              variant="solid"
               size="md"
               block
               onClick={handleConfirmStartNew}

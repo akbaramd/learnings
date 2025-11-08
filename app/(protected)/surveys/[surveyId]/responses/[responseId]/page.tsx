@@ -219,7 +219,7 @@ export default function ResponseDetailsPage({ params }: ResponseDetailsPageProps
                     می‌توانید پاسخ‌های خود را ادامه دهید و پس از تکمیل، پاسخ را ارسال کنید.
                   </p>
                   <Button
-                    variant="primary"
+                    variant="solid"
                     size="sm"
                     onClick={handleContinueResponse}
                     disabled={isGettingCurrentQuestion}

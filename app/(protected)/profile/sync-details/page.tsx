@@ -92,7 +92,7 @@ export default function SyncDetailsPage() {
               loading={isSyncing}
               loadingText="در حال همگام‌سازی..."
               block
-              variant="primary"
+              variant="solid"
               size="md"
               leftIcon={!isSyncing && <PiArrowClockwise className="h-5 w-5" />}
             >

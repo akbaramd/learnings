@@ -297,7 +297,7 @@ export default function CreateRequestPage({ params }: CreateRequestPageProps) {
               دوره مورد نظر یافت نشد
             </p>
             <Button
-              variant="primary"
+              variant="solid"
               size="md"
               onClick={handleBack}
               className="mt-6"
@@ -326,7 +326,7 @@ export default function CreateRequestPage({ params }: CreateRequestPageProps) {
               این دوره فعال نیست و امکان ثبت درخواست وجود ندارد
             </p>
             <Button
-              variant="primary"
+              variant="solid"
               size="md"
               onClick={handleBack}
               className="mt-6"
@@ -566,7 +566,7 @@ export default function CreateRequestPage({ params }: CreateRequestPageProps) {
               <div className="flex gap-2 pt-4">
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="outline"
                   size="md"
                   onClick={handleBack}
                   disabled={isSubmitting}
@@ -576,7 +576,7 @@ export default function CreateRequestPage({ params }: CreateRequestPageProps) {
                 </Button>
                 <Button
                   type="submit"
-                  variant="primary"
+                  variant="solid"
                   size="md"
                   disabled={!canSubmit}
                   loading={isSubmitting}

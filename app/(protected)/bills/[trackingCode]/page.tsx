@@ -502,7 +502,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
                 <PiSpinner className="h-4 w-4 mr-2" />
                 تلاش مجدد
               </Button>
-              <Button onClick={handleBack} variant="secondary" className="w-full">
+              <Button onClick={handleBack} variant="outline" className="w-full">
                 بازگشت
               </Button>
             </div>
@@ -677,7 +677,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
                         </p>
                         <Button
                           onClick={() => router.push('/bills')}
-                          variant="primary"
+                          variant="solid"
                           size="sm"
                           className="w-full"
                           leftIcon={<PiReceipt className="h-4 w-4" />}
@@ -745,7 +745,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
                   <div className="flex items-center justify-between gap-3">
                     <span>مبلغ صورت‌حساب پس از اعمال تخفیف، صفر است.</span>
                     <Button
-                      variant="secondary"
+                      variant="outline"
                       size="sm"
                       onClick={handleRemoveDiscount}
                       aria-label="لغو تخفیف"
@@ -765,7 +765,8 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
                     disabled={!!appliedDiscount}
                   />
                   <Button
-                    variant={appliedDiscount ? 'ghost' : (canApplyDiscount ? 'primary' : 'ghost')}
+                    variant={appliedDiscount ? 'outline' : (canApplyDiscount ? 'solid' : 'outline')}
+                    color={appliedDiscount ? 'secondary' : (canApplyDiscount ? 'primary' : 'secondary')}
                     disabled={!discountCodeInput.trim() || isDiscountValidating}
                     onClick={appliedDiscount ? handleRemoveDiscount : handleDiscountValidation}
                     className="px-3"
@@ -859,7 +860,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
                     اما موجودی شما {formatCurrencyFa(2000000)} ریال است.
                   </p>
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     size="sm"
                     className="w-full mt-2"
                     onClick={() => {/* Handle wallet charge */}}
@@ -898,7 +899,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
             )}
 
             <Button
-              variant="secondary"
+              variant="outline"
               onClick={printInvoice}
               className="flex-1 py-3 text-base font-medium"
             >

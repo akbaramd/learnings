@@ -404,7 +404,7 @@ export default function LoginPage() {
 
           <Button
             type="submit"
-            variant="primary"
+            variant="solid"
             size="md"
             radius="xs"
             block
@@ -575,7 +575,7 @@ export default function LoginPage() {
         <DrawerFooter>
           <div className="flex gap-3">
             <Button
-              variant="ghost"
+              variant="subtle"
               size="md"
               block
               onClick={() => {
@@ -593,7 +593,7 @@ export default function LoginPage() {
               بستن
             </Button>
             <Button
-              variant="primary"
+              variant="solid"
               size="md"
               block
               loading={isValidating || isValidatingQuery}

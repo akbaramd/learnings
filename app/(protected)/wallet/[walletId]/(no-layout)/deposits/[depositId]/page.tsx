@@ -106,7 +106,7 @@ export default function DepositDetailsPage({ params }: PageProps) {
       <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="px-4 py-3">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={goBack} className="text-gray-600 dark:text-gray-300">
+            <Button variant="subtle" size="sm" onClick={goBack} className="text-gray-600 dark:text-gray-300">
               <PiArrowLeft className="h-4 w-4" />
             </Button>
             <div className="flex items-center gap-2">
@@ -115,7 +115,7 @@ export default function DepositDetailsPage({ params }: PageProps) {
               <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">{walletId.slice(0,8)}...</span>
             </div>
             <div className="flex-1" />
-            <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={loading}>
+            <Button variant="subtle" size="sm" onClick={() => refetch()} disabled={loading}>
               {loading ? <span className="h-4 w-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" /> : 'بروزرسانی'}
             </Button>
           </div>
@@ -237,7 +237,7 @@ export default function DepositDetailsPage({ params }: PageProps) {
             {status === 'AwaitingPayment' && details.trackingCode && (
               <Button
                 onClick={goToBill}
-                variant="primary"
+                variant="solid"
                 size="lg"
                 className="flex-1 py-3 text-base font-medium"
                 leftIcon={<PiReceipt className="h-5 w-5" />}
@@ -250,7 +250,7 @@ export default function DepositDetailsPage({ params }: PageProps) {
             {status === 'Completed' && details.trackingCode && (
               <Button
                 onClick={goToBill}
-                variant="primary"
+                variant="solid"
                 size="lg"
                 className="flex-1 py-3 text-base font-medium"
                 leftIcon={<PiReceipt className="h-5 w-5" />}
@@ -262,7 +262,7 @@ export default function DepositDetailsPage({ params }: PageProps) {
             {/* Always show back button */}
             <Button
               onClick={goBack}
-              variant="ghost"
+              variant="subtle"
               size="lg"
               className="flex-1 py-3 text-base font-medium"
             >

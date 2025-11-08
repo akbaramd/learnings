@@ -99,7 +99,7 @@ export default function VideoTutorialDrawer({
           {showLoginButton && onLoginClick && (
             <div className="flex items-center justify-center gap-2 pt-2">
               <Button
-                variant="primary"
+                variant="solid"
                 size="md"
                 onClick={onLoginClick}
                 rightIcon={<PiArrowRight className="h-4 w-4" />}

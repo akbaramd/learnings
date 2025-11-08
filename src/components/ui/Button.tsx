@@ -4,12 +4,14 @@ import { Button as HUIButton } from '@headlessui/react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { forwardRef, useMemo } from 'react';
 
-type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
+type Variant = 'solid' | 'outline' | 'subtle';
+type Color = 'primary' | 'secondary' | 'accent';
 type Size = 'xs' | 'sm' | 'md' | 'lg';
 type Radius = 'xs' | 'sm' | 'md' | 'none';
 
 export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'color'> {
   variant?: Variant;
+  color?: Color;
   size?: Size;
   radius?: Radius;             // border radius control; default very small
   loading?: boolean;
@@ -20,35 +22,41 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   rightIcon?: ReactNode;
 }
 
-const VARIANT_STYLES: Record<Variant, string> = {
-  // Primary uses design system bg-primary and text-on-primary utilities
-  primary: [
-    'bg-primary text-on-primary',
-    'data-[hover]:bg-emerald-400 dark:data-[hover]:bg-emerald-300',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800',
-    'focus-visible:ring-emerald-500 dark:focus-visible:ring-emerald-400',
-  ].join(' '),
-  // Secondary uses design system bg-secondary and text-on-secondary utilities
-  secondary: [
-    'bg-secondary text-on-secondary',
-    'data-[hover]:bg-gray-600 dark:data-[hover]:bg-gray-200',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800',
-    'focus-visible:ring-gray-500 dark:focus-visible:ring-gray-300',
-  ].join(' '),
-  // Danger uses design system bg-danger and text-on-danger utilities
-  danger: [
-    'bg-danger text-on-danger',
-    'data-[hover]:bg-red-700 dark:data-[hover]:bg-red-600',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800',
-    'focus-visible:ring-red-700 dark:focus-visible:ring-red-500',
-  ].join(' '),
-  // Ghost uses design system bg-ghost class (text color is built into bg-ghost)
-  ghost: [
-    'bg-ghost',
-    'data-[hover]:bg-black/5 dark:data-[hover]:bg-white/10',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800',
-    'focus-visible:ring-gray-300 dark:focus-visible:ring-gray-500',
-  ].join(' '),
+// Generate variant styles based on variant and color combination
+const getVariantStyles = (variant: Variant, color: Color): string => {
+  const baseFocusStyles = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800';
+
+  switch (variant) {
+    case 'solid':
+      return [
+        // Solid variants use design system backgrounds and on-* text colors
+        `bg-${color} text-on-${color}`,
+        `data-[hover]:bg-${color}-hover`,
+        baseFocusStyles,
+        `focus-visible:ring-${color === 'primary' ? 'emerald' : color === 'secondary' ? 'gray' : 'blue'}-500 dark:focus-visible:ring-${color === 'primary' ? 'emerald' : color === 'secondary' ? 'gray' : 'blue'}-400`,
+      ].join(' ');
+
+    case 'outline':
+      return [
+        // Outline variants use border colors, transparent background, and text colors
+        `border border-${color} text-${color} bg-transparent`,
+        `data-[hover]:bg-${color}-subtle`,
+        baseFocusStyles,
+        `focus-visible:ring-${color === 'primary' ? 'emerald' : color === 'secondary' ? 'gray' : 'blue'}-500 dark:focus-visible:ring-${color === 'primary' ? 'emerald' : color === 'secondary' ? 'gray' : 'blue'}-400`,
+      ].join(' ');
+
+    case 'subtle':
+      return [
+        // Subtle variants use subtle backgrounds and text colors
+        `bg-${color}-subtle text-${color}`,
+        `data-[hover]:bg-${color}-hover data-[hover]:text-on-${color}`,
+        baseFocusStyles,
+        `focus-visible:ring-${color === 'primary' ? 'emerald' : color === 'secondary' ? 'gray' : 'blue'}-500 dark:focus-visible:ring-${color === 'primary' ? 'emerald' : color === 'secondary' ? 'gray' : 'blue'}-400`,
+      ].join(' ');
+
+    default:
+      return '';
+  }
 };
 
 const SIZE_STYLES: Record<Size, string> = {
@@ -74,7 +82,8 @@ const RADIUS_STYLES: Record<Radius, string> = {
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   {
-    variant = 'primary',
+    variant = 'solid',
+    color = 'primary',
     size = 'md',
     radius = 'xs',        // default: very small rounded
     loading = false,
@@ -105,10 +114,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
         RADIUS_STYLES[radius],
         // Only apply variant styles when not disabled, otherwise apply disabled background
         // Disabled state handles all hover, focus, and active states via CSS
-        isDisabled ? 'bg-disabled cursor-not-allowed' : [VARIANT_STYLES[variant], 'cursor-pointer'].join(' '),
+        isDisabled ? 'bg-disabled cursor-not-allowed' : [getVariantStyles(variant, color), 'cursor-pointer'].join(' '),
         'overflow-hidden', // shimmer overlay containment
       ].join(' '),
-    [variant, size, block, isDisabled, radius]
+    [variant, color, size, block, isDisabled, radius]
   );
 
   const shimmerEl =

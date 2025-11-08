@@ -339,7 +339,8 @@ export default function DepositsPage({ params }: DepositsPageProps) {
                                      });
                                    }
                                  }}
-                                 variant='ghost'
+                                 variant='solid'
+                                 color='primary'
                                  className="w-full"
                                  leftIcon={<PiReceipt className="h-4 w-4" />}
                                >

@@ -192,7 +192,7 @@ export default function SurveysPage() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">جستجو و فیلتر</h3>
               <Button
-                variant="ghost"
+                variant="subtle"
                 size="sm"
                 onClick={() => setShowFilters(false)}
                 className="p-1"
@@ -216,7 +216,8 @@ export default function SurveysPage() {
                 {normalizedSearch && (
                   <Button
                     onClick={() => setSearch('')}
-                    variant="secondary"
+                    variant="outline"
+                    color="secondary"
                     title="پاک کردن جستجو"
                     size="sm"
                   >
@@ -233,28 +234,32 @@ export default function SurveysPage() {
                 </label>
                 <div className="flex gap-2 flex-wrap">
                   <Button
-                    variant={stateFilter === undefined ? 'primary' : 'secondary'}
+                    variant={stateFilter === undefined ? 'solid' : 'outline'}
+                    color={stateFilter === undefined ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => setStateFilter(undefined)}
                   >
                     همه
                   </Button>
                   <Button
-                    variant={stateFilter === 'Active' ? 'primary' : 'secondary'}
+                    variant={stateFilter === 'Active' ? 'solid' : 'outline'}
+                    color={stateFilter === 'Active' ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => setStateFilter('Active')}
                   >
                     فعال
                   </Button>
                   <Button
-                    variant={stateFilter === 'Scheduled' ? 'primary' : 'secondary'}
+                    variant={stateFilter === 'Scheduled' ? 'solid' : 'outline'}
+                    color={stateFilter === 'Scheduled' ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => setStateFilter('Scheduled')}
                   >
                     زمان‌بندی شده
                   </Button>
                   <Button
-                    variant={stateFilter === 'Closed' ? 'primary' : 'secondary'}
+                    variant={stateFilter === 'Closed' ? 'solid' : 'outline'}
+                    color={stateFilter === 'Closed' ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => setStateFilter('Closed')}
                   >
@@ -269,21 +274,24 @@ export default function SurveysPage() {
                 </label>
                 <div className="flex gap-2 flex-wrap">
                   <Button
-                    variant={isAcceptingFilter === undefined ? 'primary' : 'secondary'}
+                    variant={isAcceptingFilter === undefined ? 'solid' : 'outline'}
+                    color={isAcceptingFilter === undefined ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => setIsAcceptingFilter(undefined)}
                   >
                     همه
                   </Button>
                   <Button
-                    variant={isAcceptingFilter === true ? 'primary' : 'secondary'}
+                    variant={isAcceptingFilter === true ? 'solid' : 'outline'}
+                    color={isAcceptingFilter === true ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => setIsAcceptingFilter(true)}
                   >
                     در حال پذیرش
                   </Button>
                   <Button
-                    variant={isAcceptingFilter === false ? 'primary' : 'secondary'}
+                    variant={isAcceptingFilter === false ? 'solid' : 'outline'}
+                    color={isAcceptingFilter === false ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => setIsAcceptingFilter(false)}
                   >
@@ -335,7 +343,7 @@ export default function SurveysPage() {
                 <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                   <div className="flex items-center justify-between">
                     <Button
-                      variant="ghost"
+                      variant="subtle"
                       size="sm"
                       onClick={() => setSearch('')}
                       className="text-xs"
@@ -407,7 +415,7 @@ export default function SurveysPage() {
                               e.stopPropagation();
                               router.push(`/surveys/${survey.id}`);
                             }}
-                            variant="primary"
+                            variant="solid"
                             rightIcon={<PiArrowRight className="h-4 w-4" />}
                           >
                             مشاهده جزئیات
@@ -429,7 +437,8 @@ export default function SurveysPage() {
                     </div>
                   ) : (
                     <Button
-                      variant="secondary"
+                      variant="outline"
+                      color="secondary"
                       onClick={handleLoadMore}
                       disabled={isLoading}
                       className="min-w-[120px]"

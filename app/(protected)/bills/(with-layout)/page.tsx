@@ -382,7 +382,7 @@ export default function BillsPage() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">جستجو و فیلتر</h3>
                 <Button
-                  variant="ghost"
+                  variant="subtle"
                   size="sm"
                   onClick={() => setShowFilters(false)}
                   className="p-1"
@@ -407,7 +407,7 @@ export default function BillsPage() {
                   {normalizedSearch && (
                     <Button
                       onClick={() => setTrackingCode('')}
-                      variant="secondary"
+                      variant="outline"
                       title="پاک کردن جستجو"
                       size="sm"
                     >
@@ -424,35 +424,40 @@ export default function BillsPage() {
                 </label>
                 <div className="flex gap-2 flex-wrap">
                   <Button
-                    variant={statusFilter === 'all' ? 'primary' : 'secondary'}
+                    variant={statusFilter === 'all' ? 'solid' : 'outline'}
+                    color={statusFilter === 'all' ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => setStatusFilter('all')}
                   >
                     همه
                   </Button>
                   <Button
-                    variant={statusFilter === 'Issued' ? 'primary' : 'secondary'}
+                    variant={statusFilter === 'Issued' ? 'solid' : 'outline'}
+                    color={statusFilter === 'Issued' ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => setStatusFilter('Issued')}
                   >
                     صادر شده
                   </Button>
                   <Button
-                    variant={statusFilter === 'PartiallyPaid' ? 'primary' : 'secondary'}
+                    variant={statusFilter === 'PartiallyPaid' ? 'solid' : 'outline'}
+                    color={statusFilter === 'PartiallyPaid' ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => setStatusFilter('PartiallyPaid')}
                   >
                     پرداخت جزئی
                   </Button>
                   <Button
-                    variant={statusFilter === 'FullyPaid' ? 'primary' : 'secondary'}
+                    variant={statusFilter === 'FullyPaid' ? 'solid' : 'outline'}
+                    color={statusFilter === 'FullyPaid' ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => setStatusFilter('FullyPaid')}
                   >
                     پرداخت کامل
                   </Button>
                   <Button
-                    variant={statusFilter === 'Cancelled' ? 'primary' : 'secondary'}
+                    variant={statusFilter === 'Cancelled' ? 'solid' : 'outline'}
+                    color={statusFilter === 'Cancelled' ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => setStatusFilter('Cancelled')}
                   >
@@ -478,7 +483,7 @@ export default function BillsPage() {
                   <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                     <div className="flex items-center justify-between">
                       <Button
-                        variant="ghost"
+                        variant="subtle"
                         size="sm"
                         onClick={() => setTrackingCode('')}
                         className="text-xs"
@@ -570,7 +575,8 @@ export default function BillsPage() {
                               e.stopPropagation();
                               router.push(`/bills/${bill.referenceTrackingCode}?billType=${bill.referenceType}`);
                             }}
-                            variant='primary'
+                            variant='solid'
+                            color='primary'
                           >
                             پرداخت
                           </Button>
@@ -591,7 +597,7 @@ export default function BillsPage() {
                       </div>
                     ) : (
                       <Button
-                        variant="secondary"
+                        variant="outline"
                         onClick={handleLoadMore}
                         disabled={isLoading}
                         className="min-w-[120px]"

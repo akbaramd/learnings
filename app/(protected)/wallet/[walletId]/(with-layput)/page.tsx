@@ -189,7 +189,8 @@ export default function WalletPage({ params }: WalletPageProps) {
                   <IconButton
                     aria-label={hidden ? 'نمایش موجودی' : 'مخفی کردن موجودی'}
                     onClick={() => setHidden(v => !v)}
-                    variant="ghost"
+                    variant="solid"
+                    color="secondary"
                     className="text-white hover:bg-white/15 border-white/20"
                   >
                     {hidden ? <PiEye className="h-4 w-4" /> : <PiEyeSlash className="h-4 w-4" />}
@@ -258,7 +259,7 @@ export default function WalletPage({ params }: WalletPageProps) {
             {/* Add Deposit Button - Outside card */}
             <Button
               onClick={handleCreateDeposit}
-              variant="primary"
+              variant="solid"
               size="lg"
               className="w-full"
               leftIcon={<PiPlusCircle className="h-5 w-5" />}

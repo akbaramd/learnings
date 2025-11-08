@@ -194,7 +194,7 @@ export default function CreateDepositPage({ params }: CreateDepositPageProps) {
           <div className="px-4 py-3">
             <div className="flex items-center gap-3">
               <Button
-                variant="ghost"
+                variant="subtle"
                 size="sm"
                 onClick={handleBack}
                 className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
@@ -281,7 +281,7 @@ export default function CreateDepositPage({ params }: CreateDepositPageProps) {
           <div className="flex gap-3">
             <Button
               type="submit"
-              variant="primary"
+              variant="solid"
               size="lg"
               loading={isCreating}
               loadingText="در حال ایجاد..."
@@ -296,7 +296,7 @@ export default function CreateDepositPage({ params }: CreateDepositPageProps) {
             <Button
               type="button"
               onClick={handleBack}
-              variant="ghost"
+              variant="subtle"
               size="lg"
               className="flex-1 py-3 text-base font-medium"
             >

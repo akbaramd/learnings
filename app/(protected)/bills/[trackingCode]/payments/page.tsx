@@ -363,7 +363,7 @@ export default function BillPaymentsPage({ params }: BillPaymentsPageProps) {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
               شناسه فاکتور یافت نشد
             </h3>
-            <Button onClick={handleBack} variant="primary" className="mt-4">
+            <Button onClick={handleBack} variant="solid" className="mt-4">
               بازگشت
             </Button>
           </div>
@@ -477,7 +477,7 @@ export default function BillPaymentsPage({ params }: BillPaymentsPageProps) {
                     </div>
                   ) : (
                     <Button
-                      variant="secondary"
+                      variant="outline"
                       onClick={handleLoadMore}
                       disabled={isLoading}
                       className="min-w-[120px]"

@@ -52,7 +52,7 @@ export function ThemeSwitcher({
     <div className={`${positionClasses[position]} z-50 ${className}`}>
       <IconButton
         onClick={toggleTheme}
-        variant="ghost"
+        variant="subtle"
         size="md"
         aria-label={getAriaLabel()}
         className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-800 shadow-lg"

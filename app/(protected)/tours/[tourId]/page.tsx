@@ -538,7 +538,7 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
           <Button
             onClick={handleStartReservation}
             disabled={isStarting || !selectedCapacityId || selectedCapacityId.trim() === ''}
-            variant="primary"
+            variant="solid"
             size="md"
             block
             className="font-medium"

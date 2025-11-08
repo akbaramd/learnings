@@ -373,7 +373,7 @@ export default function PaymentsPage() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">جستجو و فیلتر</h3>
                 <Button
-                  variant="ghost"
+                  variant="subtle"
                   size="sm"
                   onClick={() => setShowFilters(false)}
                   className="p-1"
@@ -398,7 +398,7 @@ export default function PaymentsPage() {
                   {search.trim() && (
                     <Button
                       onClick={() => setSearch('')}
-                      variant="secondary"
+                      variant="outline"
                       title="پاک کردن جستجو"
                       size="sm"
                     >
@@ -469,7 +469,7 @@ export default function PaymentsPage() {
                   <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                     <div className="flex items-center justify-between">
                       <Button
-                        variant="ghost"
+                        variant="subtle"
                         size="sm"
                         onClick={() => setSearch('')}
                         className="text-xs"
@@ -567,7 +567,7 @@ export default function PaymentsPage() {
                       </div>
                     ) : (
                       <Button
-                        variant="secondary"
+                        variant="outline"
                         onClick={handleLoadMore}
                         disabled={isLoading}
                         className="min-w-[120px]"

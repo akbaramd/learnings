@@ -541,7 +541,7 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
       <div className="flex-shrink-0 sticky bottom-0 left-0 right-0 p-4 bg-surface border-t border-subtle z-10">
         <div className="flex items-center gap-2 w-full">
           <Button
-            variant="primary"
+            variant="solid"
             size="md"
             className="flex-1"
             onClick={handleSaveAndNext}
@@ -555,7 +555,7 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
 
           {hasPrevious && (
             <Button
-              variant="secondary"
+              variant="outline"
               size="md"
               className="flex-1"
               onClick={handlePrevious}
