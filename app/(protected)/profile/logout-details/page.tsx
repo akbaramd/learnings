@@ -1,19 +1,22 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useLogoutMutation } from '@/src/store/auth';
+import { useDispatch } from 'react-redux';
+import { useLogoutMutation, selectIsAuthenticated } from '@/src/store/auth';
+import { clearUser, clearChallengeId, setAuthStatus, setAnonymous } from '@/src/store/auth/auth.slice';
+import { useAppSelector } from '@/src/hooks/store';
 import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import { PageHeader } from '@/src/components/ui/PageHeader';
 import { Button } from '@/src/components/ui/Button';
 import {
   PiSignOut,
-  PiXCircle,
-  PiSpinner,
   PiWarning,
 } from 'react-icons/pi';
 
 export default function LogoutDetailsPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
 
   const handleBack = () => {
@@ -21,11 +24,21 @@ export default function LogoutDetailsPage() {
   };
 
   const handleLogout = async () => {
+    // Always set status to anonymous FIRST before any API calls or redirects
+    // This ensures state is 'anonymous' and persists even after page reload
     try {
       await logout({ refreshToken: undefined }).unwrap();
-    } catch (error) {
-      console.error('Logout failed:', error);
+    } catch {
+      // API failed, but state is already set to 'anonymous' above
+      // No need to set it again
     }
+    dispatch(clearUser());
+    dispatch(clearChallengeId());
+    dispatch(setAnonymous());
+
+ 
+
+
   };
 
   const handleCancel = () => {

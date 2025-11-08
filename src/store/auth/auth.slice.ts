@@ -141,7 +141,12 @@ const authSlice = createSlice({
     },
     
     // Reset entire auth state
-    reset: () => initialState,
+    // IMPORTANT: After logout, state should be 'anonymous', not 'idle'
+    // Only use reset() for complete app reset, not for logout
+    reset: (): AuthState => ({
+      ...initialState,
+      status: 'anonymous', // After reset, user is anonymous, not idle
+    }),
     
     // Set loading state (redundant with setAuthStatus, but kept for convenience)
     setLoading: (state) => {

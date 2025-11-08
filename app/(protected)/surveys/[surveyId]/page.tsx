@@ -17,6 +17,7 @@ import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
 import Drawer, { DrawerHeader, DrawerBody, DrawerFooter } from '@/src/components/overlays/Drawer';
+import VideoTutorialDrawer from '@/src/components/overlays/VideoTutorialDrawer';
 import {
   PiClipboardText,
   PiArrowRight,
@@ -24,6 +25,7 @@ import {
   PiPlay,
   PiList,
   PiWarning,
+  PiPlayCircle,
 } from 'react-icons/pi';
 
 interface SurveyDetailPageProps {
@@ -46,6 +48,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
   // Modal states
   const [showStartConfirm, setShowStartConfirm] = useState(false);
   const [showStartNewConfirm, setShowStartNewConfirm] = useState(false);
+  const [showVideoTutorial, setShowVideoTutorial] = useState(false);
 
   // Redux selectors
   const isLoading = useSelector(selectSurveysLoading);
@@ -212,9 +215,11 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
 
       <ScrollableArea className="flex-1" hideScrollbar={true}>
         <div className="p-2 space-y-3">
+ 
+
           {/* Simple Start Button */}
           {canStart && hasAttemptsAvailable && (
-            <Card variant="default" radius="lg" padding="md">
+            <Card variant="default" radius="lg" padding="md" className="flex flex-col gap-2 items-center justify-between">
               {hasActiveResponse && !isLatestResponseCompleted ? (
                 <div className="space-y-3">
                   <Button
@@ -258,6 +263,16 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                   }
                 </Button>
               )}
+                <Button
+              variant="ghost"
+              size="md"
+              block
+              onClick={() => setShowVideoTutorial(true)}
+              leftIcon={<PiPlayCircle className="h-4 w-4" />}
+              className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium"
+            >
+              آموزش ویدویی
+            </Button>
             </Card>
           )}
 
@@ -687,6 +702,14 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
           </div>
         </DrawerFooter>
       </Drawer>
+
+      {/* Video Tutorial Drawer */}
+      <VideoTutorialDrawer
+        open={showVideoTutorial}
+        onClose={setShowVideoTutorial}
+        title="آموزش ویدویی پاسخ به سوالات"
+        subtitle="راهنمای تصویری نحوه پاسخ به سوالات نظرسنجی"
+      />
     </div>
   );
 }

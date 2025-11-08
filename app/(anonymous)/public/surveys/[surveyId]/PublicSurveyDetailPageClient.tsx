@@ -8,6 +8,7 @@ import Card from '@/src/components/ui/Card';
 import Button from '@/src/components/ui/Button';
 import { ShareMenu } from '@/src/components/ui/ShareButton';
 import Drawer from '@/src/components/overlays/Drawer';
+import VideoTutorialDrawer from '@/src/components/overlays/VideoTutorialDrawer';
 import {
   PiClipboardText,
   PiArrowRight,
@@ -19,6 +20,7 @@ import {
   PiUser,
   PiInfo,
   PiShareNetwork,
+  PiPlayCircle,
 } from 'react-icons/pi';
 import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 
@@ -45,6 +47,7 @@ export default function PublicSurveyDetailPageClient({ surveyId, survey }: Publi
   const hasRedirectedRef = useRef(false);
   const { isAuthenticated } = useAuth();
   const [shareDrawerOpen, setShareDrawerOpen] = useState(false);
+  const [videoDrawerOpen, setVideoDrawerOpen] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated || !surveyId || hasRedirectedRef.current) {
@@ -86,6 +89,15 @@ export default function PublicSurveyDetailPageClient({ surveyId, survey }: Publi
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setVideoDrawerOpen(true)}
+              leftIcon={<PiPlayCircle className="h-4 w-4" />}
+              className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium"
+            >
+              آموزش ویدویی
+            </Button>
             <Button
               variant="primary"
               size="sm"
@@ -274,6 +286,15 @@ export default function PublicSurveyDetailPageClient({ surveyId, survey }: Publi
           />
         </Drawer.Body>
       </Drawer>
+
+      {/* Video Tutorial Drawer */}
+      <VideoTutorialDrawer
+        open={videoDrawerOpen}
+        onClose={setVideoDrawerOpen}
+        showLoginButton={true}
+        onLoginClick={handleLogin}
+        loginButtonText="ورود و شروع نظرسنجی"
+      />
     </ScrollableArea>
   );
 }

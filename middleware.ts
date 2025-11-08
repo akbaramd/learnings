@@ -87,7 +87,23 @@ export function middleware(request: NextRequest) {
   }
   
   // Redirect authenticated users away from auth pages
-  if ((pathname === '/login' || pathname === '/verify-otp') && (accessToken || refreshToken)) {
+  // BUT: Allow access to login page if logout query param is present (handles logout flow)
+  // This allows the login page to handle session validation and clearing
+  const isLogoutFlow = request.nextUrl.searchParams.get('logout') === 'true';
+  
+  // Only redirect if cookies exist AND we're not in logout flow
+  // During logout flow, cookies might still exist but are being cleared, so let the login page handle it
+  if ((pathname === '/login' || pathname === '/verify-otp') && (accessToken || refreshToken) && !isLogoutFlow) {
+    // Check if there's a return URL in query params
+    const returnUrl = request.nextUrl.searchParams.get('r');
+    
+    // Only redirect to returnUrl if it's a safe internal path
+    if (returnUrl && returnUrl.startsWith('/') && !returnUrl.startsWith('//') && !returnUrl.startsWith('/http')) {
+      const redirectUrl = new URL(returnUrl, request.url);
+      return NextResponse.redirect(redirectUrl);
+    }
+    
+    // Otherwise redirect to dashboard
     const dashboardUrl = new URL('/dashboard', request.url);
     return NextResponse.redirect(dashboardUrl);
   }

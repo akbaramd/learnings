@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useSelector } from 'react-redux';
-import { selectAuthStatus, selectAuthReady, useGetMeQuery, useLogoutMutation } from '@/src/store/auth';
+import { useGetMeQuery, useLogoutMutation } from '@/src/store/auth';
+import { useAuth } from '@/src/hooks/useAuth';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { useTheme } from '@/src/hooks/useTheme';
 import { NotificationDot } from '@/src/components/ui/NotificationBadge';
@@ -118,9 +118,8 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
     pathnameRef.current = pathname;
   }, [pathname]);
 
-  // Get auth status directly from Redux store
-  const authStatus = useSelector(selectAuthStatus);
-  const isReady = useSelector(selectAuthReady);
+  // Use useAuth hook for authentication state
+  const { isAuthenticated, isReady } = useAuth();
   const [logout] = useLogoutMutation();
 
   // Fetch user profile on mount - this will set isInitialized to true
@@ -132,48 +131,24 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
     refetchOnReconnect: false,
   });
 
-  // Single effect to handle all authentication status checks
-  // Only allow status changes and redirects when auth is ready
+  // Check authentication and redirect if not authenticated
   useEffect(() => {
     // Don't process anything until auth is ready
+    console.log('isReady', isReady);
     if (!isReady) {
       return;
     }
-
-    const isAuthenticated = authStatus === 'authenticated';
-    const wasAuthenticated = prevStatusRef.current === 'authenticated';
-
-    // If status changed from authenticated to unauthenticated, logout and redirect
-    if (wasAuthenticated && !isAuthenticated) {
-      const handleLogoutAndRedirect = async () => {
-        try {
-          await logout({ refreshToken: undefined }).unwrap();
-        } catch (error) {
-          console.warn('Logout failed:', error);
-        } finally {
-          const returnUrl = encodeURIComponent(pathnameRef.current || '/');
-          router.replace(`/login?r=${returnUrl}`);
-        }
-      };
-      handleLogoutAndRedirect();
-      return; // Exit early to prevent double redirect
-    }
-
+    console.log('isAuthenticated', isAuthenticated);
     // If not authenticated, redirect to login
     if (!isAuthenticated) {
+      console.log('Redirecting to login', pathnameRef.current);
       const returnUrl = encodeURIComponent(pathnameRef.current || '/');
-      router.replace(`/login?r=${returnUrl}`);
-      return; // Exit early after redirect
+      window.location.href = `/login?logout=true&r=${returnUrl}`;
+      return;
     }
-
-    // Update previous status only when ready and processing
-    prevStatusRef.current = authStatus;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReady, authStatus]); // Removed router and logout from deps to prevent loops
+  }, [isAuthenticated, isReady]);
 
   // Auto-fetch notifications when authenticated and ready
-  // Memoize authentication check to prevent unnecessary recalculations
-  const isAuthenticated = useMemo(() => authStatus === 'authenticated', [authStatus]);
   const shouldPollNotifications = useMemo(() => isReady && isAuthenticated, [isReady, isAuthenticated]);
   
   const { data: unreadCountData, isLoading: notificationsLoading } = useGetUnreadCountQuery(

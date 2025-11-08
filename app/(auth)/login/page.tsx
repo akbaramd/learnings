@@ -5,8 +5,10 @@ import Button from '@/src/components/ui/Button';
 import Card from '@/src/components/ui/Card';
 import InputField from '@/src/components/forms/InputField';
 import { useRouter } from 'next/navigation';
-import { useSendOtpMutation, useLazyValidateNationalCodeQuery, selectChallengeId, selectAuthStatus, selectIsUserNotFoundError, selectAuthErrorInfo } from '@/src/store/auth';
+import { useDispatch } from 'react-redux';
+import { useSendOtpMutation, useLazyValidateNationalCodeQuery, selectChallengeId, selectAuthStatus, selectIsUserNotFoundError, selectAuthErrorInfo, setAuthStatus } from '@/src/store/auth';
 import { useAppSelector } from '@/src/hooks/store';
+import { useAuth } from '@/src/hooks/useAuth';
 import { PiShieldCheck, PiWarningCircle } from 'react-icons/pi';
 import Drawer, { DrawerHeader, DrawerBody, DrawerFooter } from '@/src/components/overlays/Drawer';
 /* ---- Iranian National ID (Melli) utilities ---- */
@@ -38,11 +40,15 @@ type UiStatus = 'idle' | 'typing' | 'valid' | 'invalid';
 export default function LoginPage() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const router = useRouter();
+  const dispatch = useDispatch();
   
   // استفاده مستقیم از RTK Query mutation
   const [sendOtpMutation, { isLoading, error }] = useSendOtpMutation();
   
   // Check authentication and redirect if already logged in
+  
+  // Use useAuth hook for authentication state
+  const { isAuthenticated, isReady } = useAuth();
   
   // دریافت challengeId و auth status از Redux store
   const challengeId = useAppSelector(selectChallengeId);
@@ -72,12 +78,42 @@ export default function LoginPage() {
   // Lazy query for validating national code
   const [validateNationalCode, { isLoading: isValidatingQuery }] = useLazyValidateNationalCodeQuery();
   
-  // Get return URL from query params
+  // Get return URL and logout flag from query params
   const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const [returnUrl] = useState<string | null>(() => {
     const r = params?.get('r');
     return r || null;
   });
+  const isLogoutFlow = params?.get('logout') === 'true';
+  
+  // Check if user is authenticated and redirect to dashboard
+  // Also ensure state is 'anonymous' if we're in logout flow and state is 'idle'
+  useEffect(() => {
+    // Wait for auth to be ready
+    if (!isReady) {
+      return;
+    }
+    
+    // If we're in logout flow and status is 'idle' (initial state after page reload),
+    // set it to 'anonymous' to ensure correct state
+    if (isLogoutFlow && authStatus === 'idle') {
+      dispatch(setAuthStatus('anonymous'));
+      return;
+    }
+    
+    // Don't redirect if we're in logout flow
+    if (isLogoutFlow) {
+      return;
+    }
+    
+    // If user is authenticated, redirect to dashboard or returnUrl
+    if (isAuthenticated) {
+      const redirectTo = returnUrl && returnUrl.startsWith('/') && !returnUrl.startsWith('//') && !returnUrl.startsWith('/http')
+        ? returnUrl
+        : '/dashboard';
+      router.replace(redirectTo);
+    }
+  }, [isAuthenticated, isReady, isLogoutFlow, returnUrl, router, authStatus, dispatch]);
   
   // Redirect to verify-otp when challengeId is set (OTP sent successfully)
   useEffect(() => {
@@ -268,6 +304,16 @@ export default function LoginPage() {
 
                     // Prevent multiple submissions
                     if (isLoading) return;
+
+            // Prevent sending OTP if user is already authenticated
+            // This can happen if session is restored after page load
+            if (authStatus === 'authenticated' && !isLogoutFlow) {
+              const redirectTo = returnUrl && returnUrl.startsWith('/') && !returnUrl.startsWith('//') && !returnUrl.startsWith('/http')
+                ? returnUrl
+                : '/dashboard';
+              router.replace(redirectTo);
+              return;
+            }
 
             // Final guard
             const res = Melli.validate(nationalId);

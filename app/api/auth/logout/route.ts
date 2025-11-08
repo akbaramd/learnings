@@ -11,15 +11,69 @@ export async function POST(req: NextRequest) {
     
     // Get access token from cookies
     const accessToken = cookieStore.get('accessToken')?.value;
+    const refreshToken = cookieStore.get('refreshToken')?.value;
     
-    if (!accessToken) {
-      const errorResponse: LogoutResponse = {
-        isSuccess: false,
-        message: 'No access token found',
-        errors: ['No access token found'],
-        data: { isSuccess: false, message: 'No access token found' }
+    // If no tokens found, return success and clear any existing cookies
+    if (!accessToken && !refreshToken) {
+      const successResponse: LogoutResponse = {
+        isSuccess: true,
+        message: 'Already logged out',
+        data: { isSuccess: true, message: 'Already logged out' }
       };
-      return NextResponse.json(errorResponse, { status: 401 });
+      
+      const res = NextResponse.json(successResponse, { status: 200 });
+      res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      
+      // Clear cookies anyway (in case they exist but weren't readable)
+      res.cookies.set('accessToken', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/',
+        maxAge: 0,
+      });
+      
+      res.cookies.set('refreshToken', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/',
+        maxAge: 0,
+      });
+      
+      return res;
+    }
+    
+    // If no access token but refresh token exists, still proceed with logout
+    if (!accessToken) {
+      // Clear cookies and return success
+      const successResponse: LogoutResponse = {
+        isSuccess: true,
+        message: 'Logged out successfully',
+        data: { isSuccess: true, message: 'Logged out successfully' }
+      };
+      
+      const res = NextResponse.json(successResponse, { status: 200 });
+      res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      
+      // Clear cookies
+      res.cookies.set('accessToken', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/',
+        maxAge: 0,
+      });
+      
+      res.cookies.set('refreshToken', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/',
+        maxAge: 0,
+      });
+      
+      return res;
     }
 
     // Parse request body to get refreshToken if provided

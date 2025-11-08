@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/src/hooks/useToast';
 import { useSendOtpMutation, useVerifyOtpMutation, selectChallengeId, selectMaskedPhone, selectNationalCode, selectAuthStatus } from '@/src/store/auth';
 import { useAppSelector } from '@/src/hooks/store';
+import { useAuth } from '@/src/hooks/useAuth';
 
 type UiStatus = 'idle' | 'typing' | 'valid' | 'invalid';
 
@@ -26,6 +27,9 @@ function safeResolveReturnUrl(searchParams: URLSearchParams): string {
 
 export default function VerifyOtpPage() {
   const router = useRouter();
+  
+  // Use useAuth hook for authentication state
+  const { isAuthenticated, isReady } = useAuth();
   
   // Get return URL from query params and sanitize it
   const redirectTo = useMemo(() => {
@@ -74,20 +78,22 @@ export default function VerifyOtpPage() {
     }
   }, [error]);
 
-  // Debug logging to understand the redirect issue
+  // Check if user is authenticated and redirect to dashboard
   useEffect(() => {
-    console.log('Verify OTP Page - State:', {
-      challengeId,
-      authStatus,
-      maskedPhone,
-      isLoading
-    });
-  }, [challengeId, authStatus, maskedPhone, isLoading]);
+
+    // Wait for auth to be ready
+    if (!isReady) {
+      return;
+    }
+
+    // If user is authenticated, redirect to dashboard or returnUrl
+    if (isAuthenticated) {
+      router.replace(redirectTo);
+    }
+  }, [isAuthenticated, isReady, redirectTo, router]);
 
   // Redirect if no challengeId or nationalCode (should come from login)
   useEffect(() => {
-    console.log('Redirect check - challengeId:', challengeId, 'nationalCode:', nationalCode, 'authStatus:', authStatus);
-    
     // Redirect to login if we don't have the required data for OTP verification
     // Only redirect if we're absolutely sure there's no challengeId or nationalCode
     // and we're not in any loading or OTP-related state
@@ -95,7 +101,6 @@ export default function VerifyOtpPage() {
         authStatus !== 'otp-sent' && 
         authStatus !== 'loading' && 
         authStatus !== 'idle') {
-      console.log('Redirecting to login - missing challengeId or nationalCode');
       router.push('/login');
     } else {
       console.log('Not redirecting - challengeId and nationalCode exist or in valid state');
