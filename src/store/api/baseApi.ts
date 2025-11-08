@@ -44,6 +44,29 @@ export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, unkno
 ) => {
   const result = await rawBaseQuery(args, api, extraOptions);
   
+  // Check if token was refreshed on server-side
+  // Server adds 'x-token-refreshed' header after successful refresh
+  // This means cookies were updated but Redux state needs to be synced
+  // Headers can be Headers object (with .get()) or plain object
+  const responseHeaders = result.meta?.response?.headers;
+  const tokenWasRefreshed = 
+    (responseHeaders instanceof Headers && responseHeaders.get('x-token-refreshed') === 'true') ||
+    (responseHeaders && typeof responseHeaders === 'object' && 'x-token-refreshed' in responseHeaders && 
+     String(responseHeaders['x-token-refreshed']) === 'true');
+
+  if (tokenWasRefreshed) {
+    console.log('[baseQueryWithReauth] Token was refreshed on server-side, syncing Redux state...');
+    // Fetch user profile to sync Redux state with server-side session
+    // This prevents "ghost logout" where cookies are valid but Redux shows anonymous
+    // Use lazy import to avoid circular dependency (authApi uses baseQueryWithReauth)
+    import('@/src/store/auth/auth.queries').then(({ authApi }) => {
+      api.dispatch(authApi.endpoints.getMe.initiate());
+      console.log('[baseQueryWithReauth] getMe initiated to sync Redux state');
+    }).catch((error) => {
+      console.error('[baseQueryWithReauth] Failed to import authApi:', error);
+    });
+  }
+  
   // Check if we got a 401 error
   // This only happens when server-side refresh failed definitively
   // Check multiple ways the error might be structured:

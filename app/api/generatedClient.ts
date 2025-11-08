@@ -22,6 +22,10 @@ const getUpstream = () => {
 // This prevents multiple simultaneous refresh attempts
 let globalRefreshPromise: Promise<{ success: boolean; accessToken?: string; refreshToken?: string }> | null = null;
 
+// Lock flag to prevent race condition between checking and setting globalRefreshPromise
+// CRITICAL: This ensures atomic check-and-set operation
+let isRefreshing = false;
+
 /**
  * Refresh access token using refresh token from cookies
  * Uses global promise to prevent concurrent refresh requests
@@ -29,27 +33,49 @@ let globalRefreshPromise: Promise<{ success: boolean; accessToken?: string; refr
 async function refreshAccessToken(req: NextRequest): Promise<{ success: boolean; accessToken?: string; refreshToken?: string }> {
   const isDev = process.env.NODE_ENV === 'development';
   
-  // If refresh is already in progress, wait for it (concurrent request handling)
-  if (globalRefreshPromise) {
-    if (isDev) {
-      console.log('[RefreshToken] Refresh already in progress, waiting for concurrent request...');
-    }
-    try {
-      const result = await globalRefreshPromise;
+  // CRITICAL: Atomic check-and-set to prevent race condition
+  // Pattern: Check lock, if locked wait, if not locked acquire lock immediately
+  if (isRefreshing) {
+    // Refresh is already in progress, wait for existing promise
+    if (globalRefreshPromise) {
       if (isDev) {
-        console.log('[RefreshToken] Concurrent request completed:', result.success ? 'SUCCESS' : 'FAILED');
+        console.log('[RefreshToken] Refresh already in progress, waiting for concurrent request...');
       }
-      return result;
-    } catch (error) {
+      try {
+        const result = await globalRefreshPromise;
+        if (isDev) {
+          console.log('[RefreshToken] Concurrent request completed:', result.success ? 'SUCCESS' : 'FAILED');
+        }
+        return result;
+      } catch (error) {
+        if (isDev) {
+          console.error('[RefreshToken] Concurrent request failed:', error);
+        }
+        return { success: false };
+      }
+    } else {
+      // Lock is set but promise doesn't exist yet (shouldn't happen, but handle it)
+      // Wait a bit and check again
       if (isDev) {
-        console.error('[RefreshToken] Concurrent request failed:', error);
+        console.warn('[RefreshToken] Lock set but promise missing, waiting...');
       }
-      return { success: false };
+      await new Promise(resolve => setTimeout(resolve, 100));
+      if (globalRefreshPromise) {
+        try {
+          return await globalRefreshPromise;
+        } catch {
+          return { success: false };
+        }
+      }
     }
   }
 
+  // Acquire lock BEFORE creating promise (prevents race condition)
+  // This ensures only one refresh happens at a time
+  isRefreshing = true;
+
   if (isDev) {
-    console.log('[RefreshToken] Starting new refresh token request...');
+    console.log('[RefreshToken] Starting new refresh token request (lock acquired)...');
   }
 
   // Create new refresh promise
@@ -198,11 +224,12 @@ async function refreshAccessToken(req: NextRequest): Promise<{ success: boolean;
       }
       return { success: false };
     } finally {
-      // Clear promise after completion
+      // Clear promise and lock flag after completion
       if (isDevMode) {
-        console.log('[RefreshToken] Clearing global refresh promise');
+        console.log('[RefreshToken] Clearing global refresh promise and lock');
       }
       globalRefreshPromise = null;
+      isRefreshing = false; // CRITICAL: Release lock
     }
   })();
 
@@ -364,6 +391,11 @@ export function createApiForRequest(req: NextRequest) {
             if (retryResponse.status === 200) {
               if (isDev) {
                 console.log('[RefreshToken] Retry successful, returning 200 response');
+              }
+              // Add custom header to signal that token was refreshed
+              // Client-side baseApi.ts will detect this and sync Redux state
+              if (retryResponse.headers) {
+                retryResponse.headers['x-token-refreshed'] = 'true';
               }
               return retryResponse;
             }
@@ -545,6 +577,11 @@ export function createApiForRequest(req: NextRequest) {
               if (isDev) {
                 console.log('[RefreshToken] Retry successful, returning 200 response');
               }
+              // Add custom header to signal that token was refreshed
+              // Client-side baseApi.ts will detect this and sync Redux state
+              if (retryResponse.headers) {
+                retryResponse.headers['x-token-refreshed'] = 'true';
+              }
               return retryResponse;
             }
             
@@ -677,7 +714,8 @@ export function handleApiResponse(response: AxiosResponse) {
 }
 
 // Helper function to handle API errors in API routes
-export function handleApiError(error: AxiosError | Error) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function handleApiError(error: AxiosError | Error, _req?: NextRequest) {
   const isDev = process.env.NODE_ENV === 'development';
   
   if (isDev) {
@@ -698,6 +736,10 @@ export function handleApiError(error: AxiosError | Error) {
     const upstream = error.response;
     const setCookie = upstream.headers?.['set-cookie'];
     const status = upstream.status || 500;
+    
+    // API routes should return JSON responses, not redirects
+    // Client-side code (RTK Query) will handle 401s and redirect if needed
+    // This ensures API routes work correctly when called directly or via fetch/axios
     
     // Extract error message from response data if available
     let errorMessage = error.message || 'Internal Server Error';

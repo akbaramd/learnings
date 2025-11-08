@@ -82,7 +82,23 @@ export default function LoginPage() {
   const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const [returnUrl] = useState<string | null>(() => {
     const r = params?.get('r');
-    return r || null;
+    if (!r) return null;
+    
+    // CRITICAL: Decode returnUrl to handle query strings properly
+    let decodedReturnUrl = '';
+    try {
+      decodedReturnUrl = decodeURIComponent(r);
+    } catch (error) {
+      console.warn('[Login] Failed to decode returnUrl:', r, error);
+      decodedReturnUrl = r; // Fallback to original if decode fails
+    }
+    
+    // Only internal paths are allowed (prevent open redirect)
+    if (decodedReturnUrl && decodedReturnUrl.startsWith('/') && !decodedReturnUrl.startsWith('//') && !decodedReturnUrl.startsWith('/http')) {
+      return decodedReturnUrl;
+    }
+    
+    return null;
   });
   const isLogoutFlow = params?.get('logout') === 'true';
   
@@ -101,27 +117,34 @@ export default function LoginPage() {
       return;
     }
     
-    // Don't redirect if we're in logout flow
+    // Don't redirect if we're in logout flow (let user login first)
     if (isLogoutFlow) {
       return;
     }
     
-    // If user is authenticated, redirect to dashboard or returnUrl
+    // If user is authenticated, redirect to dashboard (always dashboard if no returnUrl)
     if (isAuthenticated) {
-      const redirectTo = returnUrl && returnUrl.startsWith('/') && !returnUrl.startsWith('//') && !returnUrl.startsWith('/http')
-        ? returnUrl
-        : '/dashboard';
+      const redirectTo = returnUrl || '/dashboard';
       router.replace(redirectTo);
     }
   }, [isAuthenticated, isReady, isLogoutFlow, returnUrl, router, authStatus, dispatch]);
   
   // Redirect to verify-otp when challengeId is set (OTP sent successfully)
+  // Pass logout flag and returnUrl to verify-otp page
   useEffect(() => {
     if (challengeId && authStatus === 'otp-sent') {
-      const redirectTo = returnUrl ? `/verify-otp?r=${encodeURIComponent(returnUrl)}` : '/verify-otp';
+      const searchParams = new URLSearchParams();
+      if (isLogoutFlow) {
+        searchParams.set('logout', 'true');
+      }
+      if (returnUrl) {
+        searchParams.set('r', returnUrl);
+      }
+      const queryString = searchParams.toString();
+      const redirectTo = queryString ? `/verify-otp?${queryString}` : '/verify-otp';
       router.push(redirectTo);
     }
-  }, [challengeId, authStatus, router, returnUrl]);
+  }, [challengeId, authStatus, router, returnUrl, isLogoutFlow]);
 
   // Show error from mutation - handle user not found with drawer
   useEffect(() => {
@@ -308,9 +331,8 @@ export default function LoginPage() {
             // Prevent sending OTP if user is already authenticated
             // This can happen if session is restored after page load
             if (authStatus === 'authenticated' && !isLogoutFlow) {
-              const redirectTo = returnUrl && returnUrl.startsWith('/') && !returnUrl.startsWith('//') && !returnUrl.startsWith('/http')
-                ? returnUrl
-                : '/dashboard';
+              // Always redirect to dashboard if no returnUrl, or if logout flow
+              const redirectTo = (isLogoutFlow || !returnUrl) ? '/dashboard' : returnUrl;
               router.replace(redirectTo);
               return;
             }

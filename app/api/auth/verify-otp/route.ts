@@ -26,8 +26,22 @@ export async function POST(req: NextRequest) {
     const upstream = await api.api.verifyOtp(requestBody); 
     const status = upstream.status ?? upstream?.status ?? 200;
 
+    console.log('[VerifyOTP] Upstream response:', {
+      status,
+      hasData: !!upstream.data,
+      isSuccess: upstream.data?.isSuccess,
+      hasDataData: !!upstream.data?.data,
+      dataKeys: upstream.data?.data ? Object.keys(upstream.data.data) : [],
+      fullData: JSON.stringify(upstream.data?.data, null, 2),
+    });
+
     // فوروارد کردن کوکی‌هایی که بک‌اند ست می‌کند (refresh cookie)
     const setCookie = upstream.headers?.['set-cookie'];
+    console.log('[VerifyOTP] Upstream Set-Cookie headers:', {
+      hasSetCookie: !!setCookie,
+      isArray: Array.isArray(setCookie),
+      cookieCount: Array.isArray(setCookie) ? setCookie.length : (setCookie ? 1 : 0),
+    });
 
     // Strongly typed response structure using ApplicationResult
     const response: VerifyOtpResponse = {
@@ -47,6 +61,23 @@ export async function POST(req: NextRequest) {
     if (status === 200 && upstream.data?.isSuccess && upstream.data?.data) {
       const { accessToken, refreshToken } = upstream.data.data;
       
+      console.log('[VerifyOTP] Extracted tokens from upstream.data.data:', {
+        hasAccessToken: !!accessToken,
+        hasRefreshToken: !!refreshToken,
+        accessTokenType: typeof accessToken,
+        refreshTokenType: typeof refreshToken,
+        accessTokenValue: accessToken ? `${accessToken.substring(0, 20)}...` : 'null',
+        refreshTokenValue: refreshToken ? `${refreshToken.substring(0, 20)}...` : 'null',
+      });
+      
+      console.log('[VerifyOTP] Setting cookies for tokens:', {
+        hasAccessToken: !!accessToken,
+        hasRefreshToken: !!refreshToken,
+        accessTokenLength: accessToken?.length || 0,
+        refreshTokenLength: refreshToken?.length || 0,
+        nodeEnv: process.env.NODE_ENV,
+      });
+      
       if (accessToken) {
         // Store access token in httpOnly cookie (15 minutes)
         // Server-side refresh will use this automatically when it expires
@@ -57,6 +88,15 @@ export async function POST(req: NextRequest) {
           path: '/',
           maxAge: 15 * 60, // 15 minutes
         });
+        console.log('[VerifyOTP] ✅ accessToken cookie set:', {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          path: '/',
+          maxAge: 15 * 60,
+        });
+      } else {
+        console.warn('[VerifyOTP] ⚠️ No accessToken in response data');
       }
       
       if (refreshToken) {
@@ -69,7 +109,33 @@ export async function POST(req: NextRequest) {
           path: '/',
           maxAge: 7 * 24 * 60 * 60, // 7 days
         });
+        console.log('[VerifyOTP] ✅ refreshToken cookie set:', {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          path: '/',
+          maxAge: 7 * 24 * 60 * 60,
+        });
+      } else {
+        console.warn('[VerifyOTP] ⚠️ No refreshToken in response data');
       }
+      
+      // Log all Set-Cookie headers that will be sent
+      const setCookieHeaders = result.headers.getSetCookie();
+      console.log('[VerifyOTP] Set-Cookie headers count:', setCookieHeaders.length);
+      setCookieHeaders.forEach((cookie, index) => {
+        console.log(`[VerifyOTP] Set-Cookie[${index}]:`, cookie.substring(0, 100) + '...');
+      });
+      
+      // SECURITY: Removed auth=1 cookie - it was insecure (readable, could cause desync)
+      // ProtectedLayout now checks actual token presence (accessToken/refreshToken) instead
+      // This is more secure and prevents false positives
+    } else {
+      console.warn('[VerifyOTP] ⚠️ Not setting cookies - verification failed:', {
+        status,
+        isSuccess: upstream.data?.isSuccess,
+        hasData: !!upstream.data?.data,
+      });
     }
     
     // Apply CSRF cookie if set

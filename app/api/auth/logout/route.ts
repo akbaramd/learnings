@@ -73,6 +73,14 @@ export async function POST(req: NextRequest) {
         maxAge: 0,
       });
       
+      res.cookies.set('auth', '', {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/',
+        maxAge: 0,
+      });
+      
       return res;
     }
 
@@ -134,30 +142,38 @@ export async function POST(req: NextRequest) {
       }
     };
 
-    // Clear cookies only if logout API call was successful
+    // Create response
     const res = NextResponse.json(response, { status });
     res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     
-    // Only clear cookies if logout API call was successful
-    if (status === 200 && upstream.data?.isSuccess) {
-      // Clear access token cookie
-      res.cookies.set('accessToken', '', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/',
-        maxAge: 0,
-      });
-      
-      // Clear refresh token cookie
-      res.cookies.set('refreshToken', '', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/',
-        maxAge: 0,
-      });
-    }
+    // CRITICAL: Always clear cookies, even if API call failed
+    // This ensures security - if logout API fails (timeout, network error), 
+    // we still clear cookies to prevent unauthorized access
+    // State is already cleared in onQueryStarted, so we must clear cookies too
+    res.cookies.set('accessToken', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 0,
+    });
+    
+    res.cookies.set('refreshToken', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 0,
+    });
+    
+    // Clear auth flag cookie
+    res.cookies.set('auth', '', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 0,
+    });
 
     return res;
   } catch (error) {
@@ -177,6 +193,33 @@ export async function POST(req: NextRequest) {
     
     const result = NextResponse.json(errorResponse, { status: 400 });
     result.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    
+    // CRITICAL: Clear cookies even on error
+    // This ensures security - if logout fails, we still clear cookies
+    // State is already cleared in onQueryStarted, so we must clear cookies too
+    result.cookies.set('accessToken', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 0,
+    });
+    
+    result.cookies.set('refreshToken', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 0,
+    });
+    
+    result.cookies.set('auth', '', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 0,
+    });
     
     return result;
   }

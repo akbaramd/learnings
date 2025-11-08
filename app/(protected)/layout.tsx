@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { useGetMeQuery } from '@/src/store/auth';
+import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/hooks/useAuth';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { useTheme } from '@/src/hooks/useTheme';
@@ -109,101 +108,7 @@ function BrandTitle() {
 
 export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const router = useRouter();
-  const pathname = usePathname();
-  const pathnameRef = useRef(pathname);
-  const redirectInitiatedRef = useRef(false);
-
-  // Update pathname ref whenever it changes
-  useEffect(() => {
-    pathnameRef.current = pathname;
-  }, [pathname]);
-
-  // Use useAuth hook for authentication state
-  const { isAuthenticated, isReady, authStatus } = useAuth();
-
-  // Fetch user profile on mount - this will set isInitialized to true
-  // Skip if not ready to prevent infinite loops
-  useGetMeQuery(undefined, {
-    skip: !isReady, // Only fetch when auth is ready
-    refetchOnMountOrArgChange: false,
-    refetchOnFocus: false,
-    refetchOnReconnect: false,
-  });
-
-  // Check authentication and redirect if not authenticated
-  // Listen to both isAuthenticated AND authStatus to catch all state changes
-  useEffect(() => {
-    // Prevent multiple redirects
-    if (redirectInitiatedRef.current) {
-      console.log('[ProtectedLayout] Redirect already initiated, skipping...');
-      return;
-    }
-
-    console.log('[ProtectedLayout] Auth state check:', { 
-      isReady, 
-      isAuthenticated, 
-      authStatus,
-      pathname: pathnameRef.current 
-    });
-    
-    // If status is anonymous, ALWAYS redirect (even if not ready)
-    // This handles the case where logout happens before isReady becomes true
-    if (authStatus === 'anonymous') {
-      console.log('[ProtectedLayout] Status is anonymous, redirecting immediately...');
-      console.log('[ProtectedLayout] Current pathname:', pathnameRef.current);
-      const returnUrl = encodeURIComponent(pathnameRef.current || '/');
-      console.log('[ProtectedLayout] Return URL:', returnUrl);
-      const redirectUrl = `/login?logout=true&r=${returnUrl}`;
-      console.log('[ProtectedLayout] Redirecting to:', redirectUrl);
-      
-      // Mark redirect as initiated
-      redirectInitiatedRef.current = true;
-      
-      // Use requestAnimationFrame + setTimeout to ensure state updates are processed
-      // This works better in production where React batches updates more aggressively
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          console.log('[ProtectedLayout] Executing redirect...');
-          // Force redirect - use replace to prevent back button issues
-          window.location.replace(redirectUrl);
-        }, 10);
-      });
-      
-      return;
-    }
-    
-    // Don't process anything until auth is ready (for other statuses)
-    if (!isReady) {
-      console.log('[ProtectedLayout] Auth not ready yet, waiting...');
-      return;
-    }
-    
-    // If not authenticated, redirect to login
-    if (!isAuthenticated) {
-      console.log('[ProtectedLayout] User not authenticated, redirecting to login...');
-      console.log('[ProtectedLayout] Current pathname:', pathnameRef.current);
-      const returnUrl = encodeURIComponent(pathnameRef.current || '/');
-      console.log('[ProtectedLayout] Return URL:', returnUrl);
-      const redirectUrl = `/login?logout=true&r=${returnUrl}`;
-      console.log('[ProtectedLayout] Redirecting to:', redirectUrl);
-      
-      // Mark redirect as initiated
-      redirectInitiatedRef.current = true;
-      
-      // Use requestAnimationFrame + setTimeout for production compatibility
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          console.log('[ProtectedLayout] Executing redirect...');
-          // Force redirect - use replace to prevent back button issues
-          window.location.replace(redirectUrl);
-        }, 10);
-      });
-      
-      return;
-    }
-    
-    console.log('[ProtectedLayout] User authenticated, no redirect needed');
-  }, [isAuthenticated, isReady, authStatus]);
+  const { isAuthenticated, isReady } = useAuth();
 
   // Auto-fetch notifications when authenticated and ready
   const shouldPollNotifications = useMemo(() => isReady && isAuthenticated, [isReady, isAuthenticated]);

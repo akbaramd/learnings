@@ -39,6 +39,10 @@ export async function GET(req: NextRequest) {
     // Create response with headers
     const res = NextResponse.json(response, { status });
     res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    
+    // Set prefetch flag to prevent duplicate getMe calls in client
+    // If SSR already fetched this, client should skip the fetch
+    res.headers.set('x-me-prefetched', '1');
 
     // Forward Set-Cookie headers from upstream if present
     const setCookie = upstream.headers?.['set-cookie'];
@@ -50,6 +54,12 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Forward x-token-refreshed header if present (signals that token was refreshed server-side)
+    const tokenRefreshed = upstream.headers?.['x-token-refreshed'];
+    if (tokenRefreshed) {
+      res.headers.set('x-token-refreshed', String(tokenRefreshed));
+    }
+
     return res;
   } catch (error) {
     console.error('[GetMe] BFF error:', {
@@ -59,6 +69,6 @@ export async function GET(req: NextRequest) {
       type: typeof error,
     });
 
-    return handleApiError(error as AxiosError);
+    return handleApiError(error as AxiosError, req);
   }
 }

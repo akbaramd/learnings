@@ -132,28 +132,52 @@ export const authApi = createApi({
       }),
       invalidatesTags: ['Auth', 'User'],
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        console.log('[VerifyOtp Mutation] onQueryStarted - Starting OTP verification...');
         try {
           dispatch(setAuthStatus('loading'));
           dispatch(setError(null));
+          console.log('[VerifyOtp Mutation] Set authStatus to loading');
 
           const { data } = await queryFulfilled;
+          console.log('[VerifyOtp Mutation] Query fulfilled:', {
+            isSuccess: data?.isSuccess,
+            hasUserId: !!data?.data?.userId,
+            userId: data?.data?.userId,
+            fullData: JSON.stringify(data, null, 2),
+          });
 
           // Check isSuccess flag - must be true for success
           if (data?.isSuccess === true && data?.data?.userId) {
+            console.log('[VerifyOtp Mutation] ✅ OTP verification successful!');
+            console.log('[VerifyOtp Mutation] Clearing challengeId...');
             dispatch(clearChallengeId());
+            
+            console.log('[VerifyOtp Mutation] Setting authStatus to authenticated...');
             dispatch(setAuthStatus('authenticated'));
+            
+            console.log('[VerifyOtp Mutation] Dispatching getMe.initiate() to fetch user profile...');
             // Fetch user profile after successful verification
             dispatch(authApi.endpoints.getMe.initiate());
+            console.log('[VerifyOtp Mutation] ✅ All dispatches completed');
           } else {
+            console.warn('[VerifyOtp Mutation] ⚠️ OTP verification failed:', {
+              isSuccess: data?.isSuccess,
+              hasUserId: !!data?.data?.userId,
+              message: data?.message,
+              errors: data?.errors,
+            });
             const errorMessage = data?.message || data?.errors?.[0] || 'OTP verification failed.';
             const { message, type } = categorizeAuthError({ data });
             dispatch(setErrorWithType({ message: errorMessage || message, type }));
             dispatch(setAuthStatus('error'));
+            console.log('[VerifyOtp Mutation] Set authStatus to error');
           }
         } catch (error: unknown) {
+          console.error('[VerifyOtp Mutation] ❌ Error in onQueryStarted:', error);
           const { message, type } = categorizeAuthError(error);
           dispatch(setErrorWithType({ message, type }));
           dispatch(setAuthStatus('error'));
+          console.log('[VerifyOtp Mutation] Set authStatus to error after catch');
         }
       },
     }),
