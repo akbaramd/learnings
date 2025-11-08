@@ -314,7 +314,7 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
         />
         <ScrollableArea className="flex-1">
           <div className="flex justify-center items-center py-12">
-            <p className="text-gray-500">در حال بارگذاری سوال...</p>
+            <p className="text-body text-gray-500 dark:text-gray-400">در حال بارگذاری سوال...</p>
           </div>
         </ScrollableArea>
       </div>
@@ -331,7 +331,7 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
         />
         <ScrollableArea className="flex-1">
           <div className="flex justify-center items-center py-12">
-            <p className="text-gray-500">سوال مورد نظر یافت نشد</p>
+            <p className="text-body text-gray-500 dark:text-gray-400">سوال مورد نظر یافت نشد</p>
           </div>
         </ScrollableArea>
       </div>
@@ -386,14 +386,14 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
               {/* Question Number and Type */}
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">سوال</span>
-                  <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                  <span className="text-caption text-gray-600 dark:text-gray-400">سوال</span>
+                  <span className="text-body font-semibold text-gray-900 dark:text-gray-100">
                     {questionNumber}
                   </span>
                   {totalQuestions > 0 && (
                     <>
-                      <span className="text-sm text-gray-500 dark:text-gray-500">از</span>
-                      <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      <span className="text-caption text-gray-500 dark:text-gray-500">از</span>
+                      <span className="text-body font-semibold text-gray-900 dark:text-gray-100">
                         {totalQuestions}
                       </span>
                     </>
@@ -402,12 +402,12 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
                 <div className="flex items-center gap-2">
                   <div className={`flex items-center gap-1.5 ${questionTypeInfo.color}`}>
                     {questionTypeInfo.icon}
-                    <span className="text-xs font-medium">{questionTypeInfo.text}</span>
+                    <span className="text-caption font-medium">{questionTypeInfo.text}</span>
                   </div>
                   {isRequired && (
                     <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
                       <PiWarning className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
-                      <span className="text-xs font-semibold text-red-600 dark:text-red-400">
+                      <span className="text-caption font-semibold text-red-600 dark:text-red-400">
                         الزامی
                       </span>
                     </div>
@@ -417,10 +417,10 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
 
               {/* Question Text */}
               <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-2">
+                <label className="block text-caption text-gray-500 dark:text-gray-400 mb-2">
                   عنوان سوال:
                 </label>
-                <h3 className="text- font-semibold text-gray-900 dark:text-gray-100 leading-relaxed">
+                <h3 className="text-heading-3 text-gray-900 dark:text-gray-100">
                   {questionText}
                 </h3>
               </div>
@@ -433,7 +433,7 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
               {/* Text Answer Input */}
               {isTextQuestion && (
                 <div>
-                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-2">
+                  <label className="block text-caption text-gray-500 dark:text-gray-400 mb-2">
                     پاسخ شما:
                   </label>
                   <TextAreaField
@@ -453,7 +453,7 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
               {/* Options Answer (Radio/Checkbox) */}
               {!isTextQuestion && (
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  <label className="block text-label text-gray-700 dark:text-gray-300 mb-3">
                     انتخاب گزینه
                     {isRequired && <span className="text-red-600 dark:text-red-400 mr-1">*</span>}
                   </label>
@@ -504,7 +504,7 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
                               </div>
                               <span
                                 className={`
-                                  text-sm font-medium truncate
+                                  text-body font-medium truncate
                                   ${isSelected
                                     ? 'text-emerald-700 dark:text-emerald-300'
                                     : 'text-gray-900 dark:text-gray-100'
@@ -529,7 +529,7 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
               {validationError && (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
                   <PiWarning className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0" />
-                  <p className="text-sm text-red-600 dark:text-red-400">{validationError}</p>
+                  <p className="text-body text-red-600 dark:text-red-400">{validationError}</p>
                 </div>
               )}
             </div>
