@@ -40,11 +40,15 @@ export default function LogoutDetailsPage() {
       console.log('[Logout] User not authenticated, skipping API call');
       console.log('[Logout] Waiting for layout to detect status change and redirect...');
       // Give layout a moment to detect the change, then force redirect if needed
-      setTimeout(() => {
-        console.log('[Logout] Timeout: Forcing redirect as fallback...');
-        const returnUrl = encodeURIComponent(window.location.pathname || '/');
-        window.location.href = `/login?logout=true&r=${returnUrl}`;
-      }, 100);
+      // Use requestAnimationFrame + setTimeout for production compatibility
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          console.log('[Logout] Timeout: Forcing redirect as fallback...');
+          const returnUrl = encodeURIComponent(window.location.pathname || '/');
+          // Use replace to prevent back button issues
+          window.location.replace(`/login?logout=true&r=${returnUrl}`);
+        }, 100);
+      });
       return;
     }
 
@@ -56,22 +60,30 @@ export default function LogoutDetailsPage() {
       // Layout will handle redirect when it detects status change
       console.log('[Logout] Waiting for layout to detect status change and redirect...');
       // Give layout a moment to detect the change, then force redirect if needed
-      setTimeout(() => {
-        console.log('[Logout] Timeout: Forcing redirect as fallback...');
-        const returnUrl = encodeURIComponent(window.location.pathname || '/');
-        window.location.href = `/login?logout=true&r=${returnUrl}`;
-      }, 100);
+      // Use requestAnimationFrame + setTimeout for production compatibility
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          console.log('[Logout] Timeout: Forcing redirect as fallback...');
+          const returnUrl = encodeURIComponent(window.location.pathname || '/');
+          // Use replace to prevent back button issues
+          window.location.replace(`/login?logout=true&r=${returnUrl}`);
+        }, 100);
+      });
     } catch (error) {
       console.error('[Logout] Logout API failed:', error);
       // API failed, but state is already cleared above
       // Layout will handle redirect when it detects status change
       console.log('[Logout] Waiting for layout to detect status change and redirect...');
       // Give layout a moment to detect the change, then force redirect if needed
-      setTimeout(() => {
-        console.log('[Logout] Timeout: Forcing redirect as fallback...');
-        const returnUrl = encodeURIComponent(window.location.pathname || '/');
-        window.location.href = `/login?logout=true&r=${returnUrl}`;
-      }, 100);
+      // Use requestAnimationFrame + setTimeout for production compatibility
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          console.log('[Logout] Timeout: Forcing redirect as fallback...');
+          const returnUrl = encodeURIComponent(window.location.pathname || '/');
+          // Use replace to prevent back button issues
+          window.location.replace(`/login?logout=true&r=${returnUrl}`);
+        }, 100);
+      });
     }
   };
 

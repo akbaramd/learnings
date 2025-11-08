@@ -4,7 +4,7 @@ import {
   FetchArgs,
   BaseQueryFn
 } from '@reduxjs/toolkit/query/react';
-import { setAnonymous, clearUser } from '@/src/store/auth/auth.slice';
+import { setAnonymous, clearUser, setInitialized } from '@/src/store/auth/auth.slice';
 import { getCsrfHeader } from '@/src/lib/client-csrf';
 
 const rawBaseQuery = fetchBaseQuery({
@@ -78,10 +78,13 @@ export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, unkno
     });
     
     // Clear user data and set anonymous to trigger logout
+    // Also set initialized to true so isReady becomes true and layout can redirect
     console.log('[baseQueryWithReauth] Clearing user and setting anonymous...');
     api.dispatch(clearUser());
     api.dispatch(setAnonymous());
-    console.log('[baseQueryWithReauth] User cleared, layout should redirect');
+    api.dispatch(setInitialized(true));
+    console.log('[baseQueryWithReauth] User cleared, status set to anonymous, initialized set to true');
+    console.log('[baseQueryWithReauth] Layout should detect authStatus change and redirect');
   }
 
   return result;

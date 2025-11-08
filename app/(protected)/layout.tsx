@@ -111,6 +111,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const pathnameRef = useRef(pathname);
+  const redirectInitiatedRef = useRef(false);
 
   // Update pathname ref whenever it changes
   useEffect(() => {
@@ -132,6 +133,12 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   // Check authentication and redirect if not authenticated
   // Listen to both isAuthenticated AND authStatus to catch all state changes
   useEffect(() => {
+    // Prevent multiple redirects
+    if (redirectInitiatedRef.current) {
+      console.log('[ProtectedLayout] Redirect already initiated, skipping...');
+      return;
+    }
+
     console.log('[ProtectedLayout] Auth state check:', { 
       isReady, 
       isAuthenticated, 
@@ -139,20 +146,59 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
       pathname: pathnameRef.current 
     });
     
-    // Don't process anything until auth is ready
+    // If status is anonymous, ALWAYS redirect (even if not ready)
+    // This handles the case where logout happens before isReady becomes true
+    if (authStatus === 'anonymous') {
+      console.log('[ProtectedLayout] Status is anonymous, redirecting immediately...');
+      console.log('[ProtectedLayout] Current pathname:', pathnameRef.current);
+      const returnUrl = encodeURIComponent(pathnameRef.current || '/');
+      console.log('[ProtectedLayout] Return URL:', returnUrl);
+      const redirectUrl = `/login?logout=true&r=${returnUrl}`;
+      console.log('[ProtectedLayout] Redirecting to:', redirectUrl);
+      
+      // Mark redirect as initiated
+      redirectInitiatedRef.current = true;
+      
+      // Use requestAnimationFrame + setTimeout to ensure state updates are processed
+      // This works better in production where React batches updates more aggressively
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          console.log('[ProtectedLayout] Executing redirect...');
+          // Force redirect - use replace to prevent back button issues
+          window.location.replace(redirectUrl);
+        }, 10);
+      });
+      
+      return;
+    }
+    
+    // Don't process anything until auth is ready (for other statuses)
     if (!isReady) {
       console.log('[ProtectedLayout] Auth not ready yet, waiting...');
       return;
     }
     
-    // If not authenticated OR status is anonymous, redirect to login
-    if (!isAuthenticated || authStatus === 'anonymous') {
-      console.log('[ProtectedLayout] User not authenticated or status is anonymous, redirecting to login...');
+    // If not authenticated, redirect to login
+    if (!isAuthenticated) {
+      console.log('[ProtectedLayout] User not authenticated, redirecting to login...');
       console.log('[ProtectedLayout] Current pathname:', pathnameRef.current);
       const returnUrl = encodeURIComponent(pathnameRef.current || '/');
       console.log('[ProtectedLayout] Return URL:', returnUrl);
-      console.log('[ProtectedLayout] Redirecting to:', `/login?logout=true&r=${returnUrl}`);
-      window.location.href = `/login?logout=true&r=${returnUrl}`;
+      const redirectUrl = `/login?logout=true&r=${returnUrl}`;
+      console.log('[ProtectedLayout] Redirecting to:', redirectUrl);
+      
+      // Mark redirect as initiated
+      redirectInitiatedRef.current = true;
+      
+      // Use requestAnimationFrame + setTimeout for production compatibility
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          console.log('[ProtectedLayout] Executing redirect...');
+          // Force redirect - use replace to prevent back button issues
+          window.location.replace(redirectUrl);
+        }, 10);
+      });
+      
       return;
     }
     
