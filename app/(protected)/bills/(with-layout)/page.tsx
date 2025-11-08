@@ -570,7 +570,7 @@ export default function BillsPage() {
                               e.stopPropagation();
                               router.push(`/bills/${bill.referenceTrackingCode}?billType=${bill.referenceType}`);
                             }}
-                            variant='emerald'
+                            variant='primary'
                           >
                             پرداخت
                           </Button>
