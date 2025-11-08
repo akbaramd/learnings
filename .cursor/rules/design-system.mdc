@@ -2,332 +2,136 @@
 globs: **/*.tsx
 alwaysApply: false
 ---
-# Typography Design System Rules
+# Design System — Vazirmatn + TailwindCSS
 
-You are a design system expert. All text elements MUST use the typography design system classes defined in `app/globals.css`. This ensures consistency, maintainability, and proper visual hierarchy across the Persian mobile app.
+Unified **Typography**, **Color**, **Background**, and **Border** system  
+for Persian RTL applications using **TailwindCSS** and **Vazirmatn** font.  
+Fully supports **light** and **dark** modes with ≥ 3:1 contrast ratio.
 
-## 🎨 Typography Scale (Minor Scale)
+---
 
-The design system uses a **minor scale** optimized for mobile Persian content. All typography classes are defined in `@layer components` in `app/globals.css`.
-
-### Available Typography Classes
+## 1. Typography
 
 | Class | Size | Line Height | Weight | Use Case |
-|------|------|-------------|--------|----------|
-| `.text-heading-1` | 24px | 28px | Medium 500 | Page titles, main headings |
-| `.text-heading-2` | 20px | 24px | SemiBold 600 | Section headers, card titles |
-| `.text-heading-3` | 16px | 20px | SemiBold 600 | Subsection headers, component titles |
-| `.text-heading-3-alt` | 18px | 22px | SemiBold 600 | Alternative H3 (slightly larger) |
-| `.text-body` | 14px | 20px | Regular 400 | Body text, paragraphs, main content |
-| `.text-label` | 14px | 20px | Medium 500 | Form labels, UI labels |
-| `.text-button` | 14px | 20px | SemiBold 600 | Button text (usually handled by Button component) |
-| `.text-link` | 14px | 20px | Regular 400 | Clickable links |
-| `.text-secondary` | 12px | 16px | Regular 400 | Secondary text, muted content |
-| `.text-caption` | 12px | 16px | Regular 400 | Captions, annotations, timestamps, hints |
-| `.text-small` | 11px | 16px | Regular 400 | Absolute minimum for specialized UI elements |
-| `.text-overline` | 11px | 16px | SemiBold 600 | Small uppercase labels |
+|--------|------|-------------|--------|----------|
+| `.typo-h1` | 32px | 40px | Bold 700 | Page titles, main headers |
+| `.typo-h2` | 24px | 32px | Bold 700 | Section headings |
+| `.typo-h3` | 20px | 28px | SemiBold 600 | Subsections, card titles |
+| `.typo-body` | 16px | 24px | Regular 400 | Main content, paragraphs |
+| `.typo-body-2` | 14px | 20px | Medium 500 | Secondary text, captions |
+| `.typo-micro` | 12px | 18px | Medium 500 | Metadata, labels, timestamps |
+| `.typo-link` | 14px | 20px | Medium 500 | Clickable inline text, actions |
+| `.typo-button` | 14px | 20px | SemiBold 600 | Button text, calls to action |
+| `.typo-muted` | 14px | 20px | Regular 400 | Low-emphasis text, disclaimers |
+
+**Tailwind Utilities Mapping**
+| Class | Tailwind Utilities |
+|--------|--------------------|
+| `.typo-h1` | `text-3xl md:text-4xl font-bold leading-tight text-right text-gray-900 dark:text-gray-50 mt-10 mb-4` |
+| `.typo-h2` | `text-2xl md:text-3xl font-bold leading-snug text-right text-gray-900 dark:text-gray-100 mt-8 mb-3` |
+| `.typo-h3` | `text-xl md:text-2xl font-semibold leading-snug text-right text-gray-800 dark:text-gray-200 mt-6 mb-2` |
+| `.typo-body` | `text-base md:text-lg font-normal leading-relaxed text-right text-gray-900 dark:text-gray-100` |
+| `.typo-body-2` | `text-sm md:text-base font-medium leading-normal text-right text-gray-700 dark:text-gray-300` |
+| `.typo-micro` | `text-xs font-medium leading-normal text-right text-gray-600 dark:text-gray-400` |
+| `.typo-link` | `text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 underline underline-offset-2` |
+| `.typo-button` | `text-sm font-semibold text-center text-white dark:text-gray-900 bg-emerald-600 dark:bg-emerald-500 hover:bg-emerald-700 dark:hover:bg-emerald-400 active:bg-emerald-800 dark:active:bg-emerald-300 rounded px-4 py-2` |
+| `.typo-muted` | `text-sm text-gray-500 dark:text-gray-400 text-right` |
 
 ---
 
-## ✅ MUST DO
+## 2. Colors
 
-### 1. Always Use Typography Classes
+**Primary palette (Emerald)**
+| Token | Light | Dark | Use Case |
+|--------|--------|-------|-----------|
+| `--color-primary` | `#059669` (emerald-600) | `#34D399` (emerald-400) | Primary actions, CTAs |
+| `--color-on-primary` | `#FFFFFF` | `#111827` | Text/icons on primary background |
+| `--color-primary-hover` | `#047857` (emerald-700) | `#10B981` (emerald-500) | Hover state |
+| `--color-primary-active` | `#065F46` (emerald-800) | `#6EE7B7` (emerald-300) | Active/Pressed state |
+| `--color-primary-disabled` | `#A7F3D0` (emerald-200)`opacity-70` | `#064E3B` (emerald-900)`opacity-60` | Disabled state |
 
-**NEVER use raw Tailwind text size classes** like `text-sm`, `text-base`, `text-lg`, `text-xl`, `text-2xl`, `text-3xl` directly on text elements.
+**Secondary palette**
+| Token | Light | Dark | Use Case |
+|--------|--------|-------|-----------|
+| `--color-secondary` | `#6B7280` (gray-500) | `#D1D5DB` (gray-300) | Secondary text, neutral surfaces |
+| `--color-on-secondary` | `#FFFFFF` | `#111827` | Text on secondary |
+| `--color-secondary-hover` | `#4B5563` (gray-600) | `#E5E7EB` (gray-200) | Hover state |
+| `--color-secondary-active` | `#374151` (gray-700) | `#F3F4F6` (gray-100) | Active state |
 
-```tsx
-// ❌ WRONG
-<p className="text-sm text-gray-600">Some text</p>
-<h3 className="text-lg font-semibold">Title</h3>
-<span className="text-xs text-gray-500">Caption</span>
+**Subtle palette**
+| Token | Light | Dark | Use Case |
+|--------|--------|-------|-----------|
+| `--color-subtle` | `#F3F4F6` (gray-100) | `#1F2937` (gray-800) | Card backgrounds, soft panels |
+| `--color-on-subtle` | `#111827` | `#F9FAFB` | Text/icons on subtle surfaces |
+| `--color-subtle-border` | `#E5E7EB` | `#374151` | Dividers, borders |
 
-// ✅ CORRECT
-<p className="text-body text-gray-600 dark:text-gray-400">Some text</p>
-<h3 className="text-heading-3 text-gray-900 dark:text-gray-100">Title</h3>
-<span className="text-caption text-gray-500 dark:text-gray-400">Caption</span>
-```
+**Surface palette**
+| Token | Light | Dark | Use Case |
+|--------|--------|-------|-----------|
+| `--color-surface` | `#FFFFFF` (white) | `#1F2937` (gray-800) | Main containers, cards, big components |
+| `--color-on-surface` | `#111827` | `#F9FAFB` | Text/icons on surface containers |
+| `--color-surface-border` | `#E5E7EB` | `#374151` | Container borders |
 
-### 2. Use Semantic HTML with Typography Classes
-
-Prefer semantic HTML elements (`<h1>`, `<h2>`, `<h3>`, `<p>`, `<label>`, `<small>`) with typography classes:
-
-```tsx
-// ✅ CORRECT - Semantic HTML with typography classes
-<h1 className="text-heading-1 text-gray-900 dark:text-gray-100">
-  Page Title
-</h1>
-
-<h2 className="text-heading-2 text-gray-900 dark:text-gray-100">
-  Section Header
-</h2>
-
-<h3 className="text-heading-3 text-gray-900 dark:text-gray-100">
-  Subsection
-</h3>
-
-<p className="text-body text-gray-700 dark:text-gray-300">
-  Body text content
-</p>
-
-<label className="text-label text-gray-700 dark:text-gray-300">
-  Form Label
-</label>
-
-<small className="text-caption text-gray-500 dark:text-gray-400">
-  Caption text
-</small>
-```
-
-### 3. Always Include Dark Mode Colors
-
-**ALWAYS** include both light and dark mode color classes:
-
-```tsx
-// ❌ WRONG - Missing dark mode
-<p className="text-body text-gray-600">Content</p>
-
-// ✅ CORRECT - Includes dark mode
-<p className="text-body text-gray-600 dark:text-gray-400">Content</p>
-```
-
-### 4. Use Appropriate Typography for Context
-
-Choose the right typography class based on semantic meaning and visual hierarchy:
-
-```tsx
-// ✅ Page/Screen Titles
-<h1 className="text-heading-1 text-gray-900 dark:text-gray-100">
-  Dashboard
-</h1>
-
-// ✅ Section/Card Headers
-<h2 className="text-heading-2 text-gray-900 dark:text-gray-100">
-  User Profile
-</h2>
-
-// ✅ Component/Subsection Titles
-<h3 className="text-heading-3 text-gray-900 dark:text-gray-100">
-  Settings
-</h3>
-
-// ✅ Body Content
-<p className="text-body text-gray-700 dark:text-gray-300">
-  Main paragraph content goes here.
-</p>
-
-// ✅ Form Labels
-<label className="text-label text-gray-700 dark:text-gray-300">
-  Email Address
-</label>
-
-// ✅ Captions, Hints, Timestamps
-<span className="text-caption text-gray-500 dark:text-gray-400">
-  Last updated: 2 hours ago
-</span>
-
-// ✅ Secondary/Muted Text
-<span className="text-secondary">
-  Optional information
-</span>
-```
-
-### 5. Remove Redundant Line Height Classes
-
-Typography classes already include line-height. **NEVER** add additional `leading-*` classes:
-
-```tsx
-// ❌ WRONG - Redundant leading class
-<p className="text-body leading-6 text-gray-600">Content</p>
-
-// ✅ CORRECT - Line height is included in text-body
-<p className="text-body text-gray-600 dark:text-gray-400">Content</p>
-```
-
-### 6. Use Typography Classes in Loading/Error States
-
-```tsx
-// ✅ CORRECT
-<div className="flex justify-center items-center py-12">
-  <p className="text-body text-gray-500 dark:text-gray-400">
-    در حال بارگذاری...
-  </p>
-</div>
-
-<div className="text-body text-red-600 dark:text-red-400">
-  {errorMessage}
-</div>
-```
+**Ghost palette**
+| Token | Light | Dark | Use Case |
+|--------|--------|-------|-----------|
+| `--color-ghost` | `transparent` | `transparent` | Transparent UI elements |
+| `--color-ghost-hover` | `rgba(0,0,0,0.05)` | `rgba(255,255,255,0.1)` | Hover feedback |
+| `--color-ghost-active` | `rgba(0,0,0,0.1)` | `rgba(255,255,255,0.15)` | Active state |
 
 ---
 
-## 🚫 MUST NOT DO
+## 3. Backgrounds
 
-### ❌ Never Use Raw Tailwind Text Sizes
-
-```tsx
-// ❌ WRONG - Direct Tailwind classes
-<span className="text-sm">Small text</span>
-<p className="text-base">Body text</p>
-<h3 className="text-lg font-semibold">Heading</h3>
-
-// ✅ CORRECT - Typography classes
-<span className="text-caption">Small text</span>
-<p className="text-body">Body text</p>
-<h3 className="text-heading-3">Heading</h3>
-```
-
-### ❌ Never Skip Dark Mode Colors
-
-```tsx
-// ❌ WRONG - Missing dark mode
-<p className="text-body text-gray-600">Content</p>
-
-// ✅ CORRECT - Includes dark mode
-<p className="text-body text-gray-600 dark:text-gray-400">Content</p>
-```
-
-### ❌ Never Add Redundant Line Height
-
-```tsx
-// ❌ WRONG - Redundant leading
-<p className="text-body leading-5 text-gray-600">Content</p>
-
-// ✅ CORRECT - Line height included
-<p className="text-body text-gray-600 dark:text-gray-400">Content</p>
-```
-
-### ❌ Never Mix Typography Classes with Raw Sizes
-
-```tsx
-// ❌ WRONG - Mixing classes
-<h3 className="text-heading-3 text-sm">Title</h3>
-
-// ✅ CORRECT - Single typography class
-<h3 className="text-heading-3 text-gray-900 dark:text-gray-100">Title</h3>
-```
+| Class | Tailwind Utilities | Purpose |
+|--------|--------------------|----------|
+| `.bg-primary` | `bg-emerald-600 text-white dark:bg-emerald-500 dark:text-gray-900` | Base background for CTAs |
+| `.bg-primary-hover` | `bg-emerald-700 dark:bg-emerald-400` | Hover/Focus state |
+| `.bg-primary-active` | `bg-emerald-800 dark:bg-emerald-300` | Active/Pressed state |
+| `.bg-primary-disabled` | `bg-emerald-200 opacity-70 cursor-not-allowed dark:bg-emerald-900` | Disabled buttons |
+| `.bg-secondary` | `bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100` | Neutral surfaces |
+| `.bg-subtle` | `bg-gray-50 text-gray-900 border border-gray-200 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700` | Cards and containers |
+| `.bg-surface` | `bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700` | Main containers, cards, big components |
+| `.bg-ghost` | `bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800` | Ghost buttons and icons |
 
 ---
 
-## 📋 Common Patterns
+## 4. Borders
 
-### Card Titles
-
-```tsx
-<Card>
-  <h3 className="text-heading-3 text-gray-900 dark:text-gray-100 mb-2">
-    Card Title
-  </h3>
-  <p className="text-body text-gray-700 dark:text-gray-300">
-    Card content
-  </p>
-</Card>
-```
-
-### Form Labels and Inputs
-
-```tsx
-<div>
-  <label className="block text-label text-gray-700 dark:text-gray-300 mb-2">
-    Email Address
-  </label>
-  <input className="..." />
-  <p className="text-caption text-gray-500 dark:text-gray-400 mt-1">
-    Hint text or validation message
-  </p>
-</div>
-```
-
-### Lists and Items
-
-```tsx
-<div className="space-y-2">
-  {items.map((item) => (
-    <div key={item.id}>
-      <h4 className="text-heading-3 text-gray-900 dark:text-gray-100">
-        {item.title}
-      </h4>
-      <p className="text-body text-gray-700 dark:text-gray-300">
-        {item.description}
-      </p>
-      <span className="text-caption text-gray-500 dark:text-gray-400">
-        {item.timestamp}
-      </span>
-    </div>
-  ))}
-</div>
-```
-
-### Error Messages
-
-```tsx
-<div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-900/20">
-  <PiWarning className="h-4 w-4 text-red-600 dark:text-red-400" />
-  <p className="text-body text-red-600 dark:text-red-400">
-    {errorMessage}
-  </p>
-</div>
-```
-
-### Loading States
-
-```tsx
-<div className="flex justify-center items-center py-12">
-  <p className="text-body text-gray-500 dark:text-gray-400">
-    در حال بارگذاری...
-  </p>
-</div>
-```
-
-### Empty States
-
-```tsx
-<div className="flex flex-col items-center justify-center py-12">
-  <p className="text-body text-gray-500 dark:text-gray-400">
-    No items found
-  </p>
-</div>
-```
+| Class | Tailwind Utilities | Purpose |
+|--------|--------------------|----------|
+| `.border-primary` | `border-emerald-600 dark:border-emerald-400` | CTA focus outlines |
+| `.border-secondary` | `border-gray-300 dark:border-gray-600` | UI section dividers |
+| `.border-subtle` | `border-gray-200 dark:border-gray-700` | Card outlines or neutral separators |
 
 ---
 
-## 🎯 Typography Hierarchy Guidelines
+## Tailwind Config (Partial)
 
-### Visual Hierarchy
-
-1. **Page Level**: Use `text-heading-1` for main page titles
-2. **Section Level**: Use `text-heading-2` for major sections
-3. **Component Level**: Use `text-heading-3` or `text-heading-3-alt` for component titles
-4. **Content Level**: Use `text-body` for paragraphs and main content
-5. **Supporting Text**: Use `text-caption` or `text-secondary` for hints, timestamps, annotations
-
-### Font Weight Guidelines
-
-- **Headings**: Use `font-semibold` (600) or `font-medium` (500) - already included in typography classes
-- **Body Text**: Use `font-normal` (400) - already included in typography classes
-- **Labels**: Use `font-medium` (500) - already included in `text-label`
-- **Never override font-weight** unless absolutely necessary for emphasis
-
----
-
-## 🔍 Code Review Checklist
-
-When reviewing code, ensure:
-
-- [ ] All text elements use typography classes (`.text-*`)
-- [ ] No raw Tailwind text size classes (`text-sm`, `text-base`, etc.)
-- [ ] Dark mode colors are included (`dark:text-*`)
-- [ ] No redundant `leading-*` classes
-- [ ] Semantic HTML elements are used (`<h1>`, `<h2>`, `<h3>`, `<p>`, `<label>`, `<small>`)
-- [ ] Typography classes match semantic meaning
-- [ ] Visual hierarchy is maintained
-- [ ] Loading/error states use typography classes
-
----
-
-## 📚 Reference
-
-All typography classes are defined in `app/globals.css` under `@layer components`. The design system uses a **minor scale** optimized for mobile Persian content with Vazirmatn font family.
-
-**Base font size**: 14px (text-body)  
-**Minimum readable size**: 11px (text-small)  
-**Scale ratio**: ~1.2-1.3× between levels
+```js
+// tailwind.config.js
+module.exports = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        emerald: {
+          50: '#ECFDF5',
+          100: '#D1FAE5',
+          200: '#A7F3D0',
+          300: '#6EE7B7',
+          400: '#34D399',
+          500: '#10B981',
+          600: '#059669',
+          700: '#047857',
+          800: '#065F46',
+          900: '#064E3B',
+        },
+      },
+      fontFamily: {
+        sans: ['Vazirmatn', 'ui-sans-serif', 'system-ui'],
+      },
+    },
+  },
+  plugins: [],
+}

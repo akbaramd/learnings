@@ -477,7 +477,7 @@ export default function CreateRequestPage({ params }: CreateRequestPageProps) {
                           className={`
                             w-full p-4 rounded-lg border-2 transition-all text-right
                             ${isSelected
-                              ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 shadow-sm'
+                              ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
                               : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-emerald-300 dark:hover:border-emerald-700'
                             }
                             ${touched.price && validationErrors.price && !isSelected
@@ -576,7 +576,7 @@ export default function CreateRequestPage({ params }: CreateRequestPageProps) {
                 </Button>
                 <Button
                   type="submit"
-                  variant="emerald"
+                  variant="primary"
                   size="md"
                   disabled={!canSubmit}
                   loading={isSubmitting}

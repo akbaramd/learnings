@@ -673,7 +673,7 @@ export default function AddGuestPage({ params }: AddGuestPageProps) {
         </div>
 
         {/* Submit Buttons */}
-        <div className="flex-shrink-0 sticky bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent dark:from-gray-900 dark:via-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)] z-10">
+        <div className="flex-shrink-0 sticky bottom-0 left-0 right-0 p-4 bg-surface border-t border-subtle z-10">
           <div className="flex gap-3">
             <Button
               type="button"

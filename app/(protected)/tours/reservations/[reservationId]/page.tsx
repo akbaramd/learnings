@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/src/components/ui/Button';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { ConfirmDialog } from '@/src/components/ui/ConfirmDialog';
+import { PageHeader } from '@/src/components/ui/PageHeader/PageHeader';
 import { useGetReservationDetailQuery, useGetReservationPricingQuery, useRemoveGuestFromReservationMutation, useFinalizeReservationMutation, useReactivateReservationMutation } from '@/src/store/tours/tours.queries';
 import { selectSelectedReservation } from '@/src/store/tours';
 import { useSelector } from 'react-redux';
@@ -18,7 +19,6 @@ import {
   PiSpinner,
   PiUserPlus,
   PiTrash,
-  PiArrowLeft,
   PiArrowClockwise,
   PiWarningCircle,
   PiArrowCounterClockwise,
@@ -478,27 +478,15 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
   if (isLoading || isFetching) {
     return (
       <div className="h-full flex flex-col" dir="rtl">
-        <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBack}
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
-              >
-                <PiArrowLeft className="h-4 w-4" />
-              </Button>
-              <div className="flex items-center gap-2">
-                <PiReceipt className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">جزئیات رزرو</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          title="جزئیات رزرو"
+          titleIcon={<PiReceipt className="h-5 w-5 text-primary" />}
+          showBackButton={true}
+          onBack={handleBack}
+        />
         <div className="flex-1 flex items-center justify-center">
-          <PiSpinner className="h-8 w-8 animate-spin text-emerald-600" />
-          <span className="mr-3 text-gray-600 dark:text-gray-400">در حال بارگذاری...</span>
+          <PiSpinner className="h-8 w-8 animate-spin text-primary" />
+          <span className="mr-3 text-muted">در حال بارگذاری...</span>
         </div>
       </div>
     );
@@ -507,27 +495,15 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
   if (error || !details) {
     return (
       <div className="h-full flex flex-col" dir="rtl">
-        <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBack}
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
-              >
-                <PiArrowLeft className="h-4 w-4" />
-              </Button>
-              <div className="flex items-center gap-2">
-                <PiReceipt className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">جزئیات رزرو</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          title="جزئیات رزرو"
+          titleIcon={<PiReceipt className="h-5 w-5 text-primary" />}
+          showBackButton={true}
+          onBack={handleBack}
+        />
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
-            <p className="text-red-600 dark:text-red-400 mb-4">
+            <p className="text-red-600 dark:text-red-400 mb-4 text-body">
               {error ? 'خطا در بارگذاری جزئیات رزرو' : 'رزرو یافت نشد'}
             </p>
             <Button onClick={handleBack}>بازگشت</Button>
@@ -571,50 +547,32 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
         }
       `}</style>
       <div className="h-full flex flex-col" dir="rtl">
-        {/* Breadcrumb Header */}
-        <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBack}
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
-              >
-                <PiArrowLeft className="h-4 w-4" />
-              </Button>
-              <div className="flex items-center gap-2">
-                <PiReceipt className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">جزئیات رزرو</span>
-                {details.trackingCode && (
-                  <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
-                    {details.trackingCode.slice(0, 12)}...
-                  </span>
-                )}
-              </div>
-              <div className="flex-1"></div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => { refetchDetails(); refetchPricing(); }}
-                disabled={isFetching}
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="بروزرسانی"
-              >
-                <PiArrowClockwise className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
-          </div>
-        </div>
+        {/* Page Header */}
+        <PageHeader
+          title="جزئیات رزرو"
+          titleIcon={<PiReceipt className="h-5 w-5 text-primary" />}
+          subtitle={details.trackingCode ? `${details.trackingCode.slice(0, 12)}...` : undefined}
+          showBackButton={true}
+          onBack={handleBack}
+          rightActions={[
+            {
+              icon: <PiArrowClockwise className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />,
+              onClick: () => { refetchDetails(); refetchPricing(); },
+              disabled: isFetching,
+              'aria-label': 'بروزرسانی',
+              label: 'بروزرسانی',
+            },
+          ]}
+        />
 
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <div className="p-4 space-y-4">
             {/* Compact Reservation Details */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div className="bg-surface rounded-lg p-4">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   {details.tour?.title && (
-                    <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                    <h2 className="text-heading-3 text-on-surface">
                       {details.tour.title}
                     </h2>
                   )}
@@ -623,37 +581,37 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
               
               {/* Tour Information */}
               {details.tour && (
-                <div className="mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">اطلاعات تور</h3>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="mb-3 pb-3 border-b border-subtle">
+                  <h3 className="text-label text-on-surface mb-2">اطلاعات تور</h3>
+                  <div className="grid grid-cols-2 gap-2 text-caption">
                     {details.tour.tourStart && (
                       <div>
-                        <span className="text-gray-500 dark:text-gray-400">شروع: </span>
-                        <span className="text-gray-900 dark:text-gray-100 font-medium">
+                        <span className="text-muted">شروع: </span>
+                        <span className="text-on-surface font-medium">
                           {formatDateFa(details.tour.tourStart)}
                         </span>
                       </div>
                     )}
                     {details.tour.tourEnd && (
                       <div>
-                        <span className="text-gray-500 dark:text-gray-400">پایان: </span>
-                        <span className="text-gray-900 dark:text-gray-100 font-medium">
+                        <span className="text-muted">پایان: </span>
+                        <span className="text-on-surface font-medium">
                           {formatDateFa(details.tour.tourEnd)}
                         </span>
                       </div>
                     )}
                     {details.tour.status && (
                       <div>
-                        <span className="text-gray-500 dark:text-gray-400">وضعیت: </span>
-                        <span className="text-gray-900 dark:text-gray-100 font-medium">
+                        <span className="text-muted">وضعیت: </span>
+                        <span className="text-on-surface font-medium">
                           {translateTourStatus(details.tour.status)}
                         </span>
                       </div>
                     )}
                     {details.tour.isActive !== undefined && (
                       <div>
-                        <span className="text-gray-500 dark:text-gray-400">فعال: </span>
-                        <span className={`font-medium ${details.tour.isActive ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                        <span className="text-muted">فعال: </span>
+                        <span className={`font-medium ${details.tour.isActive ? 'text-green-600 dark:text-green-400' : 'text-muted'}`}>
                           {details.tour.isActive ? 'بله' : 'خیر'}
                         </span>
                       </div>
@@ -663,32 +621,32 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
               )}
 
               {/* Reservation Information */}
-              <div className="grid grid-cols-2 gap-3 text-xs mb-3">
+              <div className="grid grid-cols-2 gap-3 text-caption mb-3">
                 {details.capacity?.description && (
                   <div>
-                    <span className="text-gray-500 dark:text-gray-400">ظرفیت: </span>
-                    <span className="text-gray-900 dark:text-gray-100 font-medium">{details.capacity.description}</span>
+                    <span className="text-muted">ظرفیت: </span>
+                    <span className="text-on-surface font-medium">{details.capacity.description}</span>
                   </div>
                 )}
                 <div>
-                  <span className="text-gray-500 dark:text-gray-400">تعداد شرکت‌کنندگان: </span>
-                  <span className="text-gray-900 dark:text-gray-100 font-medium">
+                  <span className="text-muted">تعداد شرکت‌کنندگان: </span>
+                  <span className="text-on-surface font-medium">
                     {details.participantCount || 0} نفر
                   </span>
                 </div>
                 {details.trackingCode && (
                   <div className="col-span-2 flex items-center gap-2">
-                    <span className="text-gray-500 dark:text-gray-400">کد پیگیری: </span>
-                    <span className="text-gray-900 dark:text-gray-100 font-medium font-mono text-xs">
+                    <span className="text-muted">کد پیگیری: </span>
+                    <span className="text-on-surface font-medium font-mono text-caption">
                       {details.trackingCode}
                     </span>
                     <button
                       onClick={() => copyToClipboard(details.trackingCode || '', toast)}
-                      className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                      className="p-1 rounded hover:bg-ghost-hover transition"
                       aria-label="کپی کد پیگیری"
                       title="کپی کد پیگیری"
                     >
-                      <PiCopy className="h-3.5 w-3.5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" />
+                      <PiCopy className="h-3.5 w-3.5 text-muted hover:text-secondary" />
                     </button>
                   </div>
                 )}
@@ -696,13 +654,13 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
 
               {/* Draft Status Badge with Description - At bottom of card */}
               {status === 'Draft' && (
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
+                <div className="border-t border-subtle pt-3 mt-3">
                   <div className="flex flex-col gap-2">
                     <div className={`px-3 py-1.5 rounded-lg ${badge.bg} ${badge.border} border inline-flex items-center gap-2 w-fit`}>
                       <StatusIcon className={`h-4 w-4 ${badge.color}`} />
-                      <span className={`text-xs font-semibold ${badge.color}`}>{badge.text}</span>
+                      <span className={`text-caption font-semibold ${badge.color}`}>{badge.text}</span>
                     </div>
-                    <span className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                    <span className="text-caption text-muted">
                       این رزرو هنوز نهایی نشده است و قطعی محسوب نمی‌شود. برای قطعی شدن رزرو، باید آن را نهایی و پرداخت کنید.
                     </span>
                   </div>
@@ -711,13 +669,13 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
 
               {/* OnHold Status Badge with Description and Remaining Time - At bottom of card */}
               {status === 'OnHold' && !expired && (
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
+                <div className="border-t border-subtle pt-3 mt-3">
                   <div className="flex flex-col gap-2">
                     <div className={`px-3 py-1.5 rounded-lg ${badge.bg} ${badge.border} border inline-flex items-center gap-2 w-fit`}>
                       <StatusIcon className={`h-4 w-4 ${badge.color}`} />
-                      <span className={`text-xs font-semibold ${badge.color}`}>{badge.text}</span>
+                      <span className={`text-caption font-semibold ${badge.color}`}>{badge.text}</span>
                     </div>
-                    <span className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                    <span className="text-caption text-muted">
                       این رزرو در انتظار پرداخت است. زمان باقی‌مانده: <strong className="text-orange-600 dark:text-orange-400">{getRemainingTime(details.expiryDate)}</strong>
                     </span>
                   </div>
@@ -726,13 +684,13 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
 
               {/* Confirmed Status Badge with Description - At bottom of card */}
               {status === 'Confirmed' && (
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
+                <div className="border-t border-subtle pt-3 mt-3">
                   <div className="flex flex-col gap-2">
                     <div className={`px-3 py-1.5 rounded-lg ${badge.bg} ${badge.border} border inline-flex items-center gap-2 w-fit`}>
                       <StatusIcon className={`h-4 w-4 ${badge.color}`} />
-                      <span className={`text-xs font-semibold ${badge.color}`}>{badge.text}</span>
+                      <span className={`text-caption font-semibold ${badge.color}`}>{badge.text}</span>
                     </div>
-                    <span className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                    <span className="text-caption text-muted">
                       این رزرو با موفقیت تأیید شده است. پرداخت به صورت کامل انجام شده و رزرو قطعی است.
                     </span>
                   </div>
@@ -741,13 +699,13 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
 
               {/* Expired Status Badge - Shows when expired */}
               {(expired || status === 'Expired') && (
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
+                <div className="border-t border-subtle pt-3 mt-3">
                   <div className="flex flex-col gap-2">
                     <div className="px-3 py-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 inline-flex items-center gap-2 w-fit">
                       <PiWarningCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                      <span className="text-xs font-semibold text-red-600 dark:text-red-400">منقضی شده</span>
+                      <span className="text-caption font-semibold text-red-600 dark:text-red-400">منقضی شده</span>
                     </div>
-                    <span className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                    <span className="text-caption text-muted">
                       مهلت پرداخت این رزرو به پایان رسیده است. جهت ادامه، لازم است ظرفیت را مجدداً رزرو و فرآیند پرداخت را آغاز کنید.
                       
                     </span>
@@ -757,18 +715,18 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
             </div>
 
             {/* Participants Card with Pricing */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+            <div className="bg-surface rounded-lg p-5">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                  <div className="w-1 h-5 bg-emerald-500 rounded-full" />
+                <h2 className="text-heading-3 text-on-surface flex items-center gap-2">
+                  <div className="w-1 h-5 bg-primary rounded-full" />
                   شرکت‌کنندگان و قیمت
                 </h2>
                 {details.status === 'Draft' && (
                   <Button
                     onClick={handleAddGuest}
                     size="sm"
+                    variant="primary"
                     leftIcon={<PiUserPlus className="h-4 w-4" />}
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white"
                   >
                     افزودن عضو
                   </Button>
@@ -784,26 +742,26 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
                     return (
                       <div
                         key={participant.id}
-                        className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50"
+                        className="p-3 rounded-lg border border-subtle bg-subtle"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 flex-1">
-                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            <span className="text-body font-medium text-on-subtle">
                               {participant.fullName || `${participant.firstName} ${participant.lastName}`}
                             </span>
                             {participant.isMainParticipant && (
-                              <span className="px-2 py-0.5 text-xs font-medium rounded bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                              <span className="px-2 py-0.5 text-caption font-medium rounded bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
                                 اصلی
                               </span>
                             )}
                             {participant.isGuest && (
-                              <span className="px-2 py-0.5 text-xs font-medium rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300">
+                              <span className="px-2 py-0.5 text-caption font-medium rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300">
                                 مهمان
                               </span>
                             )}
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            <span className="text-body font-semibold text-on-subtle">
                               {formatCurrencyFa(participantPrice)} ریال
                             </span>
                             {details.status === 'Draft' && participant.isGuest && (
@@ -820,7 +778,7 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
                           </div>
                         </div>
                         {participant.isFullyPaid && (
-                          <div className="mt-2 text-xs text-green-600 dark:text-green-400">
+                          <div className="mt-2 text-caption text-green-600 dark:text-green-400">
                             ✓ پرداخت شده
                           </div>
                         )}
@@ -829,15 +787,16 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
                   })}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400 mb-4">
+                <div className="text-center py-8 text-muted mb-4">
                   <PiUsers className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">هنوز عضوی اضافه نشده است</p>
+                  <p className="text-body">هنوز عضوی اضافه نشده است</p>
                   {details.status === 'Draft' && (
                     <Button
                       onClick={handleAddGuest}
                       size="sm"
+                      variant="primary"
                       leftIcon={<PiUserPlus className="h-4 w-4" />}
-                      className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white"
+                      className="mt-4"
                     >
                       افزودن اولین عضو
                     </Button>
@@ -847,25 +806,25 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
 
               {/* Final Price Summary */}
               {(pricing?.totalRequiredAmount != null || pricing?.totalRemainingAmount != null) && (
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
+                <div className="border-t border-subtle pt-4 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">مبلغ کل:</span>
-                    <span className="text-base font-bold text-gray-900 dark:text-gray-100">
+                    <span className="text-body font-medium text-muted">مبلغ کل:</span>
+                    <span className="text-heading-3 font-bold text-on-surface">
                       {formatCurrencyFa(pricing.totalRequiredAmount)} ریال
                     </span>
                   </div>
                   {details.paidAmountRials != null && details.paidAmountRials > 0 && (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">پرداخت شده:</span>
-                      <span className="text-sm font-semibold text-green-600 dark:text-green-400">
+                      <span className="text-body font-medium text-muted">پرداخت شده:</span>
+                      <span className="text-body font-semibold text-green-600 dark:text-green-400">
                         {formatCurrencyFa(details.paidAmountRials)} ریال
                       </span>
                     </div>
                   )}
                   {(pricing?.totalRemainingAmount != null || details.remainingAmountRials != null) && (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">باقیمانده:</span>
-                      <span className="text-base font-bold text-orange-600 dark:text-orange-400">
+                      <span className="text-body font-medium text-muted">باقیمانده:</span>
+                      <span className="text-heading-3 font-bold text-orange-600 dark:text-orange-400">
                         {formatCurrencyFa(pricing?.totalRemainingAmount ?? details.remainingAmountRials)} ریال
                       </span>
                     </div>
@@ -899,7 +858,7 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
 
         {/* Action Buttons - Finalize and Pay (Only for Draft, not expired) */}
         {details.status === 'Draft' && !expired && pricing?.totalRequiredAmount != null && pricing.totalRequiredAmount > 0 && (
-          <div className="flex-shrink-0 sticky bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent dark:from-gray-900 dark:via-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)] z-10">
+          <div className="flex-shrink-0 sticky bottom-0 left-0 right-0 p-4 bg-surface border-t border-subtle z-10">
             <Button
               onClick={handleFinalizeClick}
               disabled={isFinalizing}
@@ -913,7 +872,7 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
 
         {/* Action Buttons - Reactivate Reservation (Only for expired) */}
         {(expired || status === 'Expired') && (
-          <div className="flex-shrink-0 sticky bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent dark:from-gray-900 dark:via-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)] z-10">
+          <div className="flex-shrink-0 sticky bottom-0 left-0 right-0 p-4 bg-surface border-t border-subtle z-10">
             <Button
               variant="primary"
               onClick={handleReactivate}
@@ -990,10 +949,10 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
 
         {/* Action Buttons - Pay Remaining */}
         {details.billId && !expired && status !== 'Expired' && (details.isPending || details.isPaying || details.status === 'Pending') && pricing?.totalRemainingAmount != null && pricing.totalRemainingAmount > 0 && (
-          <div className="flex-shrink-0 sticky bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent dark:from-gray-900 dark:via-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)] z-10">
+          <div className="flex-shrink-0 sticky bottom-0 left-0 right-0 p-4 bg-surface border-t border-subtle z-10">
             <Button 
               onClick={handleGoToBill} 
-              className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white shadow-lg" 
+              className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white" 
               leftIcon={<PiReceipt className="h-5 w-5" />}
             >
               پرداخت باقیمانده ({formatCurrencyFa(pricing.totalRemainingAmount)} ریال)

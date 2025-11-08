@@ -15,17 +15,16 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 
 const CARD_VARIANTS = {
   default: [
-    'bg-white dark:bg-gray-800',
-    'border border-neutral-200 dark:border-gray-700',
+    'bg-surface',
+    'border border-subtle',
   ].join(' '),
   outlined: [
-    'bg-white dark:bg-gray-800',
-    'border-2 border-neutral-300 dark:border-gray-600',
+    'bg-surface',
+    'border-2 border-subtle',
   ].join(' '),
   elevated: [
-    'bg-white dark:bg-gray-800',
-    'shadow-lg dark:shadow-xl',
-    'border border-neutral-200 dark:border-gray-700',
+    'bg-surface',
+    'border border-subtle',
   ].join(' '),
 };
 
@@ -57,7 +56,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
   ref
 ) {
   const hoverClasses = hover
-    ? 'hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600'
+    ? 'hover:border-gray-300 dark:hover:border-gray-600'
     : '';
   
   const clickableClasses = clickable

@@ -177,7 +177,7 @@ export default function WalletPage({ params }: WalletPageProps) {
             )}
 
             {/* Wallet Balance Card */}
-            <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-lg p-4 text-white shadow-sm">
+            <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-lg p-4 text-white">
               <div className="mb-3 flex items-center justify-between">
                 <div className="text-sm font-medium opacity-90">موجودی کیف پول</div>
                 <div className="flex items-center gap-2">
@@ -222,7 +222,7 @@ export default function WalletPage({ params }: WalletPageProps) {
               <button
                 type="button"
                 onClick={handleTransactions}
-                className="group relative bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer"
+                className="group relative bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 overflow-hidden cursor-pointer"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative flex items-center gap-3">
@@ -240,7 +240,7 @@ export default function WalletPage({ params }: WalletPageProps) {
               <button
                 type="button"
                 onClick={handleDeposits}
-                className="group relative bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-emerald-400 dark:hover:border-emerald-500 hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer"
+                className="group relative bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-emerald-400 dark:hover:border-emerald-500 transition-all duration-300 overflow-hidden cursor-pointer"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-900/20 dark:to-emerald-800/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative flex items-center gap-3">
@@ -258,7 +258,7 @@ export default function WalletPage({ params }: WalletPageProps) {
             {/* Add Deposit Button - Outside card */}
             <Button
               onClick={handleCreateDeposit}
-              variant="emerald"
+              variant="primary"
               size="lg"
               className="w-full"
               leftIcon={<PiPlusCircle className="h-5 w-5" />}
@@ -267,7 +267,7 @@ export default function WalletPage({ params }: WalletPageProps) {
             </Button>
 
             {/* Wallet Information - Card Design */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
               <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
                 <div className="w-1 h-5 bg-emerald-500 rounded-full" />
                 اطلاعات کیف پول

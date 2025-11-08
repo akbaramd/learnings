@@ -360,6 +360,11 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
                 </h3>
               </div>
               
+              {/* Message to inform users they must select a capacity */}
+              <p className="text-caption text-gray-600 dark:text-gray-400 mb-4">
+                لطفاً یکی از ظرفیت‌های زیر را انتخاب کنید
+              </p>
+              
               <div className="space-y-2">
                 {capacities.map((capacity: CapacityDetailDto, index) => {
                   if (!capacity.id) return null;
@@ -529,11 +534,11 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
 
       {/* Sticky Action Button at Bottom */}
       {tour.isRegistrationOpen && !tour.isFullyBooked && capacities.length > 0 && (
-        <div className="sticky bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-white via-white to-transparent dark:from-gray-900 dark:via-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.3)] z-10">
+        <div className="sticky bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-white via-white to-transparent dark:from-gray-900 dark:via-gray-900 border-t border-gray-200 dark:border-gray-700 z-10">
           <Button
             onClick={handleStartReservation}
             disabled={isStarting || !selectedCapacityId || selectedCapacityId.trim() === ''}
-            variant="emerald"
+            variant="primary"
             size="md"
             block
             className="font-medium"
@@ -544,11 +549,7 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
           >
             شروع رزرو
           </Button>
-          {!selectedCapacityId && (
-            <p className="text-[10px] text-center text-gray-500 dark:text-gray-400 mt-1.5">
-              لطفاً یک ظرفیت انتخاب کنید
-            </p>
-          )}
+       
         </div>
       )}
     </div>

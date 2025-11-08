@@ -267,10 +267,10 @@ export default function VerifyOtpPage() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       {/* Title above card */}
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold text-emerald-700 dark:text-emerald-400 mb-2">
+        <h1 className="text-heading-1 text-emerald-700 dark:text-emerald-400 mb-2">
           سامانه خدمات رفاهی   
         </h1>
-        <p className="text-xs text-gray-500 dark:text-gray-500">
+        <p className="text-caption text-gray-500 dark:text-gray-400">
           نظام مهندسی ساختمان آذربایجان غربی
         </p>
       </div>
@@ -282,13 +282,13 @@ export default function VerifyOtpPage() {
         className="w-full"
       >
           <div className="mb-6 text-center">
-            <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">تأیید کد</h2>
-            <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+            <h2 className="text-heading-3-alt text-neutral-900 dark:text-neutral-100">تأیید کد</h2>
+            <p className="mt-1 text-body text-neutral-600 dark:text-neutral-400">
               کد ۶ رقمی ارسال شده به شماره تلفن خود را وارد کنید.
             </p>
             <div className="mt-3 p-3 bg-neutral-50 dark:bg-gray-700 rounded-lg border border-neutral-200 dark:border-gray-600">
-              <p className="text-sm text-neutral-700 dark:text-neutral-300">
-                <span className="font-medium">شماره تلفن:</span>
+              <p className="text-body text-neutral-700 dark:text-neutral-300">
+                <span className="text-label">شماره تلفن:</span>
                 <span className="mr-2 font-mono text-base sm:ltr" dir="ltr">{maskedPhone || 'در حال بارگذاری...'}</span>
               </p>
             </div>
@@ -503,7 +503,7 @@ export default function VerifyOtpPage() {
             {/* Timer and Resend button in a row */}
             <div className="flex items-center justify-between gap-3">
               {!canResend ? (
-                <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+                <div className="flex items-center gap-2 text-caption text-neutral-500 dark:text-neutral-400">
                   <span>زمان باقی‌مانده:</span>
                   <span className="font-mono text-red-600 dark:text-red-400 sm:ltr" dir="ltr">{formatTime(timeLeft)}</span>
                 </div>
@@ -556,7 +556,7 @@ export default function VerifyOtpPage() {
           
           {/* Info message about organization phone numbers at bottom */}
           <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800/50">
-            <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed text-center">
+            <p className="text-caption text-blue-700 dark:text-blue-300 text-center">
               کد تأیید به شماره تلفن ثبت‌شده در سیستم سازمان ارسال شده است.
             </p>
           </div>

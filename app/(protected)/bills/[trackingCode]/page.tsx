@@ -579,7 +579,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <div className="p-4 space-y-4">
             {/* Bill Status Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               {getStatusIcon(bill.status || '')}
@@ -691,7 +691,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
                 
         {/* Bill Items */}
         {billItems.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
               جزئیات فاکتور
                   </h3>
@@ -735,7 +735,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
 
         {/* Discount Code Section */}
         {!isBillFullyPaid && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
               کد تخفیف
                   </h3>
@@ -805,7 +805,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
 
         {/* Payment Method Selection (hidden if free) */}
         {!isBillFullyPaid && amountAfterDiscount > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
               روش پرداخت
             </h3>

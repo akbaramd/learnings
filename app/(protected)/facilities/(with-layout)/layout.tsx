@@ -110,7 +110,7 @@ function FacilitiesLayoutContent({ children }: FacilitiesLayoutProps) {
         <div className="flex-1 flex flex-row overflow-hidden relative">
           {/* Vertical Tabs Navigation - Sticky on left side, with margins */}
           <div className="flex-shrink-0 w-12 self-start top-0 py-2 h-full">
-            <div className="bg-white dark:bg-gray-800 border-l border-t border-b border-gray-200 dark:border-gray-700 rounded-tl-lg rounded-bl-lg overflow-hidden flex flex-col items-center gap-1 h-full shadow-sm">
+            <div className="bg-white dark:bg-gray-800 border-l border-t border-b border-gray-200 dark:border-gray-700 rounded-tl-lg rounded-bl-lg overflow-hidden flex flex-col items-center gap-1 h-full">
               {tabs.map((tab) => {
                 const isActive = tab.active;
                 const Icon = tab.icon;

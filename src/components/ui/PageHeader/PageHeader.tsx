@@ -66,7 +66,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
   return (
     <div
-      className={`flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm ${className}`}
+      className={`flex-shrink-0 bg-surface border-t-0 border-b border-subtle ${className}`}
     >
       <div className={`px-4 py-2 ${contentClassName}`}>
         <div className="flex items-center gap-3">

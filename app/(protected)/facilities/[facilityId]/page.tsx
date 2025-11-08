@@ -267,7 +267,6 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
                         transition-all duration-200
                         ${bgClass}
                         ${accentClass}
-                        shadow-sm hover:shadow-md
                         ${!isActive ? 'opacity-70' : ''}
                         ${canClick ? 'hover:ring-2 hover:ring-emerald-200 dark:hover:ring-emerald-800' : ''}
                       `}
@@ -419,7 +418,7 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
                           {canClick && (
                             <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-800">
                               <Button
-                                variant="emerald"
+                                variant="primary"
                                 size="md"
                                 block
                                 onClick={() => handleCycleClick(cycle)}

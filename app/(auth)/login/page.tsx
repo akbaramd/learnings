@@ -418,7 +418,7 @@ export default function LoginPage() {
           </Button>
           
           {/* Subtle notice about organization membership */}
-          <p className="mt-6 text-center text-xs text-neutral-400 dark:text-neutral-500 leading-relaxed">
+          <p className="mt-6 text-center text-caption text-neutral-400 dark:text-neutral-500">
             این سامانه مخصوص اعضای سازمان است. در صورت مشکل در ورود، با پشتیبانی تماس بگیرید.
           </p>
         </form>
@@ -439,7 +439,7 @@ export default function LoginPage() {
               <PiWarningCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+              <h3 className="text-heading-3-alt text-neutral-900 dark:text-neutral-100">
                 کد ملی پیدا نشد
               </h3>
             </div>
@@ -448,13 +448,13 @@ export default function LoginPage() {
 
         <DrawerBody>
           <div className="space-y-4">
-            <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
+            <p className="text-body text-neutral-600 dark:text-neutral-400">
               متأسفانه کاربری با کد ملی وارد شده در سیستم یافت نشد.
             </p>
             
             {notFoundNationalId && (
               <div className="p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700">
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+                <p className="text-caption text-neutral-500 dark:text-neutral-400 mb-1">
                   کد ملی وارد شده:
                 </p>
                 <p className="text-base font-mono font-semibold text-neutral-900 dark:text-neutral-100">
@@ -476,10 +476,10 @@ export default function LoginPage() {
                   <div className="space-y-2">
                     {/* Format Validation */}
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-neutral-700 dark:text-neutral-300">
+                      <span className="text-body text-neutral-700 dark:text-neutral-300">
                         اعتبارسنجی فرمت:
                       </span>
-                      <span className={`text-sm font-semibold ${
+                      <span className={`text-body font-semibold ${
                         validationResult.isValidFormat 
                           ? 'text-green-600 dark:text-green-400'
                           : 'text-red-600 dark:text-red-400'
@@ -490,10 +490,10 @@ export default function LoginPage() {
 
                     {/* Existence Check */}
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-neutral-700 dark:text-neutral-300">
+                      <span className="text-body text-neutral-700 dark:text-neutral-300">
                         وجود در سیستم:
                       </span>
-                      <span className={`text-sm font-semibold ${
+                      <span className={`text-body font-semibold ${
                         validationResult.exists 
                           ? 'text-green-600 dark:text-green-400'
                           : 'text-red-600 dark:text-red-400'
@@ -505,10 +505,10 @@ export default function LoginPage() {
                     {/* Full Name (if exists) */}
                     {validationResult.exists && validationResult.fullName && (
                       <div className="pt-2 border-t border-neutral-200 dark:border-neutral-700">
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+                        <p className="text-caption text-neutral-500 dark:text-neutral-400 mb-1">
                           نام و نام خانوادگی:
                         </p>
-                        <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                        <p className="text-body font-semibold text-neutral-900 dark:text-neutral-100">
                           {validationResult.fullName}
                         </p>
                       </div>
@@ -517,10 +517,10 @@ export default function LoginPage() {
                     {/* Membership Number (if exists) */}
                     {validationResult.exists && validationResult.membershipNumber && (
                       <div className="pt-2 border-t border-neutral-200 dark:border-neutral-700">
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+                        <p className="text-caption text-neutral-500 dark:text-neutral-400 mb-1">
                           شماره عضویت:
                         </p>
-                        <p className="text-sm font-mono font-semibold text-neutral-900 dark:text-neutral-100">
+                        <p className="text-body font-mono font-semibold text-neutral-900 dark:text-neutral-100">
                           {validationResult.membershipNumber}
                         </p>
                       </div>
@@ -531,7 +531,7 @@ export default function LoginPage() {
                 {/* Additional Info */}
                 {validationResult.exists && (
                   <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                    <p className="text-xs text-green-700 dark:text-green-300 leading-relaxed">
+                    <p className="text-caption text-green-700 dark:text-green-300">
                       ✓ این کد ملی در سیستم ثبت شده است. در صورت مشکل در ورود، با پشتیبانی تماس بگیرید.
                     </p>
                   </div>
@@ -539,7 +539,7 @@ export default function LoginPage() {
 
                 {!validationResult.exists && validationResult.isValidFormat && (
                   <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                    <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+                    <p className="text-caption text-amber-700 dark:text-amber-300">
                       ⚠️ این کد ملی معتبر است اما در سیستم ثبت نشده است. لطفاً با پشتیبانی تماس بگیرید.
                     </p>
                   </div>
@@ -547,7 +547,7 @@ export default function LoginPage() {
 
                 {validationResult.isValidFormat === false && (
                   <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                    <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed">
+                    <p className="text-caption text-red-700 dark:text-red-300">
                       ✗ فرمت کد ملی نامعتبر است. لطفاً شماره ملی خود را بررسی کنید.
                     </p>
                   </div>
@@ -558,14 +558,14 @@ export default function LoginPage() {
             {/* Validation Error */}
             {validationError && (
               <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed">
+                <p className="text-caption text-red-700 dark:text-red-300">
                   خطا در اعتبارسنجی: {validationError}
                 </p>
               </div>
             )}
 
             {!validationResult && !validationError && (
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
+              <p className="text-caption text-neutral-500 dark:text-neutral-400">
                 اگر فکر می‌کنید این کد ملی باید در سیستم ثبت شده باشد، می‌توانید درخواست بررسی کنید.
               </p>
             )}

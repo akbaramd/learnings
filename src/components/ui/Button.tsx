@@ -4,7 +4,7 @@ import { Button as HUIButton } from '@headlessui/react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { forwardRef, useMemo } from 'react';
 
-type Variant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'emerald';
+type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
 type Size = 'xs' | 'sm' | 'md' | 'lg';
 type Radius = 'xs' | 'sm' | 'md' | 'none';
 
@@ -21,48 +21,41 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
 }
 
 const VARIANT_STYLES: Record<Variant, string> = {
+  // Primary uses design system bg-primary and text-on-primary utilities
   primary: [
-    'bg-green-600 dark:bg-green-500 text-white',
-    'data-[hover]:bg-green-700 dark:data-[hover]:bg-green-600',
+    'bg-primary text-on-primary',
+    'data-[hover]:bg-emerald-400 dark:data-[hover]:bg-emerald-300',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800',
-    'focus-visible:ring-green-700 dark:focus-visible:ring-green-500',
-    'disabled:bg-neutral-200 dark:disabled:bg-gray-700 disabled:text-neutral-500 dark:disabled:text-gray-400',
+    'focus-visible:ring-emerald-500 dark:focus-visible:ring-emerald-400',
   ].join(' '),
+  // Secondary uses design system bg-secondary and text-on-secondary utilities
   secondary: [
-    'bg-neutral-900 dark:bg-gray-800 text-white',
-    'data-[hover]:bg-neutral-800 dark:data-[hover]:bg-gray-700',
+    'bg-secondary text-on-secondary',
+    'data-[hover]:bg-gray-600 dark:data-[hover]:bg-gray-200',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800',
-    'focus-visible:ring-neutral-800 dark:focus-visible:ring-gray-600',
-    'disabled:bg-neutral-200 dark:disabled:bg-gray-700 disabled:text-neutral-500 dark:disabled:text-gray-400',
+    'focus-visible:ring-gray-500 dark:focus-visible:ring-gray-300',
   ].join(' '),
+  // Danger uses design system bg-danger and text-on-danger utilities
   danger: [
-    'bg-red-600 dark:bg-red-500 text-white',
+    'bg-danger text-on-danger',
     'data-[hover]:bg-red-700 dark:data-[hover]:bg-red-600',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800',
     'focus-visible:ring-red-700 dark:focus-visible:ring-red-500',
-    'disabled:bg-neutral-200 dark:disabled:bg-gray-700 disabled:text-neutral-500 dark:disabled:text-gray-400',
   ].join(' '),
+  // Ghost uses design system bg-ghost class (text color is built into bg-ghost)
   ghost: [
-    'bg-transparent text-neutral-900 dark:text-neutral-100 border border-neutral-300 dark:border-gray-600',
-    'data-[hover]:bg-neutral-50 dark:data-[hover]:bg-gray-800',
+    'bg-ghost',
+    'data-[hover]:bg-black/5 dark:data-[hover]:bg-white/10',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800',
-    'focus-visible:ring-neutral-300 dark:focus-visible:ring-gray-500',
-    'disabled:text-neutral-400 dark:disabled:text-gray-500 disabled:border-neutral-200 dark:disabled:border-gray-700',
-  ].join(' '),
-  emerald: [
-    'bg-gradient-to-br from-emerald-600 to-emerald-700 dark:from-emerald-500 dark:to-emerald-600 text-white',
-    'data-[hover]:from-emerald-700 data-[hover]:to-emerald-800 dark:data-[hover]:from-emerald-600 dark:data-[hover]:to-emerald-700',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800',
-    'focus-visible:ring-emerald-600 dark:focus-visible:ring-emerald-500',
-    'disabled:from-gray-400 disabled:to-gray-500 dark:disabled:from-gray-600 dark:disabled:to-gray-700 disabled:text-gray-200 dark:disabled:text-gray-300',
+    'focus-visible:ring-gray-300 dark:focus-visible:ring-gray-500',
   ].join(' '),
 };
 
 const SIZE_STYLES: Record<Size, string> = {
-  xs: 'h-7 px-2 text-[11px]',
-  sm: 'h-8 px-3 text-xs',
-  md: 'h-10 px-4 text-sm',
-  lg: 'h-12 px-5 text-base',
+  xs: 'h-7 px-2 typo-micro',
+  sm: 'h-8 px-3 typo-body-2',
+  md: 'h-10 px-4 typo-button',
+  lg: 'h-12 px-5 typo-body',
 };
 
 const GAP_BY_SIZE: Record<Size, string> = {
@@ -104,13 +97,15 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       [
         'relative inline-flex items-center justify-center select-none',
         'transition-[background-color,box-shadow,transform,opacity] duration-150',
-        'active:[transform:scale(.98)]',
+        // Only apply active transform when not disabled
+        isDisabled ? '' : 'active:[transform:scale(.98)]',
         block ? 'w-full' : 'w-auto',
         SIZE_STYLES[size],
         GAP_BY_SIZE[size],
         RADIUS_STYLES[radius],
-        VARIANT_STYLES[variant],
-        isDisabled ? 'cursor-not-allowed opacity-100' : 'cursor-pointer',
+        // Only apply variant styles when not disabled, otherwise apply disabled background
+        // Disabled state handles all hover, focus, and active states via CSS
+        isDisabled ? 'bg-disabled cursor-not-allowed' : [VARIANT_STYLES[variant], 'cursor-pointer'].join(' '),
         'overflow-hidden', // shimmer overlay containment
       ].join(' '),
     [variant, size, block, isDisabled, radius]
@@ -146,7 +141,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 
         <span className="pointer-events-none flex items-center justify-center gap-2">
           {loading ? spinner : leftIcon}
-          <span>{loading ? loadingText : children}</span>
+          <span className="whitespace-nowrap">{loading ? loadingText : children}</span>
           {!loading && rightIcon}
         </span>
       </HUIButton>

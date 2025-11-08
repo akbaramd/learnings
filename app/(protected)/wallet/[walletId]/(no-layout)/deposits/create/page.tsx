@@ -216,7 +216,7 @@ export default function CreateDepositPage({ params }: CreateDepositPageProps) {
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <div className="p-4 space-y-4">
             {/* Create Deposit Form */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
               <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                   واریز جدید

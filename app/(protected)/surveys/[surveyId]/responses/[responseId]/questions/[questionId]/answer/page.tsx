@@ -538,7 +538,7 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
       </ScrollableArea>
 
       {/* Sticky Navigation Buttons - Bottom of page */}
-      <div className="flex-shrink-0 sticky bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent dark:from-gray-900 dark:via-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)] z-10">
+      <div className="flex-shrink-0 sticky bottom-0 left-0 right-0 p-4 bg-surface border-t border-subtle z-10">
         <div className="flex items-center gap-2 w-full">
           <Button
             variant="primary"

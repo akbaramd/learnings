@@ -473,7 +473,7 @@ export default function FacilitiesPage() {
                                 router.push(`/facilities/${facility.id}`);
                               }
                             }}
-                            variant="emerald"
+                            variant="primary"
                           >
                             مشاهده جزئیات و درخواست
                           </Button>
