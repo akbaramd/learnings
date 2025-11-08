@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useGetMeQuery, useLogoutMutation } from '@/src/store/auth';
+import { useGetMeQuery } from '@/src/store/auth';
 import { useAuth } from '@/src/hooks/useAuth';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { useTheme } from '@/src/hooks/useTheme';
@@ -111,7 +111,6 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const pathnameRef = useRef(pathname);
-  const prevStatusRef = useRef<string | null>(null);
 
   // Update pathname ref whenever it changes
   useEffect(() => {
@@ -119,8 +118,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   }, [pathname]);
 
   // Use useAuth hook for authentication state
-  const { isAuthenticated, isReady } = useAuth();
-  const [logout] = useLogoutMutation();
+  const { isAuthenticated, isReady, authStatus } = useAuth();
 
   // Fetch user profile on mount - this will set isInitialized to true
   // Skip if not ready to prevent infinite loops
@@ -132,21 +130,34 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   });
 
   // Check authentication and redirect if not authenticated
+  // Listen to both isAuthenticated AND authStatus to catch all state changes
   useEffect(() => {
+    console.log('[ProtectedLayout] Auth state check:', { 
+      isReady, 
+      isAuthenticated, 
+      authStatus,
+      pathname: pathnameRef.current 
+    });
+    
     // Don't process anything until auth is ready
-    console.log('isReady', isReady);
     if (!isReady) {
+      console.log('[ProtectedLayout] Auth not ready yet, waiting...');
       return;
     }
-    console.log('isAuthenticated', isAuthenticated);
-    // If not authenticated, redirect to login
-    if (!isAuthenticated) {
-      console.log('Redirecting to login', pathnameRef.current);
+    
+    // If not authenticated OR status is anonymous, redirect to login
+    if (!isAuthenticated || authStatus === 'anonymous') {
+      console.log('[ProtectedLayout] User not authenticated or status is anonymous, redirecting to login...');
+      console.log('[ProtectedLayout] Current pathname:', pathnameRef.current);
       const returnUrl = encodeURIComponent(pathnameRef.current || '/');
+      console.log('[ProtectedLayout] Return URL:', returnUrl);
+      console.log('[ProtectedLayout] Redirecting to:', `/login?logout=true&r=${returnUrl}`);
       window.location.href = `/login?logout=true&r=${returnUrl}`;
       return;
     }
-  }, [isAuthenticated, isReady]);
+    
+    console.log('[ProtectedLayout] User authenticated, no redirect needed');
+  }, [isAuthenticated, isReady, authStatus]);
 
   // Auto-fetch notifications when authenticated and ready
   const shouldPollNotifications = useMemo(() => isReady && isAuthenticated, [isReady, isAuthenticated]);

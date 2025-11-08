@@ -213,35 +213,47 @@ export const authApi = createApi({
       }),
       invalidatesTags: ['Auth'],
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        console.log('[Logout Mutation] onQueryStarted - Starting logout mutation...');
         try {
+          console.log('[Logout Mutation] Setting status to loading...');
           dispatch(setAuthStatus('loading'));
           dispatch(setError(null));
 
+          console.log('[Logout Mutation] Waiting for API response...');
           const { data } = await queryFulfilled;
+          console.log('[Logout Mutation] API response received:', data);
 
           // Check isSuccess flag
           if (data?.isSuccess === true && data?.data?.isSuccess) {
+            console.log('[Logout Mutation] Logout successful, clearing state...');
             dispatch(clearUser());
             dispatch(clearChallengeId());
             dispatch(setAuthStatus('anonymous'));
+            console.log('[Logout Mutation] State cleared, status set to anonymous');
           } else {
+            console.log('[Logout Mutation] Logout response indicates failure, but clearing state for security...');
             // Even if logout fails on server, clear local state for security
             dispatch(clearUser());
             dispatch(clearChallengeId());
             dispatch(setAuthStatus('anonymous'));
+            console.log('[Logout Mutation] State cleared despite API failure');
             const errorMessage = data?.message || data?.errors?.[0] || 'Logout failed';
             const { message, type } = categorizeAuthError({ data });
             dispatch(setErrorWithType({ message: errorMessage || message, type }));
           }
         } catch (error: unknown) {
+          console.error('[Logout Mutation] Error during logout:', error);
           // Even if logout fails on server, clear local state
+          console.log('[Logout Mutation] Clearing state due to error...');
           dispatch(clearUser());
           dispatch(clearChallengeId());
           dispatch(setAuthStatus('anonymous'));
+          console.log('[Logout Mutation] State cleared after error');
           
           const { message, type } = categorizeAuthError(error);
           dispatch(setErrorWithType({ message, type }));
         }
+        console.log('[Logout Mutation] onQueryStarted completed');
       },
     }),
 

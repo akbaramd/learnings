@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { useLogoutMutation, selectIsAuthenticated } from '@/src/store/auth';
-import { clearUser, clearChallengeId, setAuthStatus, setAnonymous } from '@/src/store/auth/auth.slice';
+import { clearUser, clearChallengeId, setAnonymous } from '@/src/store/auth/auth.slice';
 import { useAppSelector } from '@/src/hooks/store';
 import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import { PageHeader } from '@/src/components/ui/PageHeader';
@@ -24,21 +24,55 @@ export default function LogoutDetailsPage() {
   };
 
   const handleLogout = async () => {
-    // Always set status to anonymous FIRST before any API calls or redirects
-    // This ensures state is 'anonymous' and persists even after page reload
-    try {
-      await logout({ refreshToken: undefined }).unwrap();
-    } catch {
-      // API failed, but state is already set to 'anonymous' above
-      // No need to set it again
-    }
+    console.log('[Logout] Starting logout process...');
+    console.log('[Logout] Current isAuthenticated:', isAuthenticated);
+    
+    // Clear local state first - this will trigger layout to detect change
+    console.log('[Logout] Clearing local state...');
     dispatch(clearUser());
     dispatch(clearChallengeId());
     dispatch(setAnonymous());
+    console.log('[Logout] Local state cleared - status set to anonymous');
+    console.log('[Logout] Layout should detect authStatus change and redirect');
 
- 
+    // If user is not authenticated (no tokens), layout will handle redirect
+    if (!isAuthenticated) {
+      console.log('[Logout] User not authenticated, skipping API call');
+      console.log('[Logout] Waiting for layout to detect status change and redirect...');
+      // Give layout a moment to detect the change, then force redirect if needed
+      setTimeout(() => {
+        console.log('[Logout] Timeout: Forcing redirect as fallback...');
+        const returnUrl = encodeURIComponent(window.location.pathname || '/');
+        window.location.href = `/login?logout=true&r=${returnUrl}`;
+      }, 100);
+      return;
+    }
 
-
+    // If user is authenticated (has tokens), call logout API
+    console.log('[Logout] User authenticated, calling logout API...');
+    try {
+      const result = await logout({ refreshToken: undefined }).unwrap();
+      console.log('[Logout] Logout API success:', result);
+      // Layout will handle redirect when it detects status change
+      console.log('[Logout] Waiting for layout to detect status change and redirect...');
+      // Give layout a moment to detect the change, then force redirect if needed
+      setTimeout(() => {
+        console.log('[Logout] Timeout: Forcing redirect as fallback...');
+        const returnUrl = encodeURIComponent(window.location.pathname || '/');
+        window.location.href = `/login?logout=true&r=${returnUrl}`;
+      }, 100);
+    } catch (error) {
+      console.error('[Logout] Logout API failed:', error);
+      // API failed, but state is already cleared above
+      // Layout will handle redirect when it detects status change
+      console.log('[Logout] Waiting for layout to detect status change and redirect...');
+      // Give layout a moment to detect the change, then force redirect if needed
+      setTimeout(() => {
+        console.log('[Logout] Timeout: Forcing redirect as fallback...');
+        const returnUrl = encodeURIComponent(window.location.pathname || '/');
+        window.location.href = `/login?logout=true&r=${returnUrl}`;
+      }, 100);
+    }
   };
 
   const handleCancel = () => {

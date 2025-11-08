@@ -46,20 +46,42 @@ export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, unkno
   
   // Check if we got a 401 error
   // This only happens when server-side refresh failed definitively
-  const got401 = (result?.error && 'status' in result.error && result.error.status === 401) || 
-                 (result.meta?.response?.status === 401);
+  // Check multiple ways the error might be structured:
+  // 1. result.error.status === 401 (standard RTK Query error)
+  // 2. result.meta?.response?.status === 401 (response metadata)
+  // 3. result.data with status 401 (error response in data)
+  const got401 = 
+    (result?.error && 'status' in result.error && result.error.status === 401) || 
+    (result.meta?.response?.status === 401) ||
+    (result.data && typeof result.data === 'object' && 'status' in result.data && result.data.status === 401);
 
-  // If we get a 401, it means:
+  // Also check for token refresh failure messages in the error response
+  const isTokenRefreshFailure = result.data && typeof result.data === 'object' && 
+    ('message' in result.data && 
+     (String(result.data.message).includes('Token refresh failed') || 
+      String(result.data.message).includes('Session expired')));
+
+  // If we get a 401 or token refresh failure, it means:
   // 1. Server tried to refresh token automatically
   // 2. Refresh failed (token expired, invalid, etc.)
   // 3. We must logout and clear user state
   // 
   // NOTE: We do NOT logout on network errors or other status codes
   // Only on definitive 401 after server-side refresh attempt failed
-  if (got401) {
+  if (got401 || isTokenRefreshFailure) {
+    console.log('[baseQueryWithReauth] 401 or token refresh failure detected:', {
+      got401,
+      isTokenRefreshFailure,
+      error: result.error,
+      data: result.data,
+      meta: result.meta,
+    });
+    
     // Clear user data and set anonymous to trigger logout
+    console.log('[baseQueryWithReauth] Clearing user and setting anonymous...');
     api.dispatch(clearUser());
     api.dispatch(setAnonymous());
+    console.log('[baseQueryWithReauth] User cleared, layout should redirect');
   }
 
   return result;
