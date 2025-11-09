@@ -619,7 +619,7 @@ export default function BillsPage() {
             ) : (
               <div className="text-center py-12">
                 <PiReceipt className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   {normalizedSearch ? 'نتیجه‌ای یافت نشد' : 'صورت حسابی یافت نشد'}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">

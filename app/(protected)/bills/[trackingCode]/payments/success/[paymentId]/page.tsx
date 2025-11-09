@@ -258,7 +258,7 @@ export default function PaymentSuccessPage({ params }: PaymentSuccessPageProps) 
 
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-500 dark:text-gray-400">مبلغ پرداخت:</span>
-                    <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                    <span className="text-md font-bold text-green-600 dark:text-green-400">
                       {formatCurrencyFa(paymentData?.amountRials || 0)} ریال
                     </span>
                   </div>

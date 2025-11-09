@@ -61,7 +61,7 @@ function ThemeIconButton() {
   const label = currentTheme === 'light' ? 'Switch to dark mode' : 'Switch to light mode';
 
   return (
-    <IconButton aria-label={label} onClick={handleToggleTheme} variant="solid" color="secondary">
+    <IconButton aria-label={label} onClick={handleToggleTheme} variant="subtle" color="secondary">
       {icon}
     </IconButton>
   );
@@ -82,9 +82,11 @@ function NotificationButton({ unreadCountData, notificationsLoading }: {
 
   return (
     <div className="relative">
-      <IconButton 
+      <IconButton   
         aria-label={`اعلان‌ها${hasUnreadNotifications ? ` (${unreadCount} اعلان خوانده نشده)` : ''}`}
         onClick={handleNotificationClick}
+        variant="subtle"
+        color="secondary"
       >
         <PiBell className="h-4 w-4 text-gray-700 dark:text-gray-200" />
       </IconButton>
@@ -136,6 +138,8 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
           <IconButton 
             aria-label="Go to home"
             onClick={handleHomeClick}
+            variant="subtle"
+            color="secondary"
             className="hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             <PiHouse className="h-4 w-4 text-gray-700 dark:text-gray-200" />

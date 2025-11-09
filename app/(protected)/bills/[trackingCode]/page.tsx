@@ -491,7 +491,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
         <div className="p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center">
             <PiReceipt className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-2">
               فاکتور یافت نشد
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
@@ -584,7 +584,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
             <div className="flex items-center gap-3">
               {getStatusIcon(bill.status || '')}
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                <h2 className="text-md font-semibold text-gray-900 dark:text-gray-100">
                   {isBillFullyPaid ? 'صورت حساب‌ها' : 'مشخصات فاکتور'}
                 </h2>
                 </div>
@@ -692,7 +692,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
         {/* Bill Items */}
         {billItems.length > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4">
               جزئیات فاکتور
                   </h3>
             <div className="overflow-x-auto">
@@ -736,7 +736,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
         {/* Discount Code Section */}
         {!isBillFullyPaid && (
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4">
               کد تخفیف
                   </h3>
             <div className="space-y-3">
@@ -807,7 +807,7 @@ export default function BillDetailPage({ params }: BillDetailPageProps) {
         {/* Payment Method Selection (hidden if free) */}
         {!isBillFullyPaid && amountAfterDiscount > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4">
               روش پرداخت
             </h3>
             <div className="space-y-3">

@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     const onlyActive =
       onlyActiveParam === 'true' ? true :
       onlyActiveParam === 'false' ? false :
-      undefined;
+      false;
 
     const upstream = await api.api.getFacilities({
       page,

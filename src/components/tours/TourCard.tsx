@@ -348,7 +348,8 @@ export function TourCard({
         {/* Action Button */}
         <Button
           onClick={handleButtonClick}
-          variant={hasReservation ? 'primary' : 'ghost'}
+          variant={hasReservation ? 'solid' : 'outline'}
+          color={hasReservation ? 'primary' : 'secondary'}
           className={[
             'mt-4  w-full '
           ].join(' ')}

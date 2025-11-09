@@ -51,7 +51,8 @@ export default function ShareButton({
   if (typeof navigator !== 'undefined' && 'share' in navigator && typeof navigator.share === 'function') {
     return (
       <Button
-        variant={variant}
+        variant={variant === 'primary' ? 'solid' : 'outline'}
+        color={variant === 'primary' ? 'primary' : 'secondary'}
         size={size}
         onClick={handleWebShare}
         leftIcon={<PiShareNetwork className="h-4 w-4" />}
@@ -71,7 +72,8 @@ export default function ShareButton({
   return (
     <div className="relative">
       <Button
-        variant={variant}
+        variant={variant === 'primary' ? 'solid' : 'outline'}
+        color={variant === 'primary' ? 'primary' : 'secondary'}
         size={size}
         onClick={handleTelegram}
         leftIcon={<PiPaperPlaneTilt className="h-4 w-4" />}

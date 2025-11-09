@@ -226,7 +226,7 @@ export default function ToursPage() {
             {!isLoadingState && mappedTours.length === 0 && !error && (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <PiMapPinDuotone className="h-16 w-16 text-gray-300 dark:text-gray-600 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   توری یافت نشد
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">

@@ -45,7 +45,7 @@ export async function GET(
       ? Number(pageSizeRaw)
       : 10;
 
-    const onlyActive = onlyActiveParam === 'false' ? false : true;
+    const onlyActive = onlyActiveParam === 'false' ? false : false;
     const onlyEligible = onlyEligibleParam === 'true' ? true : false;
     const onlyWithUserRequests = onlyWithUserRequestsParam === 'true' ? true : false;
     const includeUserRequestStatus = includeUserRequestStatusParam === 'false' ? false : true;

@@ -15,14 +15,12 @@ import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
 import {
-  PiBuilding,
+  PiMoney,
   PiArrowRight,
   PiCalendar,
   PiCheckCircle,
   PiClock,
   PiFileText,
-  PiChartBar,
-  PiTrendUp,
 } from 'react-icons/pi';
 
 interface FacilityDetailPageProps {
@@ -141,11 +139,54 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
     );
   }
 
+  // Smart logic for guide message
+  const activeCycle = cycles.find(cycle => cycle.isActive === true);
+  const upcomingCycle = cycles.find(cycle => cycle.hasStarted === false);
+  const hasAnyCycles = cycles.length > 0;
+  
+  const getGuideMessage = () => {
+    if (activeCycle) {
+      return {
+        title: `برای دوره "${activeCycle.name || 'فعال'}" درخواست دهید`,
+        description: 'یکی از دوره‌های فعال زیر را انتخاب کنید و برای آن درخواست ثبت کنید. اگر قبلاً درخواست داده‌اید، می‌توانید وضعیت آن را مشاهده کنید.',
+        icon: <PiCheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />,
+        bgClass: 'bg-gradient-to-br from-emerald-50 to-blue-50 dark:from-emerald-900/20 dark:to-blue-900/20',
+        borderClass: 'border-emerald-200 dark:border-emerald-800',
+      };
+    } else if (upcomingCycle) {
+      return {
+        title: 'منتظر باشید تا دوره فعال شروع شود',
+        description: `دوره "${upcomingCycle.name || 'آینده'}" در آینده شروع خواهد شد. لطفاً منتظر بمانید تا دوره فعال شود.`,
+        icon: <PiClock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />,
+        bgClass: 'bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20',
+        borderClass: 'border-yellow-200 dark:border-yellow-800',
+      };
+    } else if (hasAnyCycles) {
+      return {
+        title: 'در حال حاضر دوره فعالی وجود ندارد',
+        description: 'همه دوره‌های این تسهیلات به پایان رسیده‌اند. لطفاً منتظر دوره‌های جدید باشید.',
+        icon: <PiClock className="h-5 w-5 text-gray-600 dark:text-gray-400" />,
+        bgClass: 'bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800/20 dark:to-gray-900/20',
+        borderClass: 'border-gray-200 dark:border-gray-700',
+      };
+    } else {
+      return {
+        title: 'در حال حاضر دوره‌ای موجود نیست',
+        description: 'برای این تسهیلات هنوز دوره‌ای تعریف نشده است. لطفاً بعداً بررسی کنید.',
+        icon: <PiCalendar className="h-5 w-5 text-gray-600 dark:text-gray-400" />,
+        bgClass: 'bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800/20 dark:to-gray-900/20',
+        borderClass: 'border-gray-200 dark:border-gray-700',
+      };
+    }
+  };
+  
+  const guideMessage = getGuideMessage();
+
   return (
     <div className="h-full flex flex-col" dir="rtl">
       <PageHeader
         title={facility.name || 'جزئیات تسهیلات'}
-        titleIcon={<PiBuilding className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+        titleIcon={<PiMoney className="h-5 w-5 text-primary" />}
         showBackButton={true}
         onBack={handleBack}
         rightActions={[
@@ -160,18 +201,18 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
 
       <ScrollableArea className="flex-1" hideScrollbar={true}>
         <div className="p-2 space-y-3">
-          {/* Call to Action / Guide Section */}
-          <Card variant="default" radius="lg" padding="md" className="bg-gradient-to-br from-emerald-50 to-blue-50 dark:from-emerald-900/20 dark:to-blue-900/20 border border-emerald-200 dark:border-emerald-800">
+          {/* Call to Action / Guide Section - Smart */}
+          <Card variant="default" radius="lg" padding="md" className={`${guideMessage.bgClass} border ${guideMessage.borderClass}`}>
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 mt-0.5">
-                <PiCalendar className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                {guideMessage.icon}
               </div>
               <div className="flex-1">
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                  برای استفاده از این تسهیلات، درخواست دهید
+                  {guideMessage.title}
                 </h3>
                 <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                  یکی از دوره‌های فعال زیر را انتخاب کنید و برای آن درخواست ثبت کنید. اگر قبلاً درخواست داده‌اید، می‌توانید وضعیت آن را مشاهده کنید.
+                  {guideMessage.description}
                 </p>
               </div>
             </div>
@@ -244,6 +285,8 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
                   const isActive = cycle.isActive === true;
                   const hasRequest = !!cycle.lastRequest?.id;
                   const canClick = isActive && !!cycle.id;
+                  const hasStarted = cycle.hasStarted === true;
+                  const hasEnded = cycle.hasEnded === true;
                   
                   // Subtle alternating backgrounds for visual separation
                   const bgClass = index % 2 === 0 
@@ -434,7 +477,11 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
                             <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-800">
                               <div className="text-center py-2.5 bg-gray-50 dark:bg-gray-800/50 rounded-md">
                                 <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                                  این دوره در حال حاضر غیرفعال است
+                                  {!hasStarted
+                                    ? 'این دوره هنوز شروع نشده است'
+                                    : hasEnded
+                                    ? 'این دوره به پایان رسیده است'
+                                    : 'این دوره در حال حاضر غیرفعال است'}
                                 </span>
                               </div>
                             </div>

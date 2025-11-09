@@ -98,7 +98,7 @@ export default function SurveysPage() {
   useEffect(() => {
     setHeaderState({
       title: 'نظرسنجی‌ها',
-      titleIcon: <PiClipboardText className="h-5 w-5 text-blue-600 dark:text-blue-400" />,
+      titleIcon: <PiClipboardText className="h-5 w-5 text-accent" />,
       showBackButton: true,
       onBack,
       rightActions: [
@@ -190,7 +190,7 @@ export default function SurveysPage() {
         <div className="flex-shrink-0 mb-4">
           <Card variant="default" radius="lg" padding="md">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">جستجو و فیلتر</h3>
+              <h3 className="text-heading-3 text-on-surface">جستجو و فیلتر</h3>
               <Button
                 variant="subtle"
                 size="sm"
@@ -203,7 +203,7 @@ export default function SurveysPage() {
             </div>
 
             <div className="mb-4">
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-label text-on-surface mb-2">
                 جستجو
               </label>
               <div className="flex gap-2">
@@ -229,7 +229,7 @@ export default function SurveysPage() {
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-label text-on-surface mb-2">
                   وضعیت
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -269,7 +269,7 @@ export default function SurveysPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-label text-on-surface mb-2">
                   پذیرش پاسخ
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -340,13 +340,13 @@ export default function SurveysPage() {
           ) : allSurveys && allSurveys.length > 0 ? (
             <>
               {normalizedSearch && (
-                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="mb-4 p-3 bg-accent-subtle rounded-lg border border-accent">
                   <div className="flex items-center justify-between">
                     <Button
                       variant="subtle"
                       size="sm"
                       onClick={() => setSearch('')}
-                      className="text-xs"
+                      className="text-caption"
                     >
                       پاک کردن جستجو
                     </Button>
@@ -392,14 +392,14 @@ export default function SurveysPage() {
                               )}
                             </div>
                           </div>
-                          <div className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                          <div className="text-heading-3 text-on-surface">
                             {survey.title || 'بدون عنوان'}
                           </div>
                         </div>
                       </div>
 
                       {survey.description && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                        <p className="text-body text-muted line-clamp-2">
                           {survey.description}
                         </p>
                       )}
@@ -432,8 +432,8 @@ export default function SurveysPage() {
                 <div ref={loadMoreRef} className="mt-4 flex flex-col items-center gap-3">
                   {isLoading ? (
                     <div className="flex items-center gap-2">
-                      <PiArrowClockwise className="h-5 w-5 animate-spin text-gray-400" />
-                      <span className="text-sm text-gray-500">در حال بارگذاری...</span>
+                      <PiArrowClockwise className="h-5 w-5 animate-spin text-muted" />
+                      <span className="text-body text-muted">در حال بارگذاری...</span>
                     </div>
                   ) : (
                     <Button
@@ -451,7 +451,7 @@ export default function SurveysPage() {
 
               {paginationInfo && !paginationInfo.hasNextPage && allSurveys.length > 0 && (
                 <div className="text-center py-4">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-body text-muted">
                     تمام نظرسنجی‌ها نمایش داده شد
                   </p>
                 </div>
@@ -459,11 +459,11 @@ export default function SurveysPage() {
             </>
           ) : (
             <div className="text-center py-12">
-              <PiClipboardText className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              <PiClipboardText className="h-12 w-12 text-muted mx-auto mb-4" />
+              <h3 className="text-heading-2 text-on-surface mb-2">
                 {normalizedSearch ? 'نتیجه‌ای یافت نشد' : 'نظرسنجی‌ای یافت نشد'}
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+              <p className="text-body text-muted mb-4">
                 {normalizedSearch
                   ? 'لطفاً عنوان نظرسنجی دیگری را جستجو کنید'
                   : 'هیچ نظرسنجی‌ای با فیلترهای انتخابی پیدا نشد'

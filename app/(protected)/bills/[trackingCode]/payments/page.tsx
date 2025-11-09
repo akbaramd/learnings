@@ -360,7 +360,7 @@ export default function BillPaymentsPage({ params }: BillPaymentsPageProps) {
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
             <PiWarning className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-2">
               شناسه فاکتور یافت نشد
             </h3>
             <Button onClick={handleBack} variant="solid" className="mt-4">
@@ -439,7 +439,7 @@ export default function BillPaymentsPage({ params }: BillPaymentsPageProps) {
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">مبلغ</div>
-                          <div className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
+                          <div className="font-semibold text-gray-900 dark:text-gray-100 text-md">
                             {formatCurrencyFa(payment.amountRials || 0)} ریال
                           </div>
                         </div>
@@ -499,7 +499,7 @@ export default function BillPaymentsPage({ params }: BillPaymentsPageProps) {
           ) : (
             <div className="text-center py-12">
               <PiCreditCard className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-2">
                 پرداختی یافت نشد
               </h3>
               <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">

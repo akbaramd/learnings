@@ -341,7 +341,7 @@ export default function NotificationsPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
                 <PiInfo className="h-8 w-8 text-gray-400 dark:text-gray-500" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-2">
                 هیچ اعلانی وجود ندارد
               </h3>
               <p className="text-gray-600 dark:text-gray-400 text-sm">

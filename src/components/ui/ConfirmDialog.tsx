@@ -64,7 +64,7 @@ export function ConfirmDialog({
             {/* Header */}
             <div className="flex items-start justify-between gap-4 mb-4">
               {title && (
-                <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                <DialogTitle className="text-md font-semibold text-gray-900 dark:text-gray-100">
                   {title}
                 </DialogTitle>
               )}
@@ -98,7 +98,8 @@ export function ConfirmDialog({
                 {cancelText}
               </Button>
               <Button
-                variant={variantStyles.confirmVariant}
+                variant={variantStyles.confirmVariant === 'danger' ? 'solid' : 'outline'}
+                color={variantStyles.confirmVariant === 'danger' ? 'accent' : 'primary'}
                 size="md"
                 onClick={() => onClose(true)}
                 loading={isLoading}

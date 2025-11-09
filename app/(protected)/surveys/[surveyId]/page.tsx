@@ -172,7 +172,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
         />
         <ScrollableArea className="flex-1">
           <div className="flex justify-center items-center py-12">
-            <p className="text-body text-gray-500 dark:text-gray-400">در حال بارگذاری...</p>
+            <p className="text-body text-muted">در حال بارگذاری...</p>
           </div>
         </ScrollableArea>
       </div>
@@ -189,7 +189,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
         />
         <ScrollableArea className="flex-1">
           <div className="flex justify-center items-center py-12">
-            <p className="text-body text-gray-500 dark:text-gray-400">نظرسنجی مورد نظر یافت نشد</p>
+            <p className="text-body text-muted">نظرسنجی مورد نظر یافت نشد</p>
           </div>
         </ScrollableArea>
       </div>
@@ -200,7 +200,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
     <div className="h-full flex flex-col" dir="rtl">
       <PageHeader
         title={surveyTitle || 'جزئیات نظرسنجی'}
-        titleIcon={<PiClipboardText className="h-5 w-5 text-blue-600 dark:text-blue-400" />}
+        titleIcon={<PiClipboardText className="h-5 w-5 text-accent" />}
         showBackButton={true}
         onBack={handleBack}
         rightActions={responses.length > 0 ? [
@@ -269,7 +269,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
               block
               onClick={() => setShowVideoTutorial(true)}
               leftIcon={<PiPlayCircle className="h-4 w-4" />}
-              className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium"
+              className="text-secondary hover:text-accent font-medium"
             >
               آموزش ویدویی
             </Button>
@@ -280,14 +280,14 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
           {(surveyTitle || surveyDescription) && (
             <Card variant="default" radius="lg" padding="md">
               {surveyTitle && (
-                <h3 className="text-heading-3 text-gray-900 dark:text-gray-100 mb-2">
+                <h3 className="text-heading-3 text-on-surface mb-2">
                   {surveyTitle}
                 </h3>
               )}
               {surveyDescription && (
                 <div className={surveyTitle ? 'mt-3' : ''}>
-                  <div className="text-caption text-gray-500 dark:text-gray-400 mb-1.5">توضیحات</div>
-                  <p className="text-body text-gray-700 dark:text-gray-300">
+                  <div className="text-caption text-muted mb-1.5">توضیحات</div>
+                  <p className="text-body text-on-surface">
                     {surveyDescription}
                   </p>
                 </div>
@@ -298,18 +298,18 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
           {/* Compact Stats Card */}
           {(totalAttempts > 0 || participationStatus?.totalAttempts !== undefined || hasActiveResponse) && (
             <Card variant="default" radius="lg" padding="md">
-              <h3 className="text-heading-3 text-gray-900 dark:text-gray-100 mb-3">
+              <h3 className="text-heading-3 text-on-surface mb-3">
                 آمار مشارکت شما
               </h3>
               <div className="grid grid-cols-2 gap-3">
                 {/* Total Attempts */}
                 {(totalAttempts > 0 || participationStatus?.totalAttempts !== undefined) && (
-                  <div className="p-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                    <div className="text-caption text-gray-500 dark:text-gray-400 mb-1">کل تلاش‌ها</div>
-                    <div className="text-body font-bold text-gray-900 dark:text-gray-100">
+                  <div className="p-2 bg-subtle rounded-lg">
+                    <div className="text-caption text-muted mb-1">کل تلاش‌ها</div>
+                    <div className="text-body font-bold text-on-surface">
                       {participationStatus?.totalAttempts ?? totalAttempts}
                       {participationStatus?.maxAllowedAttempts && (
-                        <span className="text-secondary font-normal text-gray-500 dark:text-gray-400 mr-1">
+                        <span className="text-secondary font-normal text-muted mr-1">
                           از {participationStatus.maxAllowedAttempts}
                         </span>
                       )}
@@ -320,7 +320,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                 {/* Completed Attempts */}
                 {completedAttempts > 0 && (
                   <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <div className="text-caption text-gray-500 dark:text-gray-400 mb-1">تکمیل شده</div>
+                    <div className="text-caption text-muted mb-1">تکمیل شده</div>
                     <div className="text-body font-bold text-green-600 dark:text-green-400">
                       {completedAttempts}
                     </div>
@@ -330,8 +330,8 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                 {/* Active Attempts */}
                 {activeAttempts > 0 && (
                   <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <div className="text-caption text-gray-500 dark:text-gray-400 mb-1">فعال</div>
-                    <div className="text-body font-bold text-blue-600 dark:text-blue-400">
+                    <div className="text-caption text-muted mb-1">فعال</div>
+                    <div className="text-body font-bold text-accent">
                       {activeAttempts}
                     </div>
                   </div>
@@ -340,7 +340,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                 {/* Remaining Attempts */}
                 {participationStatus?.maxAllowedAttempts !== undefined && participationStatus?.totalAttempts !== undefined && (
                   <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                    <div className="text-caption text-gray-500 dark:text-gray-400 mb-1">باقی‌مانده</div>
+                    <div className="text-caption text-muted mb-1">باقی‌مانده</div>
                     <div className="text-body font-bold text-amber-600 dark:text-amber-400">
                       {Math.max(0, participationStatus.maxAllowedAttempts - participationStatus.totalAttempts)}
                     </div>
@@ -350,8 +350,8 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                 {/* Status Badge */}
                 {hasActiveResponse && (
                   <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <div className="text-caption text-gray-500 dark:text-gray-400 mb-1">وضعیت</div>
-                    <div className="text-caption font-semibold text-blue-600 dark:text-blue-400">
+                    <div className="text-caption text-muted mb-1">وضعیت</div>
+                    <div className="text-caption font-semibold text-accent">
                       پاسخ فعال دارید
                     </div>
                   </div>
@@ -360,7 +360,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                 {/* Can Start Badge */}
                 {canStart && !hasActiveResponse && (
                   <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <div className="text-caption text-gray-500 dark:text-gray-400 mb-1">وضعیت</div>
+                    <div className="text-caption text-muted mb-1">وضعیت</div>
                     <div className="text-caption font-semibold text-green-600 dark:text-green-400">
                       قابل شروع
                     </div>
@@ -370,13 +370,13 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
 
               {/* Additional Info Row */}
               {(canceledAttempts > 0 || expiredAttempts > 0) && (
-                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center gap-4 text-caption text-gray-500 dark:text-gray-400">
+                <div className="mt-3 pt-3 border-t border-subtle">
+                  <div className="flex items-center gap-4 text-caption text-muted">
                     {canceledAttempts > 0 && (
-                      <span>لغو شده: <span className="font-semibold text-gray-700 dark:text-gray-300">{canceledAttempts}</span></span>
+                      <span>لغو شده: <span className="font-semibold text-on-surface">{canceledAttempts}</span></span>
                     )}
                     {expiredAttempts > 0 && (
-                      <span>منقضی شده: <span className="font-semibold text-gray-700 dark:text-gray-300">{expiredAttempts}</span></span>
+                      <span>منقضی شده: <span className="font-semibold text-on-surface">{expiredAttempts}</span></span>
                     )}
                   </div>
                 </div>
@@ -388,8 +388,8 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
           {responses.length > 0 && (
             <Card variant="default" radius="lg" padding="md">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-heading-3 text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                  <PiFileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <h3 className="text-heading-3 text-on-surface flex items-center gap-2">
+                  <PiFileText className="h-4 w-4 text-accent" />
                   پاسخ‌های شما
                 </h3>
                 {responses.length > 1 && (
@@ -405,7 +405,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
               
               {isResponsesLoading ? (
                 <div className="flex justify-center items-center py-8">
-                  <p className="text-secondary text-gray-500 dark:text-gray-400">در حال بارگذاری پاسخ‌ها...</p>
+                  <p className="text-body text-muted">در حال بارگذاری پاسخ‌ها...</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -427,7 +427,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
-                              <span className="text-body font-semibold text-gray-900 dark:text-gray-100">
+                              <span className="text-body font-semibold text-on-surface">
                                 تلاش شماره {response.attemptNumber || 1}
                               </span>
                               {isSubmitted && (
@@ -436,7 +436,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-4 text-caption text-gray-500 dark:text-gray-400">
+                            <div className="flex items-center gap-4 text-caption text-muted">
                               {response.submittedAt && (
                                 <span>ارسال: {formatDate(response.submittedAt)}</span>
                               )}
@@ -445,7 +445,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                               )}
                             </div>
                           </div>
-                          <PiArrowRight className="h-5 w-5 text-gray-400" />
+                          <PiArrowRight className="h-5 w-5 text-muted" />
                         </div>
                       </Card>
                     );
@@ -471,13 +471,13 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
         <DrawerHeader>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-              <PiPlay className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <PiPlay className="h-5 w-5 text-accent" />
             </div>
             <div>
-              <h3 className="text-heading-3 text-gray-900 dark:text-gray-100">
+              <h3 className="text-heading-3 text-on-surface">
                 راهنمای پاسخ به نظرسنجی
               </h3>
-              <p className="text-caption text-gray-500 dark:text-gray-400 mt-0.5">
+              <p className="text-caption text-muted mt-0.5">
                 مراحل پاسخ به سوالات
               </p>
             </div>
@@ -488,13 +488,13 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
             {/* Step 1 */}
             <div className="flex gap-3">
               <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                <span className="text-caption font-semibold text-blue-600 dark:text-blue-400">1</span>
+                <span className="text-caption font-semibold text-accent">1</span>
               </div>
               <div className="flex-1">
-                <h4 className="text-heading-3 text-gray-900 dark:text-gray-100 mb-1">
+                <h4 className="text-heading-3 text-on-surface mb-1">
                   شروع نظرسنجی
                 </h4>
-                <p className="text-caption text-gray-600 dark:text-gray-400">
+                <p className="text-caption text-muted">
                   با کلیک روی دکمه شروع، نظرسنجی برای شما فعال می‌شود.
                 </p>
               </div>
@@ -503,13 +503,13 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
             {/* Step 2 */}
             <div className="flex gap-3">
               <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                <span className="text-caption font-semibold text-blue-600 dark:text-blue-400">2</span>
+                <span className="text-caption font-semibold text-accent">2</span>
               </div>
               <div className="flex-1">
-                <h4 className="text-heading-3 text-gray-900 dark:text-gray-100 mb-1">
+                <h4 className="text-heading-3 text-on-surface mb-1">
                   پاسخ به سوالات
                 </h4>
-                <p className="text-caption text-gray-600 dark:text-gray-400">
+                <p className="text-caption text-muted">
                   به هر سوال به ترتیب پاسخ دهید. می‌توانید بین سوالات جابجا شوید.
                 </p>
               </div>
@@ -518,13 +518,13 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
             {/* Step 3 */}
             <div className="flex gap-3">
               <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                <span className="text-caption font-semibold text-blue-600 dark:text-blue-400">3</span>
+                <span className="text-caption font-semibold text-accent">3</span>
               </div>
               <div className="flex-1">
-                <h4 className="text-heading-3 text-gray-900 dark:text-gray-100 mb-1">
+                <h4 className="text-heading-3 text-on-surface mb-1">
                   بررسی پاسخ‌ها
                 </h4>
-                <p className="text-caption text-gray-600 dark:text-gray-400">
+                <p className="text-caption text-muted">
                   قبل از ارسال نهایی، تمام پاسخ‌های خود را بررسی کنید.
                 </p>
               </div>
@@ -536,18 +536,18 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                 <span className="text-caption font-semibold text-green-600 dark:text-green-400">4</span>
               </div>
               <div className="flex-1">
-                <h4 className="text-heading-3 text-gray-900 dark:text-gray-100 mb-1">
+                <h4 className="text-heading-3 text-on-surface mb-1">
                   تایید و ارسال
                 </h4>
-                <p className="text-caption text-gray-600 dark:text-gray-400">
+                <p className="text-caption text-muted">
                   در پایان، پاسخ‌های خود را تایید کرده و ارسال کنید.
                 </p>
               </div>
             </div>
 
             {participationStatus?.totalAttempts !== undefined && participationStatus?.maxAllowedAttempts !== undefined && (
-              <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg mt-4">
-                <p className="text-caption text-gray-600 dark:text-gray-400">
+              <div className="p-3 bg-subtle rounded-lg mt-4">
+                <p className="text-caption text-muted">
                   تلاش‌های استفاده شده: <span className="font-semibold">{participationStatus.totalAttempts}</span> از <span className="font-semibold">{participationStatus.maxAllowedAttempts}</span>
                 </p>
               </div>
@@ -596,10 +596,10 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
               <PiWarning className="h-5 w-5 text-orange-600 dark:text-orange-400" />
             </div>
             <div>
-              <h3 className="text-heading-3 text-gray-900 dark:text-gray-100">
+              <h3 className="text-heading-3 text-on-surface">
                 شروع پاسخ جدید
               </h3>
-              <p className="text-caption text-gray-500 dark:text-gray-400 mt-0.5">
+              <p className="text-caption text-muted mt-0.5">
                 شما یک پاسخ فعال دارید
               </p>
             </div>
@@ -610,7 +610,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
             <div className="flex items-start gap-3 p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
               <PiWarning className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-body text-gray-700 dark:text-gray-300">
+                <p className="text-body text-on-surface">
                   شما در حال حاضر یک پاسخ فعال دارید. با شروع پاسخ جدید، یک تلاش جدید برای شما ثبت می‌شود. پاسخ قبلی شما همچنان قابل دسترسی خواهد بود.
                 </p>
               </div>
@@ -623,7 +623,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                   <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">1</span>
                 </div>
                 <div className="flex-1">
-                  <p className="text-caption text-gray-600 dark:text-gray-400">
+                  <p className="text-caption text-muted">
                     شروع پاسخ جدید
                   </p>
                 </div>
@@ -631,10 +631,10 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
 
               <div className="flex gap-3">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                  <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">2</span>
+                  <span className="text-sm font-semibold text-accent">2</span>
                 </div>
                 <div className="flex-1">
-                  <p className="text-caption text-gray-600 dark:text-gray-400">
+                  <p className="text-caption text-muted">
                     پاسخ به سوالات به ترتیب
                   </p>
                 </div>
@@ -642,10 +642,10 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
 
               <div className="flex gap-3">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                  <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">3</span>
+                  <span className="text-sm font-semibold text-accent">3</span>
                 </div>
                 <div className="flex-1">
-                  <p className="text-caption text-gray-600 dark:text-gray-400">
+                  <p className="text-caption text-muted">
                     بررسی پاسخ‌ها
                   </p>
                 </div>
@@ -656,7 +656,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
                   <span className="text-sm font-semibold text-green-600 dark:text-green-400">4</span>
                 </div>
                 <div className="flex-1">
-                  <p className="text-caption text-gray-600 dark:text-gray-400">
+                  <p className="text-caption text-muted">
                     تایید و ارسال نهایی
                   </p>
                 </div>
@@ -664,8 +664,8 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
             </div>
 
             {participationStatus?.totalAttempts !== undefined && participationStatus?.maxAllowedAttempts !== undefined && (
-              <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg mt-4">
-                <p className="text-caption text-gray-600 dark:text-gray-400">
+              <div className="p-3 bg-subtle rounded-lg mt-4">
+                <p className="text-caption text-muted">
                   تلاش‌های استفاده شده: <span className="font-semibold">{participationStatus.totalAttempts}</span> از <span className="font-semibold">{participationStatus.maxAllowedAttempts}</span>
                 </p>
                 {participationStatus.totalAttempts >= participationStatus.maxAllowedAttempts - 1 && (

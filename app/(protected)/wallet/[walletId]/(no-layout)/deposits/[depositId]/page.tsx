@@ -145,7 +145,7 @@ export default function DepositDetailsPage({ params }: PageProps) {
                 <StatusIcon className={`${badge.color} h-5 w-5`} />
                 <div className={`text-sm font-medium ${badge.color}`}>{badge.text}</div>
               </div>
-              <div className="text-lg font-semibold text-green-600 dark:text-green-400">
+              <div className="text-md font-semibold text-green-600 dark:text-green-400">
                 +{formatCurrencyFa(details.amount)} ریال
               </div>
             </div>

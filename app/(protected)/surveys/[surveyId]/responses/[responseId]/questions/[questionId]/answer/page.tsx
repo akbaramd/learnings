@@ -29,10 +29,88 @@ import {
   PiTextT,
   PiListBullets,
   PiCircle,
+  PiSpinner,
 } from 'react-icons/pi';
 
 interface QuestionAnswerPageProps {
   params: Promise<{ surveyId: string; responseId: string; questionId: string }>;
+}
+
+/* ===================== Skeleton Components ===================== */
+
+function QuestionCardSkeleton() {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 animate-pulse">
+      <div className="space-y-2">
+        {/* Question Number and Type */}
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded" />
+            <div className="h-5 w-6 bg-gray-200 dark:bg-gray-700 rounded" />
+            <div className="h-4 w-8 bg-gray-200 dark:bg-gray-700 rounded" />
+            <div className="h-5 w-6 bg-gray-200 dark:bg-gray-700 rounded" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded-full" />
+            <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded-full" />
+          </div>
+        </div>
+
+        {/* Question Text */}
+        <div className="pt-1 space-y-2">
+          <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded" />
+          <div className="h-6 w-full bg-gray-200 dark:bg-gray-700 rounded" />
+          <div className="h-6 w-5/6 bg-gray-200 dark:bg-gray-700 rounded" />
+          <div className="h-3 w-3/4 bg-gray-200 dark:bg-gray-700 rounded mt-2" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AnswerFormSkeleton() {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 animate-pulse">
+      <div className="space-y-4">
+        <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded" />
+        <div className="h-32 w-full bg-gray-200 dark:bg-gray-700 rounded-lg" />
+      </div>
+    </div>
+  );
+}
+
+function QuestionPageSkeleton() {
+  return (
+    <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900" dir="rtl">
+      <PageHeader
+        title="پاسخ به سوالات"
+        titleIcon={<PiQuestion className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+        showBackButton={true}
+        onBack={() => {}}
+      />
+      <ScrollableArea className="flex-1" hideScrollbar={true}>
+        <div className="p-4 space-y-4 pb-24">
+          <QuestionCardSkeleton />
+          <AnswerFormSkeleton />
+        </div>
+      </ScrollableArea>
+    </div>
+  );
+}
+
+/* ===================== Loading Overlay ===================== */
+
+function LoadingOverlay({ message }: { message?: string }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 flex flex-col items-center gap-4 min-w-[200px]">
+        <PiSpinner className="h-8 w-8 text-emerald-600 dark:text-emerald-400 animate-spin" />
+        <p className="text-body font-medium text-gray-900 dark:text-gray-100 text-center">
+          {message || 'در حال بارگذاری...'}
+        </p>
+      </div>
+    </div>
+  );
 }
 
 export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) {
@@ -45,13 +123,15 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
   const [textAnswer, setTextAnswer] = useState<string>('');
   const [selectedOptionIds, setSelectedOptionIds] = useState<string[]>([]);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [navigationMessage, setNavigationMessage] = useState<string>('');
 
   // Redux selectors
   const isLoading = useSelector(selectSurveysLoading);
   const question = useSelector(selectQuestionById);
 
   // Query hooks
-  const [getQuestionById, { isLoading: isQuestionLoading }] = useLazyGetQuestionByIdQuery();
+  const [getQuestionById, { isLoading: isQuestionLoading, isFetching: isQuestionFetching }] = useLazyGetQuestionByIdQuery();
   const [answerQuestion, { isLoading: isAnswering }] = useAnswerQuestionMutation();
   const [goNextQuestion, { isLoading: isNavigatingNext }] = useGoNextQuestionMutation();
   const [goPreviousQuestion, { isLoading: isNavigatingPrev }] = useGoPreviousQuestionMutation();
@@ -83,6 +163,10 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
     // QuestionByIdResponse has flat structure with textAnswer and selectedOptionIds
     // Use setTimeout to avoid synchronous setState in effect
     setTimeout(() => {
+      // Reset navigation state when question loads
+      setIsNavigating(false);
+      setNavigationMessage('');
+      
       if (question.textAnswer) {
         setTextAnswer(question.textAnswer);
       } else {
@@ -157,6 +241,9 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
     }
 
     try {
+      setIsNavigating(true);
+      setNavigationMessage('در حال ذخیره پاسخ...');
+
       // First, save the answer
       const answerRequest: AnswerQuestionRequest = {
         textAnswer: isTextQuestion ? textAnswer.trim() || null : null,
@@ -172,6 +259,8 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
       });
 
       if (answerResult.data?.isSuccess) {
+        setNavigationMessage('در حال انتقال به سوال بعدی...');
+        
         // Then navigate to next question
         const nextResult = await goNextQuestion({
           surveyId: surveyIdFromParams,
@@ -181,6 +270,7 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
         if (nextResult.data?.isSuccess) {
           // Check if this is the last question
           if (isLastQuestion) {
+            setNavigationMessage('در حال انتقال به صفحه نهایی...');
             // Last question completed, redirect to done/review page
             router.push(`/surveys/${surveyIdFromParams}/responses/${responseIdFromParams}/done`);
           } else {
@@ -189,23 +279,31 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
             const currentQuestionId = nextResult.data?.data?.currentQuestionId;
             
             if (currentQuestionId && currentQuestionId !== questionIdFromParams) {
+              setNavigationMessage('در حال بارگذاری سوال...');
               // Navigate to next question
               router.push(
                 `/surveys/${surveyIdFromParams}/responses/${responseIdFromParams}/questions/${currentQuestionId}/answer`
               );
             } else {
               // Fallback: redirect to done page if no next question ID
+              setNavigationMessage('در حال انتقال به صفحه نهایی...');
               router.push(`/surveys/${surveyIdFromParams}/responses/${responseIdFromParams}/done`);
             }
           }
         } else {
+          setIsNavigating(false);
+          setNavigationMessage('');
           setValidationError(nextResult.data?.message || 'خطا در انتقال به سوال بعدی');
         }
       } else {
+        setIsNavigating(false);
+        setNavigationMessage('');
         setValidationError(answerResult.data?.message || 'خطا در ذخیره پاسخ');
       }
     } catch (error) {
       console.error('Failed to save answer:', error);
+      setIsNavigating(false);
+      setNavigationMessage('');
       setValidationError('خطا در ذخیره پاسخ. لطفاً دوباره تلاش کنید.');
     }
   }, [
@@ -223,51 +321,6 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
     router,
   ]);
 
-  // Save answer only (without navigation)
-  const handleSave = useCallback(async () => {
-    if (!validateAnswer()) {
-      return;
-    }
-
-    if (!surveyIdFromParams || !responseIdFromParams || !questionIdFromParams) {
-      return;
-    }
-
-    try {
-      const answerRequest: AnswerQuestionRequest = {
-        textAnswer: isTextQuestion ? textAnswer.trim() || null : null,
-        selectedOptionIds: !isTextQuestion && selectedOptionIds.length > 0 ? selectedOptionIds : null,
-        allowBackNavigation: question?.allowBackNavigation,
-      };
-
-      const result = await answerQuestion({
-        surveyId: surveyIdFromParams,
-        responseId: responseIdFromParams,
-        questionId: questionIdFromParams,
-        data: answerRequest,
-      });
-
-      if (result.data?.isSuccess) {
-        setValidationError(null);
-        // Optionally show success message
-      } else {
-        setValidationError(result.data?.message || 'خطا در ذخیره پاسخ');
-      }
-    } catch (error) {
-      console.error('Failed to save answer:', error);
-      setValidationError('خطا در ذخیره پاسخ. لطفاً دوباره تلاش کنید.');
-    }
-  }, [
-    validateAnswer,
-    surveyIdFromParams,
-    responseIdFromParams,
-    questionIdFromParams,
-    isTextQuestion,
-    textAnswer,
-    selectedOptionIds,
-    question,
-    answerQuestion,
-  ]);
 
   // Navigate to previous question
   const handlePrevious = useCallback(async () => {
@@ -276,6 +329,9 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
     }
 
     try {
+      setIsNavigating(true);
+      setNavigationMessage('در حال انتقال به سوال قبلی...');
+
       const result = await goPreviousQuestion({
         surveyId: surveyIdFromParams,
         responseId: responseIdFromParams,
@@ -284,18 +340,25 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
       if (result.data?.isSuccess) {
         const previousQuestionId = result.data?.data?.currentQuestionId;
         if (previousQuestionId && previousQuestionId !== questionIdFromParams) {
+          setNavigationMessage('در حال بارگذاری سوال...');
           router.push(
             `/surveys/${surveyIdFromParams}/responses/${responseIdFromParams}/questions/${previousQuestionId}/answer`
           );
         } else {
           // No previous question, go back
+          setIsNavigating(false);
+          setNavigationMessage('');
           router.back();
         }
       } else {
+        setIsNavigating(false);
+        setNavigationMessage('');
         router.back();
       }
     } catch (error) {
       console.error('Failed to navigate to previous question:', error);
+      setIsNavigating(false);
+      setNavigationMessage('');
       router.back();
     }
   }, [surveyIdFromParams, responseIdFromParams, questionIdFromParams, goPreviousQuestion, router]);
@@ -304,21 +367,9 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
     router.push(`/surveys/${surveyIdFromParams}/responses/${responseIdFromParams}`);
   };
 
+  // Show skeleton while loading initial question
   if ((isLoading || isQuestionLoading) && !question) {
-    return (
-      <div className="h-full flex flex-col" dir="rtl">
-        <PageHeader
-          title="در حال بارگذاری..."
-          showBackButton={true}
-          onBack={handleBack}
-        />
-        <ScrollableArea className="flex-1">
-          <div className="flex justify-center items-center py-12">
-            <p className="text-body text-gray-500 dark:text-gray-400">در حال بارگذاری سوال...</p>
-          </div>
-        </ScrollableArea>
-      </div>
-    );
+    return <QuestionPageSkeleton />;
   }
 
   if (!question) {
@@ -338,8 +389,9 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
     );
   }
 
-  // QuestionByIdResponse has flat structure
+  // QuestionByIdResponse has flat structure with questionDescription field
   const questionText = question.questionText || 'سوال بدون عنوان';
+  const questionDescription = question.questionDescription || null;
   const questionNumber = question.currentQuestionNumber || question.order || 0;
   const totalQuestions = question.totalQuestions || 0;
   const hasPrevious = question.allowBackNavigation === true && !question.isFirstQuestion;
@@ -369,6 +421,9 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
 
   const questionTypeInfo = getQuestionTypeInfo();
 
+  // Show skeleton while fetching new question during navigation
+  const showSkeleton = isQuestionFetching && !question;
+
   return (
     <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900" dir="rtl">
       <PageHeader
@@ -378,11 +433,19 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
         onBack={handleBack}
       />
 
+      {/* Loading Overlay for Navigation */}
+      {(isNavigating || isNavigatingNext || isNavigatingPrev) && (
+        <LoadingOverlay message={navigationMessage || 'در حال انتقال...'} />
+      )}
+
       <ScrollableArea className="flex-1" hideScrollbar={true}>
         <div className="p-4 space-y-4 pb-24">
-          {/* Question Info Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-            <div className="space-y-3">
+          {/* Question Info Card - Show skeleton if fetching */}
+          {showSkeleton ? (
+            <QuestionCardSkeleton />
+          ) : (
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+            <div className="space-y-2">
               {/* Question Number and Type */}
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
@@ -415,20 +478,31 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
                 </div>
               </div>
 
-              {/* Question Text */}
-              <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                <label className="block text-caption text-gray-500 dark:text-gray-400 mb-2">
+              {/* Question Text and Description */}
+              <div className="pt-1">
+                <label className="block text-caption text-gray-500 dark:text-gray-400 mb-1.5">
                   عنوان سوال:
                 </label>
                 <h3 className="text-heading-3 text-gray-900 dark:text-gray-100">
                   {questionText}
                 </h3>
+                
+                {/* Question Description - Directly below title, no separator */}
+                {questionDescription && questionDescription.trim() && (
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1.5 leading-relaxed whitespace-pre-wrap">
+                    {questionDescription}
+                  </p>
+                )}
               </div>
             </div>
           </div>
+          )}
 
-          {/* Answer Form Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          {/* Answer Form Card - Show skeleton if fetching */}
+          {showSkeleton ? (
+            <AnswerFormSkeleton />
+          ) : (
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
             <div className="space-y-4">
               {/* Text Answer Input */}
               {isTextQuestion && (
@@ -534,6 +608,7 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
               )}
             </div>
           </div>
+          )}
         </div>
       </ScrollableArea>
 

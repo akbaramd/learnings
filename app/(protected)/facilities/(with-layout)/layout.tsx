@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { FacilitiesPageHeaderProvider, useFacilitiesPageHeader } from './FacilitiesPageHeaderContext';
 import { PageHeader } from '@/src/components/ui/PageHeader';
 import {
-  PiBuilding,
+  PiMoney,
   PiFileText,
 } from 'react-icons/pi';
 
@@ -23,7 +23,7 @@ function FacilitiesLayoutContent({ children }: FacilitiesLayoutProps) {
     {
       id: 'facilities',
       label: 'تسهیلات',
-      icon: PiBuilding,
+      icon: PiMoney,
       path: '/facilities',
       active: pathname === '/facilities' || pathname === '/facilities/',
     },

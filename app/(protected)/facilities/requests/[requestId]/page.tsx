@@ -243,7 +243,7 @@ export default function RequestDetailPage({ params }: RequestDetailPageProps) {
                 <div className="flex items-center gap-3">
                   {getStatusInfo(request.status).icon}
                   <div>
-                    <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    <div className="text-md font-semibold text-gray-900 dark:text-gray-100">
                       {getStatusInfo(request.status).label}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -267,7 +267,7 @@ export default function RequestDetailPage({ params }: RequestDetailPageProps) {
 
           {/* Request Info */}
           <Card variant="default" radius="lg" padding="md">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4">
               اطلاعات درخواست
             </h3>
             <div className="space-y-3">
@@ -282,7 +282,7 @@ export default function RequestDetailPage({ params }: RequestDetailPageProps) {
               {request.requestedAmountRials && (
                 <div>
                   <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">مبلغ درخواستی</div>
-                  <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  <div className="text-md font-semibold text-gray-900 dark:text-gray-100">
                     {formatCurrencyFa(request.requestedAmountRials)} ریال
                   </div>
                 </div>
@@ -290,7 +290,7 @@ export default function RequestDetailPage({ params }: RequestDetailPageProps) {
               {request.approvedAmountRials && (
                 <div>
                   <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">مبلغ تایید شده</div>
-                  <div className="text-lg font-semibold text-green-600 dark:text-green-400">
+                  <div className="text-md font-semibold text-green-600 dark:text-green-400">
                     {formatCurrencyFa(request.approvedAmountRials)} ریال
                   </div>
                 </div>
@@ -309,7 +309,7 @@ export default function RequestDetailPage({ params }: RequestDetailPageProps) {
           {/* Facility Info */}
           {request.facility?.name && (
             <Card variant="default" radius="lg" padding="md">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 اطلاعات تسهیلات
               </h3>
               <div className="space-y-3">

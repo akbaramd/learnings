@@ -277,7 +277,7 @@ export default function DepositsPage({ params }: DepositsPageProps) {
                     >
                            {/* Amount and Status Row */}
                            <div className="flex items-center justify-between mb-2">
-                             <div className="text-lg font-semibold text-green-600 dark:text-green-400">
+                             <div className="text-md font-semibold text-green-600 dark:text-green-400">
                                +{formatCurrencyFa(deposit.amount)} ریال
                              </div>
                              <div className={`text-xs px-2 py-0.5 rounded-full ${statusInfo.bgColor} ${statusInfo.color}`}>

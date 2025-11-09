@@ -5,11 +5,17 @@ import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
-import { PiEye, PiEyeSlash, PiGear, PiArrowClockwise, PiMapPinDuotone, PiMoney, PiBuildingOffice, PiDiamondDuotone, PiShieldCheck, PiTruck } from 'react-icons/pi';
+import { PiEye, PiEyeSlash, PiGear, PiArrowClockwise, PiMapPinDuotone, PiMoney, PiFileText, PiDiamondDuotone, PiShieldCheck, PiTruck } from 'react-icons/pi';
 import { ServicesGrid } from '@/src/components/services/ServiceCard';
 import { TourSection } from '@/src/components/tours/TourSection';
 import { Tour } from '@/src/components/tours/TourCard';
+import { FacilitySection } from '@/src/components/facilities/FacilitySection';
+import { Facility } from '@/src/components/facilities/FacilityCard';
+import { SurveySection } from '@/src/components/surveys/SurveySection';
+import { Survey } from '@/src/components/surveys/SurveyCard';
 import { useGetToursPaginatedQuery } from '@/src/store/tours/tours.queries';
+import { useGetFacilitiesQuery } from '@/src/store/facilities';
+import { useGetActiveSurveysQuery } from '@/src/store/surveys';
 import { selectWallet, selectWalletLastFetched } from '@/src/store/wallets';
 import { useLazyWallets } from '@/src/hooks/useLazyWallets';
 import { buildImageUrl } from '@/src/config/env';
@@ -150,10 +156,10 @@ function WalletCard() {
 const services = [
   { id: 'tour', title: 'تور', icon: <PiMapPinDuotone className="h-5 w-5" />, accent: 'blue', disabled: false },
   { id: 'facility', title: 'تسهیلات', icon: <PiMoney className="h-5 w-5" />, accent: 'emerald', disabled: false },
-  { id: 'survey', title: 'نظرسنجی', icon: <PiBuildingOffice className="h-5 w-5" />, accent: 'amber', disabled: false },
-  { id: 'flight', title: 'پرواز', icon: <PiDiamondDuotone className="h-5 w-5" />, accent: 'indigo', disabled: true },
-  { id: 'insurance', title: 'بیمه', icon: <PiShieldCheck className="h-5 w-5" />, accent: 'rose', disabled: true },
-  { id: 'car', title: 'خودرو', icon: <PiTruck className="h-5 w-5" />, accent: 'cyan', disabled: true },
+  { id: 'survey', title: 'نظرسنجی', icon: <PiFileText className="h-5 w-5" />, accent: 'amber', disabled: false },
+  { id: 'flight', title: 'به زودی ...', icon: <PiDiamondDuotone className="h-5 w-5" />, accent: 'indigo', disabled: true },
+  { id: 'insurance', title: 'به زودی ...', icon: <PiShieldCheck className="h-5 w-5" />, accent: 'rose', disabled: true },
+  { id: 'car', title: 'به زودی ...', icon: <PiTruck className="h-5 w-5" />, accent: 'cyan', disabled: true },
 ];
 
 /* =========================
@@ -192,11 +198,83 @@ function useToursList(): { tours: Tour[]; isLoading: boolean; isError: boolean }
 }
 
 /* =========================
+   Facilities Loader + Mapper
+========================= */
+
+function useFacilitiesList(): { facilities: Facility[]; isLoading: boolean; isError: boolean } {
+  const { data, isLoading, isError } = useGetFacilitiesQuery({
+    pageNumber: 1,
+    pageSize: 3,
+    isActive: true,
+  });
+
+  const facilities: Facility[] = useMemo(() => {
+    if (!data?.data?.items) return [];
+    return data.data.items.map((f) => ({
+      id: f.id,
+      name: f.name,
+      code: f.code,
+      description: f.description,
+      hasActiveCycles: f.hasActiveCycles,
+      isAcceptingApplications: f.isAcceptingApplications,
+      cycleStatistics: f.cycleStatistics ? {
+        totalActiveQuota: f.cycleStatistics.totalActiveQuota,
+        totalAvailableQuota: f.cycleStatistics.totalAvailableQuota,
+        totalCyclesCount: f.cycleStatistics.totalCyclesCount,
+      } : undefined,
+    } as Facility));
+  }, [data]);
+
+  return { facilities, isLoading, isError };
+}
+
+/* =========================
+   Surveys Loader + Mapper
+========================= */
+
+function useSurveysList(): { surveys: Survey[]; isLoading: boolean; isError: boolean } {
+  const { data, isLoading, isError } = useGetActiveSurveysQuery({
+    pageNumber: 1,
+    pageSize: 3,
+  });
+
+  const surveys: Survey[] = useMemo(() => {
+    if (!data?.data?.surveys) return [];
+    return data.data.surveys.map((s) => ({
+      id: s.id,
+      title: s.title,
+      description: s.description,
+      state: s.state,
+      stateText: s.stateText,
+      isActive: s.isActive,
+      isAcceptingResponses: s.isAcceptingResponses,
+      startAt: s.startAt,
+      endAt: s.endAt,
+      totalQuestions: s.totalQuestions,
+      requiredQuestions: s.requiredQuestions,
+      hasUserResponse: s.hasUserResponse,
+      canUserParticipate: s.canUserParticipate,
+      userAttemptCount: s.userAttemptCount,
+      remainingAttempts: s.remainingAttempts,
+      responseCount: s.responseCount,
+      durationText: s.durationText,
+      timeRemainingText: s.timeRemainingText,
+      isExpired: s.isExpired,
+      isScheduled: s.isScheduled,
+    } as Survey));
+  }, [data]);
+
+  return { surveys, isLoading, isError };
+}
+
+/* =========================
    Page (Final)
 ========================= */
 
 export default function HomeDashboard() {
-  const { tours, isLoading, isError } = useToursList();
+  const { tours, isLoading: toursLoading, isError: toursError } = useToursList();
+  const { facilities, isLoading: facilitiesLoading, isError: facilitiesError } = useFacilitiesList();
+  const { surveys, isLoading: surveysLoading, isError: surveysError } = useSurveysList();
   const router = useRouter();
 
   function handleServiceSelect(id: string): void {
@@ -226,9 +304,27 @@ export default function HomeDashboard() {
 
             {/* Tours Section */}
             <section className="px-4 my-6">
-              {isLoading && <div className="text-center py-6">در حال بارگذاری تورها...</div>}
-              {isError && <div className="text-center text-red-600 py-6">خطا در دریافت اطلاعات تورها</div>}
-              {!isLoading && !isError && <TourSection seeAllHref="/tours" title="تورها" dir="rtl" tours={tours} />}
+              {toursLoading && <div className="text-center py-6">در حال بارگذاری تورها...</div>}
+              {toursError && <div className="text-center text-red-600 py-6">خطا در دریافت اطلاعات تورها</div>}
+              {!toursLoading && !toursError && <TourSection seeAllHref="/tours" title="تورها" dir="rtl" tours={tours} />}
+            </section>
+
+            {/* Facilities Section */}
+            <section className="px-4 my-6">
+              {facilitiesLoading && <div className="text-center py-6">در حال بارگذاری تسهیلات...</div>}
+              {facilitiesError && <div className="text-center text-red-600 py-6">خطا در دریافت اطلاعات تسهیلات</div>}
+              {!facilitiesLoading && !facilitiesError && (
+                <FacilitySection seeAllHref="/facilities" title="تسهیلات" dir="rtl" facilities={facilities} />
+              )}
+            </section>
+
+            {/* Surveys Section */}
+            <section className="px-4 my-6">
+              {surveysLoading && <div className="text-center py-6">در حال بارگذاری نظرسنجی‌ها...</div>}
+              {surveysError && <div className="text-center text-red-600 py-6">خطا در دریافت اطلاعات نظرسنجی‌ها</div>}
+              {!surveysLoading && !surveysError && (
+                <SurveySection seeAllHref="/surveys" title="نظرسنجی‌ها" dir="rtl" surveys={surveys} />
+              )}
             </section>
           </div>
         </ScrollableArea>

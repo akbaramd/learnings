@@ -131,7 +131,7 @@ export default function ResponsesPage() {
   useEffect(() => {
     setHeaderState({
       title: 'پاسخ‌های نظرسنجی',
-      titleIcon: <PiFileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />,
+      titleIcon: <PiFileText className="h-5 w-5 text-accent" />,
       showBackButton: true,
       onBack,
       rightActions: [
@@ -260,7 +260,7 @@ export default function ResponsesPage() {
         <div className="flex-shrink-0 mb-4">
           <Card variant="default" radius="lg" padding="md">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">جستجو و فیلتر</h3>
+              <h3 className="text-heading-3 text-on-surface">جستجو و فیلتر</h3>
               <Button
                 variant="subtle"
                 size="sm"
@@ -273,7 +273,7 @@ export default function ResponsesPage() {
             </div>
 
             <div className="mb-4">
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-label text-on-surface mb-2">
                 جستجو
               </label>
               <div className="flex gap-2">
@@ -298,7 +298,7 @@ export default function ResponsesPage() {
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-label text-on-surface mb-2">
                   وضعیت نظرسنجی
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -338,7 +338,7 @@ export default function ResponsesPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-label text-on-surface mb-2">
                   وضعیت پاسخ
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -378,19 +378,19 @@ export default function ResponsesPage() {
         <div className="pb-2">
           {isLoading && allSurveys.length === 0 ? (
             <div className="flex justify-center items-center py-8">
-              <PiArrowClockwise className="h-6 w-6 animate-spin text-gray-400" />
-              <span className="mr-2 text-gray-500">در حال بارگذاری...</span>
+              <PiArrowClockwise className="h-6 w-6 animate-spin text-muted" />
+              <span className="mr-2 text-muted">در حال بارگذاری...</span>
             </div>
           ) : allSurveys && allSurveys.length > 0 ? (
             <>
               {normalizedSearch && (
-                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="mb-4 p-3 bg-accent-subtle rounded-lg border border-accent">
                   <div className="flex items-center justify-between">
                     <Button
                       variant="subtle"
                       size="sm"
                       onClick={() => setSearch('')}
-                      className="text-xs"
+                      className="text-caption"
                     >
                       پاک کردن جستجو
                     </Button>
@@ -420,13 +420,13 @@ export default function ResponsesPage() {
                       <div className="pb-3 border-b border-gray-200 dark:border-gray-800 mb-3">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-3">
-                            <PiClipboardText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            <PiClipboardText className="h-5 w-5 text-accent" />
                             <div className="flex-1">
-                              <div className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                              <div className="text-heading-3 text-on-surface">
                                 {survey.title || 'بدون عنوان'}
                               </div>
                               {survey.stateText && (
-                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                <div className="text-caption text-muted mt-1">
                                   {survey.stateText}
                                 </div>
                               )}
@@ -464,7 +464,7 @@ export default function ResponsesPage() {
                               <div className="flex items-center justify-between">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                    <span className="text-body font-semibold text-on-surface">
                                       تلاش شماره {response.attemptNumber || 1}
                                     </span>
                                     {isSubmitted && (
@@ -479,7 +479,7 @@ export default function ResponsesPage() {
                                       </span>
                                     )}
                                   </div>
-                                  <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                                  <div className="flex items-center gap-4 text-caption text-muted">
                                     {response.submittedAt && (
                                       <div className="flex items-center gap-1">
                                         <PiClock className="h-3 w-3" />
@@ -491,7 +491,7 @@ export default function ResponsesPage() {
                                     )}
                                   </div>
                                 </div>
-                                <PiArrowRight className="h-5 w-5 text-gray-400" />
+                                <PiArrowRight className="h-5 w-5 text-muted" />
                               </div>
                             </Card>
                           );
@@ -552,7 +552,7 @@ export default function ResponsesPage() {
           ) : (
             <div className="text-center py-12">
               <PiFileText className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-2">
                 {normalizedSearch ? 'نتیجه‌ای یافت نشد' : 'پاسخی یافت نشد'}
               </h3>
               <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">

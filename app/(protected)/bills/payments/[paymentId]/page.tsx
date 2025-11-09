@@ -263,7 +263,7 @@ export default function PaymentDetailPage({ params }: PaymentDetailPageProps) {
 
           {/* Payment Information */}
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4">
               اطلاعات پرداخت
             </h3>
             <div className="space-y-1">
@@ -300,7 +300,7 @@ export default function PaymentDetailPage({ params }: PaymentDetailPageProps) {
           {/* Bill Information */}
           {payment?.bill && (    
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 اطلاعات صورت حساب
               </h3>
               <div className="space-y-1">
@@ -318,7 +318,7 @@ export default function PaymentDetailPage({ params }: PaymentDetailPageProps) {
           {/* Transactions */}
           {payment?.transactions && payment?.transactions.length > 0 && (
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 تراکنش‌ها
               </h3>
               <div className="space-y-3">

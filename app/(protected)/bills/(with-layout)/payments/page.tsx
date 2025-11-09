@@ -415,35 +415,40 @@ export default function PaymentsPage() {
                 </label>
                 <div className="flex gap-2 flex-wrap">
                   <Button
-                    variant={statusFilter === 'all' ? 'primary' : 'secondary'}
+                    variant={statusFilter === 'all' ? 'solid' : 'outline'}
+                    color={statusFilter === 'all' ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => setStatusFilter('all')}
                   >
                     همه
                   </Button>
                   <Button
-                    variant={statusFilter === 'Pending' ? 'primary' : 'secondary'}
+                    variant={statusFilter === 'Pending' ? 'solid' : 'outline'}
+                    color={statusFilter === 'Pending' ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => setStatusFilter('Pending')}
                   >
                     در انتظار
                   </Button>
                   <Button
-                    variant={statusFilter === 'Processing' ? 'primary' : 'secondary'}
+                    variant={statusFilter === 'Processing' ? 'solid' : 'outline'}
+                    color={statusFilter === 'Processing' ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => setStatusFilter('Processing')}
                   >
                     در حال پردازش
                   </Button>
                   <Button
-                    variant={statusFilter === 'Completed' ? 'primary' : 'secondary'}
+                    variant={statusFilter === 'Completed' ? 'solid' : 'outline'}
+                    color={statusFilter === 'Completed' ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => setStatusFilter('Completed')}
                   >
                     تکمیل شده
                   </Button>
                   <Button
-                    variant={statusFilter === 'Failed' ? 'primary' : 'secondary'}
+                      variant={statusFilter === 'Failed' ? 'solid' : 'outline'}
+                    color={statusFilter === 'Failed' ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => setStatusFilter('Failed')}
                   >
@@ -519,7 +524,7 @@ export default function PaymentsPage() {
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="text-xs text-gray-500 dark:text-gray-400">مبلغ</div>
-                            <div className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
+                            <div className="font-semibold text-gray-900 dark:text-gray-100 text-md">
                               {formatCurrencyFa(payment.amountRials || 0)} ریال
                             </div>
                           </div>
@@ -589,7 +594,7 @@ export default function PaymentsPage() {
             ) : (
               <div className="text-center py-12">
                 <PiCreditCard className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   {normalizedSearch ? 'نتیجه‌ای یافت نشد' : 'پرداختی یافت نشد'}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">

@@ -170,7 +170,7 @@ export default function ResponseDonePage({ params }: ResponseDonePageProps) {
         />
         <ScrollableArea className="flex-1">
           <div className="flex justify-center items-center py-12">
-            <p className="text-gray-500">پاسخ مورد نظر یافت نشد</p>
+            <p className="text-body text-muted">پاسخ مورد نظر یافت نشد</p>
           </div>
         </ScrollableArea>
       </div>
@@ -185,7 +185,7 @@ export default function ResponseDonePage({ params }: ResponseDonePageProps) {
     <div className="h-full flex flex-col" dir="rtl">
       <PageHeader
         title="بررسی نهایی"
-        titleIcon={<PiClipboardText className="h-5 w-5 text-blue-600 dark:text-blue-400" />}
+        titleIcon={<PiClipboardText className="h-5 w-5 text-accent" />}
         showBackButton={true}
         onBack={handleBack}
       />
@@ -210,15 +210,15 @@ export default function ResponseDonePage({ params }: ResponseDonePageProps) {
 
           {/* Survey Info */}
           <Card variant="default" radius="lg" padding="md">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            <h3 className="text-heading-3 text-on-surface mb-2">
               اطلاعات نظرسنجی
             </h3>
             <div className="space-y-1">
-              <div className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="text-body text-muted">
                 <span className="font-medium">عنوان:</span> {surveyTitle}
               </div>
               {responseDetails.attemptNumber && (
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-body text-muted">
                   <span className="font-medium">تلاش شماره:</span> {responseDetails.attemptNumber}
                 </div>
               )}

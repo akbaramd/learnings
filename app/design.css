@@ -313,6 +313,35 @@
   }
 
   /* ============================================
+     SEMANTIC TEXT COLORS - For text on body/surface backgrounds
+     ============================================ */
+
+  /* Primary Text - For primary-colored text on body/surface backgrounds */
+  .text-primary {
+    @apply text-emerald-600 dark:text-emerald-400;
+  }
+
+  /* Secondary Text - For secondary-colored text on body/surface backgrounds */
+  .text-secondary {
+    @apply text-gray-600 dark:text-gray-400;
+  }
+
+  /* Accent Text - For accent-colored text on body/surface backgrounds */
+  .text-accent {
+    @apply text-blue-600 dark:text-blue-400;
+  }
+
+  /* Danger Text - For danger-colored text on body/surface backgrounds */
+  .text-danger {
+    @apply text-red-600 dark:text-red-400;
+  }
+
+  /* Muted Text - For low-emphasis text on body/surface backgrounds */
+  .text-muted {
+    @apply text-gray-500 dark:text-gray-400;
+  }
+
+  /* ============================================
      BORDER COLORS
      ============================================ */
 
@@ -377,8 +406,8 @@
     /* ~18px / 22px line-height / SemiBold 600 */
   }
 
-  /* Secondary Text / Captions */
-  .text-secondary {
+  /* Secondary Text / Captions - DEPRECATED: Use text-caption instead */
+  .text-secondary-typography {
     @apply text-xs leading-4 font-normal text-gray-500 dark:text-gray-400;
     /* ~12px / 16px line-height / Regular 400 */
   }

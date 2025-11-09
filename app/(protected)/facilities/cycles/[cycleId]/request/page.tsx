@@ -353,7 +353,7 @@ export default function CreateRequestPage({ params }: CreateRequestPageProps) {
         <div className="p-2 space-y-2">
           {/* Cycle Information */}
           <Card variant="default" radius="lg" padding="md">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
               <PiCalendar className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               اطلاعات دوره
             </h3>
@@ -445,7 +445,7 @@ export default function CreateRequestPage({ params }: CreateRequestPageProps) {
 
           {/* Request Form */}
           <Card variant="default" radius="lg" padding="md">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
               <PiInfo className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               فرم درخواست
             </h3>

@@ -11,7 +11,7 @@ import {
   type FacilityDto,
 } from '@/src/store/facilities';
 import {
-  PiBuilding,
+  PiMoney,
   PiArrowClockwise,
   PiFunnelSimple,
   PiX,
@@ -49,7 +49,7 @@ export default function FacilitiesPage() {
   // State - Single source of truth: local state
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [onlyActiveFilter, setOnlyActiveFilter] = useState<boolean | undefined>(undefined);
+  const [onlyActiveFilter, setOnlyActiveFilter] = useState<boolean | undefined>(false);
   const [allFacilities, setAllFacilities] = useState<FacilityDto[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -132,7 +132,7 @@ export default function FacilitiesPage() {
   useEffect(() => {
     setHeaderState({
       title: 'تسهیلات',
-      titleIcon: <PiBuilding className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />,
+      titleIcon: <PiMoney className="h-5 w-5 text-primary" />,
       showBackButton: true,
       onBack,
       rightActions: [
@@ -289,7 +289,7 @@ export default function FacilitiesPage() {
           <Card variant="default" radius="lg" padding="md">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">جستجو و فیلتر</h3>
+              <h3 className="text-heading-3 text-on-surface">جستجو و فیلتر</h3>
               <Button
                 variant="subtle"
                 size="sm"
@@ -303,7 +303,7 @@ export default function FacilitiesPage() {
 
             {/* Search Bar */}
             <div className="mb-4">
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-label text-on-surface mb-2">
                 جستجو
               </label>
               <div className="flex gap-2">
@@ -328,7 +328,7 @@ export default function FacilitiesPage() {
 
             {/* Filters */}
             <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-label text-on-surface mb-2">
                 وضعیت
               </label>
               <div className="flex gap-2 flex-wrap">
@@ -367,19 +367,19 @@ export default function FacilitiesPage() {
         <div className="pb-2">
           {isLoading && allFacilities.length === 0 ? (
             <div className="flex justify-center items-center py-8">
-              <PiArrowClockwise className="h-6 w-6 animate-spin text-gray-400" />
-              <span className="mr-2 text-gray-500">در حال بارگذاری...</span>
+              <PiArrowClockwise className="h-6 w-6 animate-spin text-muted" />
+              <span className="mr-2 text-muted">در حال بارگذاری...</span>
             </div>
           ) : allFacilities && allFacilities.length > 0 ? (
             <>
               {normalizedSearch && (
-                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="mb-4 p-3 bg-accent-subtle rounded-lg border border-accent">
                   <div className="flex items-center justify-between">
                     <Button
                       variant="subtle"
                       size="sm"
                       onClick={() => setSearch('')}
-                      className="text-xs"
+                      className="text-caption"
                     >
                       پاک کردن جستجو
                     </Button>
@@ -405,13 +405,13 @@ export default function FacilitiesPage() {
                       <div className="pb-2">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-3">
-                            <PiBuilding className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                            <PiMoney className="h-5 w-5 text-primary" />
                             <div>
-                              <div className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                              <div className="text-heading-3 text-on-surface">
                                 {facility.name || facility.code || 'نامشخص'}
                               </div>
                               {facility.code && (
-                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                <div className="text-caption text-muted">
                                   کد: {facility.code}
                                 </div>
                               )}
@@ -428,7 +428,7 @@ export default function FacilitiesPage() {
 
                       {facility.description && (
                         <div className="px-4 pb-2">
-                          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                          <p className="text-body text-muted line-clamp-2">
                             {facility.description}
                           </p>
                         </div>
@@ -436,28 +436,28 @@ export default function FacilitiesPage() {
 
                       {/* Cycle Statistics Info */}
                       {facility.cycleStatistics && (facility.cycleStatistics.totalActiveQuota !== undefined || facility.cycleStatistics.totalAvailableQuota !== undefined || facility.cycleStatistics.totalCyclesCount !== undefined) && (
-                        <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-800 pt-2 mt-2">
+                        <div className="px-4 border-t border-subtle pt-2 mt-2">
                           <div className="grid grid-cols-3 gap-2 text-center">
                             {facility.cycleStatistics.totalActiveQuota !== undefined && (
-                              <div className="border-l border-gray-200 dark:border-gray-700">
-                                <div className="text-xs text-gray-500 dark:text-gray-400">ظرفیت فعال</div>
-                                <div className="font-semibold text-emerald-600 dark:text-emerald-400 text-sm">
+                              <div className="border-l border-subtle">
+                                <div className="text-caption text-muted">ظرفیت فعال</div>
+                                <div className="font-semibold text-primary text-body">
                                   {formatCurrencyFa(facility.cycleStatistics.totalActiveQuota)}
                                 </div>
                               </div>
                             )}
                             {facility.cycleStatistics.totalAvailableQuota !== undefined && (
-                              <div className="border-l border-gray-200 dark:border-gray-700">
-                                <div className="text-xs text-gray-500 dark:text-gray-400">ظرفیت موجود</div>
-                                <div className="font-semibold text-blue-600 dark:text-blue-400 text-sm">
+                              <div className="border-l border-subtle">
+                                <div className="text-caption text-muted">ظرفیت موجود</div>
+                                <div className="font-semibold text-accent text-body">
                                   {formatCurrencyFa(facility.cycleStatistics.totalAvailableQuota)}
                                 </div>
                               </div>
                             )}
                             {facility.cycleStatistics.totalCyclesCount !== undefined && (
                               <div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">کل دوره‌ها</div>
-                                <div className="font-semibold text-amber-600 dark:text-amber-400 text-sm">
+                                <div className="text-caption text-muted">کل دوره‌ها</div>
+                                <div className="font-semibold text-amber-600 dark:text-amber-400 text-body">
                                   {formatCurrencyFa(facility.cycleStatistics.totalCyclesCount)}
                                 </div>
                               </div>
@@ -492,8 +492,8 @@ export default function FacilitiesPage() {
                 <div ref={loadMoreRef} className="mt-4 flex flex-col items-center gap-3">
                   {isLoading ? (
                     <div className="flex items-center gap-2">
-                      <PiArrowClockwise className="h-5 w-5 animate-spin text-gray-400" />
-                      <span className="text-sm text-gray-500">در حال بارگذاری...</span>
+                      <PiArrowClockwise className="h-5 w-5 animate-spin text-muted" />
+                      <span className="text-body text-muted">در حال بارگذاری...</span>
                     </div>
                   ) : (
                     <Button
@@ -510,7 +510,7 @@ export default function FacilitiesPage() {
 
               {pagination && !pagination.hasNextPage && allFacilities.length > 0 && (
                 <div className="text-center py-4">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-body text-muted">
                     تمام تسهیلات نمایش داده شد
                   </p>
                 </div>
@@ -518,11 +518,11 @@ export default function FacilitiesPage() {
             </>
           ) : (
             <div className="text-center py-12">
-              <PiBuilding className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              <PiMoney className="h-12 w-12 text-muted mx-auto mb-4" />
+              <h3 className="text-heading-2 text-on-surface mb-2">
                 {normalizedSearch ? 'نتیجه‌ای یافت نشد' : 'تسهیلاتی یافت نشد'}
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+              <p className="text-body text-muted mb-4">
                 {normalizedSearch
                   ? 'لطفاً نام یا کد تسهیلات دیگری را جستجو کنید'
                   : 'هیچ تسهیلاتی با فیلترهای انتخابی پیدا نشد'

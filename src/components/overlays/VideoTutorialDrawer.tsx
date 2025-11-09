@@ -47,7 +47,7 @@ export default function VideoTutorialDrawer({
             <PiVideo className="h-5 w-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100">
               {title}
             </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
