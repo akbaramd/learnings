@@ -18,12 +18,13 @@ export const PageHeaderAction: React.FC<PageHeaderActionProps> = ({
   onClick,
   label,
   disabled = false,
-  variant = 'ghost',
+  variant = 'outline',
   'aria-label': ariaLabel,
 }) => {
   return (
     <IconButton
       variant={variant}
+      size="sm"
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel || label || 'Action'}
