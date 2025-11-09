@@ -187,7 +187,7 @@ export function ServicesGrid({
   className?: string;
 }) {
   return (
-    <div dir={dir} className={['grid gap-3 grid-cols-3 sm:grid-cols-4 lg:grid-cols-6', className || ''].join(' ')}>
+    <div dir={dir} className={['grid gap-3 grid-cols-3', className || ''].join(' ')}>
       {items.map((s) => (
         <ServiceCard
           key={s.id}
