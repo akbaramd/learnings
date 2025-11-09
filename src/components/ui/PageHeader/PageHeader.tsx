@@ -1,17 +1,9 @@
 'use client';
 
 import React, { type ReactNode } from 'react';
-import { PageHeaderTitle, type PageHeaderTitleProps } from './PageHeaderTitle';
-import { PageHeaderActions, type PageHeaderActionsProps } from './PageHeaderActions';
-
-export interface PageHeaderActionProps {
-  icon: ReactNode;
-  onClick: () => void;
-  label?: string;
-  disabled?: boolean;
-  variant?: 'ghost' | 'solid' | 'outline';
-  'aria-label'?: string;
-}
+import { PageHeaderTitle } from './PageHeaderTitle';
+import { PageHeaderActions } from './PageHeaderActions';
+import { type PageHeaderActionProps } from './PageHeaderAction';
 
 export interface PageHeaderProps {
   title: string;
