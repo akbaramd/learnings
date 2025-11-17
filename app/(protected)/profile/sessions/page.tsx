@@ -2,11 +2,17 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useGetSessionsPaginatedQuery } from '@/src/store/auth/auth.queries';
+import { 
+  useGetSessionsPaginatedQuery,
+  useLogoutBySessionIdMutation,
+  useLogoutAllSessionsMutation,
+  useLogoutAllOtherSessionsMutation,
+} from '@/src/store/auth/auth.queries';
 import { getDeviceId } from '@/src/lib/deviceInfo';
 import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import { Card } from '@/src/components/ui/Card';
 import { PageHeader } from '@/src/components/ui/PageHeader/PageHeader';
+import { Button } from '@/src/components/ui/Button';
 import { SessionDto } from '@/src/store/auth/auth.types';
 import {
   PiDeviceMobile,
@@ -16,6 +22,8 @@ import {
   PiXCircle,
   PiWarning,
   PiArrowClockwise,
+  PiSignOut,
+  PiTrash,
 } from 'react-icons/pi';
 
 function formatRelativeFa(date: Date | string | null) {
@@ -79,10 +87,14 @@ function getStatusInfo(session: SessionDto) {
 
 function SessionCard({ 
   session, 
-  isCurrentDevice 
+  isCurrentDevice,
+  isSelected,
+  onSelect,
 }: { 
   session: SessionDto; 
   isCurrentDevice: boolean;
+  isSelected: boolean;
+  onSelect: () => void;
 }) {
   const statusInfo = getStatusInfo(session);
 
@@ -91,13 +103,18 @@ function SessionCard({
       variant="default"
       radius="lg"
       padding="md"
-      hover={false}
-      clickable={false}
+      hover={!isCurrentDevice && session.isActive}
+      clickable={!isCurrentDevice && session.isActive}
+      onClick={!isCurrentDevice && session.isActive ? onSelect : undefined}
       className={`
+        transition-all duration-200
         ${isCurrentDevice 
-          ? 'border-2 border-emerald-500 dark:border-emerald-400 shadow-lg' 
-          : ''
+          ? 'border-2 border-emerald-500 dark:border-emerald-400' 
+          : isSelected
+          ? 'border-2 border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+          : 'border border-gray-200 dark:border-gray-700'
         }
+        ${!isCurrentDevice && session.isActive ? 'cursor-pointer' : 'cursor-default'}
       `}
     >
       {/* Device ID and Status Row */}
@@ -147,6 +164,22 @@ function SessionCard({
           </div>
         </div>
       )}
+
+      {/* Selection Indicator */}
+      {isSelected && !isCurrentDevice && (
+        <div className="mt-2 flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 font-medium">
+          <PiCheckCircle className="h-4 w-4" />
+          <span>✓ این نشست برای خروج انتخاب شده است</span>
+        </div>
+      )}
+
+      {/* Help Text for Current Device */}
+      {isCurrentDevice && (
+        <div className="mt-2 flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400">
+          <PiCheckCircle className="h-4 w-4" />
+          <span>شما در حال حاضر از این دستگاه استفاده می‌کنید</span>
+        </div>
+      )}
     </Card>
   );
 }
@@ -161,6 +194,7 @@ export default function SessionsPage() {
     return null;
   });
   const [pageNumber, setPageNumber] = useState(1);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const pageSize = 10;
 
   const { data, isLoading, error, refetch } = useGetSessionsPaginatedQuery({
@@ -168,10 +202,29 @@ export default function SessionsPage() {
     pageSize,
   });
 
+  // Logout mutations
+  const [logoutBySessionId, { isLoading: isLoggingOutSession }] = useLogoutBySessionIdMutation();
+  const [logoutAllSessions, { isLoading: isLoggingOutAll }] = useLogoutAllSessionsMutation();
+  const [logoutAllOtherSessions, { isLoading: isLoggingOutOthers }] = useLogoutAllOtherSessionsMutation();
+
   const sessions = data?.data?.items || [];
   const totalCount = data?.data?.totalCount || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
   const hasError = error !== undefined && error !== null;
+
+  // Get active sessions (excluding current device)
+  const activeOtherSessions = sessions.filter(
+    s => s.isActive && !s.isRevoked && !s.isExpired && s.deviceId !== currentDeviceId
+  );
+  const hasActiveOtherSessions = activeOtherSessions.length > 0;
+
+  // Get selected session
+  const selectedSession = sessions.find(s => s.id === selectedSessionId);
+  const canLogoutSelected = selectedSession && 
+    selectedSession.isActive && 
+    !selectedSession.isRevoked && 
+    !selectedSession.isExpired &&
+    selectedSession.deviceId !== currentDeviceId;
 
   const handleBack = useCallback(() => {
     router.back();
@@ -180,6 +233,46 @@ export default function SessionsPage() {
   const handleRefresh = useCallback(() => {
     refetch();
   }, [refetch]);
+
+  const handleSelectSession = useCallback((sessionId: string | null) => {
+    setSelectedSessionId(sessionId);
+  }, []);
+
+  const handleLogoutSelected = useCallback(async () => {
+    if (!selectedSessionId || !canLogoutSelected) return;
+
+    try {
+      await logoutBySessionId({ sessionId: selectedSessionId }).unwrap();
+      setSelectedSessionId(null);
+      // Refetch sessions list
+      await refetch();
+    } catch (error) {
+      console.error('[Sessions] Error logging out session:', error);
+    }
+  }, [selectedSessionId, canLogoutSelected, logoutBySessionId, refetch]);
+
+  const handleLogoutAllOthers = useCallback(async () => {
+    if (!hasActiveOtherSessions) return;
+
+    try {
+      await logoutAllOtherSessions({}).unwrap();
+      setSelectedSessionId(null);
+      // Refetch sessions list
+      await refetch();
+    } catch (error) {
+      console.error('[Sessions] Error logging out other sessions:', error);
+    }
+  }, [hasActiveOtherSessions, logoutAllOtherSessions, refetch]);
+
+  const handleLogoutAll = useCallback(async () => {
+    try {
+      await logoutAllSessions({}).unwrap();
+      setSelectedSessionId(null);
+      // Will redirect automatically via AuthInitializer
+    } catch (error) {
+      console.error('[Sessions] Error logging out all sessions:', error);
+    }
+  }, [logoutAllSessions]);
 
   return (
     <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900" dir="rtl">
@@ -231,16 +324,22 @@ export default function SessionsPage() {
                   key={session.id}
                   session={session}
                   isCurrentDevice={session.deviceId === currentDeviceId}
+                  isSelected={session.id === selectedSessionId}
+                  onSelect={() => handleSelectSession(session.id || null)}
                 />
               ))}
             </div>
           ) : (
             <Card variant="default" radius="lg" padding="lg">
-              <div className="text-center">
-                <PiDeviceMobile className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">هیچ نشستی یافت نشد</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500">هنوز هیچ نشست فعالی وجود ندارد</p>
-              </div>
+            <div className="text-center py-6">
+              <PiDeviceMobile className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
+                هیچ نشستی یافت نشد
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                در حال حاضر هیچ نشست فعالی در سیستم ثبت نشده است
+              </p>
+            </div>
             </Card>
           )}
 
@@ -269,19 +368,84 @@ export default function SessionsPage() {
             </div>
           )}
 
-          {/* Info */}
+          {/* Help Info */}
           {!isLoading && sessions && sessions.length > 0 && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-4">
-              <p className="text-xs text-blue-700 dark:text-blue-300">
-                <strong>نکته:</strong> دستگاه فعلی با حاشیه سبز مشخص شده است.
-              </p>
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mt-4">
+              <div className="flex items-start gap-3">
+                <PiDeviceMobile className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 space-y-2">
+                  <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                    راهنمای استفاده
+                  </h4>
+                  <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1.5 list-disc list-inside leading-relaxed">
+                    <li>دستگاه فعلی شما با <strong className="text-emerald-700 dark:text-emerald-300">حاشیه سبز</strong> مشخص شده است</li>
+                    <li>برای خروج از یک نشست خاص، روی کارت آن <strong>کلیک</strong> کنید تا انتخاب شود</li>
+                    <li>سپس از دکمه‌های پایین صفحه برای خروج استفاده کنید</li>
+                    <li>با خروج از همه نشست‌ها، از حساب کاربری خود خارج می‌شوید</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Spacer for bottom navigation */}
-        <div className="h-20" />
+        {/* Spacer for sticky buttons */}
+        <div className="h-24" />
       </ScrollableArea>
+
+      {/* Sticky Action Buttons at Bottom */}
+      {!isLoading && sessions && sessions.length > 0 && (
+        <div className="flex-shrink-0 sticky bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent dark:from-gray-900 dark:via-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)] z-10">
+          <div className="flex gap-3">
+            {/* Logout Selected Session */}
+            {canLogoutSelected && (
+              <Button
+                variant="solid"
+                color="accent"
+                onClick={handleLogoutSelected}
+                loading={isLoggingOutSession}
+                loadingText="در حال خروج از نشست..."
+                leftIcon={!isLoggingOutSession && <PiSignOut className="h-5 w-5" />}
+                className="flex-1 py-3 text-sm font-medium"
+              >
+                {isLoggingOutSession ? 'در حال خروج...' : 'خروج از نشست انتخاب شده'}
+              </Button>
+            )}
+
+            {/* Logout All Other Sessions */}
+            {hasActiveOtherSessions && (
+              <Button
+                variant={canLogoutSelected ? "outline" : "solid"}
+                color={canLogoutSelected ? "secondary" : "accent"}
+                onClick={handleLogoutAllOthers}
+                loading={isLoggingOutOthers}
+                loadingText="در حال خروج از نشست‌های دیگر..."
+                leftIcon={!isLoggingOutOthers && <PiTrash className="h-5 w-5" />}
+                className="flex-1 py-3 text-sm font-medium"
+                disabled={isLoggingOutSession || isLoggingOutAll}
+              >
+                {isLoggingOutOthers 
+                  ? 'در حال خروج...' 
+                  : `خروج از ${activeOtherSessions.length} نشست دیگر`}
+              </Button>
+            )}
+
+            {/* Logout All Sessions */}
+            <Button
+              variant="subtle"
+              color="accent"
+              onClick={handleLogoutAll}
+              loading={isLoggingOutAll}
+              loadingText="در حال خروج از همه نشست‌ها..."
+              leftIcon={!isLoggingOutAll && <PiSignOut className="h-5 w-5" />}
+              className={canLogoutSelected || hasActiveOtherSessions ? "flex-1 py-3 text-sm font-medium" : "hidden"}
+              disabled={isLoggingOutSession || isLoggingOutOthers}
+            >
+              {isLoggingOutAll ? 'در حال خروج...' : 'خروج از همه نشست‌ها'}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

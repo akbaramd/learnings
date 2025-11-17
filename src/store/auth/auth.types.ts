@@ -81,6 +81,23 @@ export interface RefreshTokenRequest {
   userAgent?: string | null;
 }
 
+export interface LogoutRequest {
+  refreshToken?: string | null;
+}
+
+export interface LogoutByRefreshTokenRequest {
+  refreshToken?: string | null;
+}
+
+// Empty body - sessionId is in path
+export type LogoutBySessionIdRequest = Record<string, never>;
+
+// Empty body
+export type LogoutAllSessionsRequest = Record<string, never>;
+
+// Empty body
+export type LogoutAllOtherSessionsRequest = Record<string, never>;
+
 export interface ValidateNationalCodeRequest {
   nationalCode: string;
 }

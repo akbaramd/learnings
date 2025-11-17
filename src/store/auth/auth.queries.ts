@@ -5,6 +5,11 @@ import {
   SendOtpResponse,
   VerifyOtpRequest,
   VerifyOtpResponse,
+  LogoutRequest,
+  LogoutByRefreshTokenRequest,
+  LogoutBySessionIdRequest,
+  LogoutAllSessionsRequest,
+  LogoutAllOtherSessionsRequest,
   LogoutResponse,
   RefreshResponse,
   GetMeResponse,
@@ -316,56 +321,239 @@ export const authApi = createApi({
       },
     }),
 
-    // Logout mutation
-    logout: builder.mutation<LogoutResponse, { refreshToken?: string }>({
-      query: ({ refreshToken }) => ({
-        url: '/auth/logout',
-        method: 'POST',
-        body: { refreshToken: refreshToken || null },
-      }),
-      invalidatesTags: ['Auth'],
-      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
-        console.log('[Logout Mutation] onQueryStarted - Starting logout mutation...');
+    // Logout mutation - handles all logout scenarios
+    logout: builder.mutation<LogoutResponse, LogoutRequest | void>({
+      query: (request) => {
+        // Handle void case (no parameters)
+        const req = request || {};
+        
+        return {
+          url: '/auth/logout',
+          method: 'POST',
+          body: {
+            refreshToken: req.refreshToken || null,
+          },
+        };
+      },
+      invalidatesTags: ['Auth', 'User'], // Invalidate both Auth and User tags
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        console.log('[Logout Mutation] Starting logout...', {
+          hasRefreshToken: !!arg?.refreshToken,
+        });
+
         try {
-          console.log('[Logout Mutation] Setting status to loading...');
+          // Set loading state
           dispatch(setAuthStatus('loading'));
           dispatch(setError(null));
 
-          console.log('[Logout Mutation] Waiting for API response...');
+          // Wait for API response
           const { data } = await queryFulfilled;
-          console.log('[Logout Mutation] API response received:', data);
+          console.log('[Logout Mutation] API response:', {
+            isSuccess: data?.isSuccess,
+            message: data?.message,
+            hasData: !!data?.data,
+            dataIsSuccess: data?.data?.isSuccess,
+          });
 
-          // Check isSuccess flag
-          if (data?.isSuccess === true && data?.data?.isSuccess) {
-            console.log('[Logout Mutation] Logout successful, clearing state...');
-            dispatch(clearUser());
-            dispatch(clearChallengeId());
-            dispatch(setAuthStatus('anonymous'));
-            console.log('[Logout Mutation] State cleared, status set to anonymous');
+          // Handle successful logout response
+          if (data?.isSuccess === true) {
+            // Check nested data.isSuccess if present
+            const logoutSuccess = data?.data?.isSuccess !== false;
+            
+            if (logoutSuccess) {
+              console.log('[Logout Mutation] ✅ Logout successful');
+            } else {
+              console.warn('[Logout Mutation] ⚠️ API returned success but data.isSuccess is false');
+            }
           } else {
-            console.log('[Logout Mutation] Logout response indicates failure, but clearing state for security...');
-            // Even if logout fails on server, clear local state for security
-            dispatch(clearUser());
-            dispatch(clearChallengeId());
-            dispatch(setAuthStatus('anonymous'));
-            console.log('[Logout Mutation] State cleared despite API failure');
-            const errorMessage = data?.message || data?.errors?.[0] || 'Logout failed';
-            const { message, type } = categorizeAuthError({ data });
-            dispatch(setErrorWithType({ message: errorMessage || message, type }));
+            console.warn('[Logout Mutation] ⚠️ API returned isSuccess: false', {
+              message: data?.message,
+              errors: data?.errors,
+            });
           }
-        } catch (err: unknown) {
-          console.error('[Logout Mutation] Error during logout:', err);
-          // Even if logout fails on server, clear local state
-          console.log('[Logout Mutation] Clearing state due to error...');
+
+          // CRITICAL: Always clear local state regardless of API response
+          // This ensures security - even if logout API fails (timeout, network error),
+          // we clear local state to prevent unauthorized access
+          console.log('[Logout Mutation] Clearing local state...');
           dispatch(clearUser());
           dispatch(clearChallengeId());
           dispatch(setAuthStatus('anonymous'));
-          console.log('[Logout Mutation] State cleared after error');
+          console.log('[Logout Mutation] ✅ Local state cleared');
+
+          // If API response indicates failure, log error but don't block logout
+          if (data?.isSuccess === false) {
+            const errorMessage = data?.message || data?.errors?.[0] || 'Logout request failed on server';
+            const { message, type } = categorizeAuthError({ data });
+            console.warn('[Logout Mutation] Server logout failed, but local state cleared:', {
+              message: errorMessage || message,
+              type,
+            });
+            // Don't set error state - logout is still successful from user perspective
+            // Local state is cleared, which is what matters for security
+          }
+        } catch (error: unknown) {
+          console.error('[Logout Mutation] ❌ Error during logout:', error);
           
-          const { message, type } = categorizeAuthError(err);
+          // CRITICAL: Always clear local state even on network/server errors
+          // This ensures security - if logout API is unreachable (timeout, network error),
+          // we still clear local state to prevent unauthorized access
+          console.log('[Logout Mutation] Clearing local state due to error...');
+          dispatch(clearUser());
+          dispatch(clearChallengeId());
+          dispatch(setAuthStatus('anonymous'));
+          console.log('[Logout Mutation] ✅ Local state cleared after error');
+
+          // Categorize and log error
+          const { message, type } = categorizeAuthError(error);
+          console.warn('[Logout Mutation] Error details:', { message, type });
+          
+          // Don't set error state - logout is still successful from user perspective
+          // Local state is cleared, which is what matters for security
+          // The error is logged for debugging but doesn't block the logout flow
+        }
+        
+        console.log('[Logout Mutation] Logout flow completed');
+      },
+    }),
+
+    // Logout by refresh token mutation
+    logoutByRefreshToken: builder.mutation<LogoutResponse, LogoutByRefreshTokenRequest>({
+      query: (request) => ({
+        url: '/auth/logout/refresh-token',
+        method: 'POST',
+        body: {
+          refreshToken: request.refreshToken || null,
+        },
+      }),
+      invalidatesTags: ['Auth', 'User'],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        console.log('[LogoutByRefreshToken] Starting logout by refresh token...', {
+          hasRefreshToken: !!arg.refreshToken,
+        });
+
+        try {
+          dispatch(setAuthStatus('loading'));
+          dispatch(setError(null));
+
+          const { data } = await queryFulfilled;
+          console.log('[LogoutByRefreshToken] API response:', {
+            isSuccess: data?.isSuccess,
+            message: data?.message,
+          });
+
+          // Always clear local state for security
+          dispatch(clearUser());
+          dispatch(clearChallengeId());
+          dispatch(setAuthStatus('anonymous'));
+          console.log('[LogoutByRefreshToken] ✅ Local state cleared');
+        } catch (error: unknown) {
+          console.error('[LogoutByRefreshToken] ❌ Error:', error);
+          // Always clear local state even on error
+          dispatch(clearUser());
+          dispatch(clearChallengeId());
+          dispatch(setAuthStatus('anonymous'));
+        }
+      },
+    }),
+
+    // Logout by session ID mutation
+    logoutBySessionId: builder.mutation<LogoutResponse, { sessionId: string }>({
+      query: ({ sessionId }) => ({
+        url: `/auth/logout/session/${sessionId}`,
+        method: 'POST',
+        body: {}, // Empty body - sessionId is in path
+      }),
+      invalidatesTags: ['Auth', 'User'],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        console.log('[LogoutBySessionId] Starting logout for session...', {
+          sessionId: arg.sessionId,
+        });
+
+        try {
+          dispatch(setError(null));
+
+          const { data } = await queryFulfilled;
+          console.log('[LogoutBySessionId] API response:', {
+            isSuccess: data?.isSuccess,
+            message: data?.message,
+          });
+
+          // Invalidate sessions query to refresh the list
+          dispatch(authApi.util.invalidateTags(['Auth']));
+        } catch (error: unknown) {
+          console.error('[LogoutBySessionId] ❌ Error:', error);
+          const { message, type } = categorizeAuthError(error);
           dispatch(setErrorWithType({ message, type }));
         }
-        console.log('[Logout Mutation] onQueryStarted completed');
+      },
+    }),
+
+    // Logout from all sessions mutation
+    logoutAllSessions: builder.mutation<LogoutResponse, LogoutAllSessionsRequest | void>({
+      query: () => ({
+        url: '/auth/logout/all',
+        method: 'POST',
+        body: {} as LogoutAllSessionsRequest, // Empty body
+      }),
+      invalidatesTags: ['Auth', 'User'],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        console.log('[LogoutAllSessions] Starting logout from all sessions...');
+
+        try {
+          dispatch(setAuthStatus('loading'));
+          dispatch(setError(null));
+
+          const { data } = await queryFulfilled;
+          console.log('[LogoutAllSessions] API response:', {
+            isSuccess: data?.isSuccess,
+            message: data?.message,
+          });
+
+          // Always clear local state - user is logged out from all sessions
+          dispatch(clearUser());
+          dispatch(clearChallengeId());
+          dispatch(setAuthStatus('anonymous'));
+          console.log('[LogoutAllSessions] ✅ Local state cleared');
+        } catch (error: unknown) {
+          console.error('[LogoutAllSessions] ❌ Error:', error);
+          // Always clear local state even on error
+          dispatch(clearUser());
+          dispatch(clearChallengeId());
+          dispatch(setAuthStatus('anonymous'));
+        }
+      },
+    }),
+
+    // Logout from all other sessions (keep current) mutation
+    logoutAllOtherSessions: builder.mutation<LogoutResponse, LogoutAllOtherSessionsRequest | void>({
+      query: () => ({
+        url: '/auth/logout/others',
+        method: 'POST',
+        body: {} as LogoutAllOtherSessionsRequest, // Empty body
+      }),
+      invalidatesTags: ['Auth', 'User'],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        console.log('[LogoutAllOtherSessions] Starting logout from all other sessions...');
+
+        try {
+          dispatch(setError(null));
+
+          const { data } = await queryFulfilled;
+          console.log('[LogoutAllOtherSessions] API response:', {
+            isSuccess: data?.isSuccess,
+            message: data?.message,
+          });
+
+          // Don't clear local state - user stays logged in on current session
+          // Just invalidate sessions query to refresh the list
+          dispatch(authApi.util.invalidateTags(['Auth']));
+          console.log('[LogoutAllOtherSessions] ✅ Other sessions logged out, current session remains active');
+        } catch (error: unknown) {
+          console.error('[LogoutAllOtherSessions] ❌ Error:', error);
+          const { message, type } = categorizeAuthError(error);
+          dispatch(setErrorWithType({ message, type }));
+        }
       },
     }),
 
@@ -487,6 +675,10 @@ export const {
   useVerifyOtpMutation,
   useGetMeQuery,
   useLogoutMutation,
+  useLogoutByRefreshTokenMutation,
+  useLogoutBySessionIdMutation,
+  useLogoutAllSessionsMutation,
+  useLogoutAllOtherSessionsMutation,
   useRefreshTokenMutation,
   useGetSessionsPaginatedQuery,
   useValidateNationalCodeQuery,
