@@ -41,7 +41,7 @@ export async function POST(
       message: upstream.data?.message || 'Session logged out successfully',
       errors: upstream.data?.errors || undefined,
       data: upstream.data?.data ? {
-        isSuccess: upstream.data.data.isSuccess ?? false,
+        isSuccess: Boolean(upstream.data.data.isSuccess ?? false),
         message: upstream.data.data.message || upstream.data?.message || 'Session logged out successfully'
       } : {
         isSuccess: false,
