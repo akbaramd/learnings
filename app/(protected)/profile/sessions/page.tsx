@@ -266,13 +266,25 @@ export default function SessionsPage() {
 
   const handleLogoutAll = useCallback(async () => {
     try {
-      await logoutAllSessions({}).unwrap();
+      const response = await logoutAllSessions({}).unwrap();
       setSelectedSessionId(null);
-      // Will redirect automatically via AuthInitializer
+      
+      // Check if logout was successful
+      if (response?.isSuccess === true) {
+        // Redirect to login page after successful logout
+        router.push('/login');
+      } else {
+        // Even if API says failed, redirect to login for security
+        // Local state is already cleared by the mutation
+        router.push('/login');
+      }
     } catch (error) {
       console.error('[Sessions] Error logging out all sessions:', error);
+      // Even on error, redirect to login for security
+      // Local state is already cleared by the mutation
+      router.push('/login');
     }
-  }, [logoutAllSessions]);
+  }, [logoutAllSessions, router]);
 
   return (
     <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900" dir="rtl">

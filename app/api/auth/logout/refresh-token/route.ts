@@ -30,8 +30,11 @@ export async function POST(req: NextRequest) {
       isSuccess: !!upstream.data?.data?.isSuccess,
       message: upstream.data?.message || 'Logged out successfully',
       errors: upstream.data?.errors || undefined,
-      data: upstream.data?.data || {
-        isSuccess: !!upstream.data?.data?.isSuccess,
+      data: upstream.data?.data ? {
+        isSuccess: upstream.data.data.isSuccess ?? false,
+        message: upstream.data.data.message || upstream.data?.message || 'Logged out successfully'
+      } : {
+        isSuccess: false,
         message: upstream.data?.message || 'Logged out successfully'
       }
     };
