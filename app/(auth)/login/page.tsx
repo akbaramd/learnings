@@ -347,12 +347,14 @@ export default function LoginPage() {
             }
 
             // استفاده مستقیم از RTK Query mutation
+            // deviceId, userAgent, and ipAddress are automatically injected by auth.queries.ts
             try {
               // استفاده از mutation hook
+              // Only pass required fields - device info is handled automatically
               await sendOtpMutation({
                 nationalCode: nationalId,
                 purpose: 'login',
-                deviceId: 'web-browser'
+                // deviceId, userAgent, and ipAddress are automatically added by auth.queries.ts
               }).unwrap();
               
               // The useEffect will handle the redirect when challengeId is set

@@ -238,10 +238,11 @@ export default function VerifyOtpPage() {
       }
 
       // استفاده مستقیم از mutation hook با national code ذخیره شده
+      // deviceId, userAgent, and ipAddress are automatically injected by auth.queries.ts
       await sendOtpMutation({
         nationalCode: nationalCode,
         purpose: 'login',
-        deviceId: 'web-browser'
+        // deviceId, userAgent, and ipAddress are automatically added by auth.queries.ts
       }).unwrap();
 
       // Reset UI state for resend
@@ -317,6 +318,32 @@ export default function VerifyOtpPage() {
                 challengeId: challengeId!,
                 otpCode: otp
               }).unwrap();
+              
+              // Check if verification was successful
+              // API may return status 200 but with isSuccess: false (e.g., invalid/expired OTP)
+              if (!result?.isSuccess) {
+                // Handle unsuccessful verification (status 200 but isSuccess: false)
+                const errorMessage = result?.message || result?.errors?.[0] || 'کد تأیید نامعتبر است. لطفاً دوباره تلاش کنید.';
+                
+                console.log('[VerifyOtp] ⚠️ OTP verification failed:', {
+                  isSuccess: result?.isSuccess,
+                  message: result?.message,
+                  errors: result?.errors,
+                });
+                
+                // Update UI state
+                setStatus('invalid');
+                setErrorText(errorMessage);
+                setTouched(true);
+                
+                // Show error toast
+                showError('خطا در تأیید', errorMessage);
+                
+                // Clear OTP field to allow retry
+                setOtp('');
+                
+                return; // Don't redirect
+              }
               
               // Redirect after successful verification
               // CRITICAL: Wait for cookies to be set and verified before redirecting
@@ -448,20 +475,18 @@ export default function VerifyOtpPage() {
                     }
                   }
                 }, 300); // Wait 300ms for cookies to be set
-              } else {
-                console.log('[VerifyOtp] ⚠️ OTP verification result:', {
-                  isSuccess: result?.isSuccess,
-                  navigatedRef: navigatedRef.current,
-                  willNotRedirect: !result?.isSuccess || navigatedRef.current,
-                });
               }
             } catch (error: unknown) {
+              // Handle network errors or exceptions
               setStatus('invalid');
               const errorMessage = error && typeof error === 'object' && 'data' in error 
-                ? (error as { data?: { message?: string } }).data?.message || 'کد تأیید نامعتبر. لطفاً دوباره تلاش کنید.'
+                ? (error as { data?: { message?: string; errors?: string[] } }).data?.message 
+                  || (error as { data?: { errors?: string[] } }).data?.errors?.[0]
+                  || 'کد تأیید نامعتبر. لطفاً دوباره تلاش کنید.'
                 : 'کد تأیید نامعتبر. لطفاً دوباره تلاش کنید.';
               setErrorText(errorMessage);
               setTouched(true);
+              showError('خطا', errorMessage);
             }
           }}
         >

@@ -54,20 +54,31 @@ export interface AuthState {
   isInitialized: boolean;
 }
 
-// Request types with better validation
+// Request types - matching Api.ts exactly
 export interface SendOtpRequest {
-  nationalCode: string;
-  purpose?: 'login' | 'register' | 'reset_password';
-  deviceId?: string;
+  nationalCode?: string | null;
+  purpose?: string | null;
+  deviceId?: string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  scope?: string | null;
 }
 
 export interface VerifyOtpRequest {
-  challengeId: string;
-  otpCode: string;
+  challengeId?: string | null;
+  otpCode?: string | null;
+  purpose?: string | null;
+  deviceId?: string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  scope?: string | null;
 }
 
 export interface RefreshTokenRequest {
-  refreshToken?: string;
+  refreshToken?: string | null;
+  deviceId?: string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
 }
 
 export interface ValidateNationalCodeRequest {
@@ -107,6 +118,47 @@ export interface RefreshData {
   accessToken?: string;
 }
 
+// Session types
+export interface SessionDto {
+  id?: string;
+  userId?: string;
+  deviceId?: string | null;
+  normalizedUserAgent?: string | null;
+  userAgent?: string | null;
+  ipAddress?: string | null;
+  lastIpChangeTime?: string | null;
+  riskScore?: number;
+  expiresAt?: string;
+  lastActivityAt?: string;
+  isRevoked?: boolean;
+  isActive?: boolean;
+  isExpired?: boolean;
+  createdAt?: string;
+  createdBy?: string | null;
+  updatedAt?: string | null;
+  updatedBy?: string | null;
+}
+
+export interface SessionsPaginatedData {
+  items?: SessionDto[] | null;
+  totalCount?: number;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+export interface GetSessionsPaginatedRequest {
+  pageNumber?: number;
+  pageSize?: number;
+  userId?: string;
+  deviceId?: string;
+  isActive?: boolean;
+  isRevoked?: boolean;
+  isExpired?: boolean;
+  searchTerm?: string;
+  sortBy?: string;
+  sortDirection?: string;
+}
+
 // Response types using ApplicationResult
 export type SendOtpResponse = ApplicationResult<SendOtpData>;
 export type VerifyOtpResponse = ApplicationResult<VerifyOtpData>;
@@ -115,3 +167,4 @@ export type LogoutResponse = ApplicationResult<LogoutData>;
 export type RefreshResponse = ApplicationResult<RefreshData>;
 export type GetMeResponse = ApplicationResult<UserProfile>;
 export type ValidateNationalCodeResponse = ApplicationResult<ValidateNationalCodeData>;
+export type GetSessionsPaginatedResponse = ApplicationResult<SessionsPaginatedData>;

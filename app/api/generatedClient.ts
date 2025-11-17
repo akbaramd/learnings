@@ -118,10 +118,27 @@ async function refreshAccessToken(req: NextRequest): Promise<{ success: boolean;
       // Also set cookie header for the refresh request
       refreshHttp.defaults.headers.common['Content-Type'] = 'application/json';
 
-      // Call upstream refresh endpoint
+      // Extract device info from request
+      const userAgent = req.headers.get('user-agent') || null;
+      const forwardedFor = req.headers.get('x-forwarded-for');
+      const ipAddress = forwardedFor 
+        ? forwardedFor.split(',').map(ip => ip.trim())[0] 
+        : req.headers.get('x-real-ip') || req.headers.get('cf-connecting-ip') || null;
+      
+      // Get deviceId from request body if available, or from cookies
+      // Note: deviceId should be sent from client, but we can't get it here easily
+      // The client should include it in the original request that triggered the refresh
+      const deviceId = null; // Will be set by client in auth.queries.ts
+
+      // Call upstream refresh endpoint with device info
       const refreshApi = new Api({});
       (refreshApi as unknown as { instance: AxiosInstance }).instance = refreshHttp;
-      const response = await refreshApi.api.refreshToken({ refreshToken });
+      const response = await refreshApi.api.refreshToken({ 
+        refreshToken,
+        deviceId,
+        userAgent,
+        ipAddress,
+      });
       
       if (isDevMode) {
         console.log('[RefreshToken] Upstream response status:', response.status);

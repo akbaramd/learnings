@@ -6,6 +6,8 @@ import {ErrorBoundary} from "@/src/components/ErrorBoundary";
 import {vazirmatn} from "@/app/vazirmatn";
 import {PWARegister} from "@/src/components/PWARegister";
 import {AuthInitializer} from "@/src/components/auth/AuthInitializer";
+import {ClientInfoInitializer} from "@/src/components/ClientInfoInitializer";
+import {DeviceIdInitializer} from "@/src/components/DeviceIdInitializer";
 
 export const metadata: Metadata = {
   title: "سامانه رفاهی",
@@ -57,6 +59,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ErrorBoundary>
           <Providers>
             <ClientProviders>
+              <DeviceIdInitializer />
+              <ClientInfoInitializer />
               <AuthInitializer />
               {children}
             </ClientProviders>

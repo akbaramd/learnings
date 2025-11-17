@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { SendOtpResponse } from '@/src/store/auth/auth.types';
 import { ensureCsrfCookie } from '@/src/lib/csrf';
 import { createApiInstance } from '@/app/api/generatedClient';
+import { getRequestInfo } from '@/src/lib/requestInfo';
 
 // Force Node.js runtime for crypto module support
 export const runtime = 'nodejs';
@@ -16,10 +17,17 @@ export async function POST(req: NextRequest) {
     const api = createApiInstance(req);
     const body = await req.json();
 
-    // Add scope parameter for the API call
+    // Extract device info from request (IP address from headers, deviceId/userAgent from body or headers)
+    const requestInfo = getRequestInfo(req, body);
+
+    // Add scope parameter and device info for the API call
     const requestBody = {
       ...body,
-      scope: 'app' // Set scope to 'app' as required by the API
+      scope: body.scope || 'app', // Set scope to 'app' as default
+      // Override with server-extracted values if not provided by client
+      deviceId: body.deviceId || requestInfo.deviceId || null,
+      userAgent: body.userAgent || requestInfo.userAgent || null,
+      ipAddress: body.ipAddress || requestInfo.ipAddress || null,
     };
 
     // استفاده از sendOtp برای ارسال کد OTP
@@ -28,7 +36,7 @@ export async function POST(req: NextRequest) {
 
     // فوروارد کردن کوکی‌هایی که بک‌اند ست می‌کند (refresh cookie)
     const setCookie = upstream.headers?.['set-cookie'];
-
+    console.log('upstream', upstream.data);
     // Strongly typed response structure using ApplicationResult
     const response: SendOtpResponse = {
       isSuccess: upstream.data?.data?.challengeId ? true : false,

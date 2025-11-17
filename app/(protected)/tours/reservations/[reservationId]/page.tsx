@@ -583,7 +583,7 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
               {details.tour && (
                 <div className="mb-3 pb-3 border-b border-subtle">
                   <h3 className="text-label text-on-surface mb-2">اطلاعات تور</h3>
-                  <div className="grid grid-cols-2 gap-2 text-caption">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-caption">
                     {details.tour.tourStart && (
                       <div>
                         <span className="text-muted">شروع: </span>
@@ -621,7 +621,7 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
               )}
 
               {/* Reservation Information */}
-              <div className="grid grid-cols-2 gap-3 text-caption mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-caption mb-3">
                 {details.capacity?.description && (
                   <div>
                     <span className="text-muted">ظرفیت: </span>
@@ -635,7 +635,7 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
                   </span>
                 </div>
                 {details.trackingCode && (
-                  <div className="col-span-2 flex items-center gap-2">
+                  <div className="col-span-1 sm:col-span-2 flex items-center gap-2">
                     <span className="text-muted">کد پیگیری: </span>
                     <span className="text-on-surface font-medium font-mono text-caption">
                       {details.trackingCode}
@@ -788,9 +788,9 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
                   })}
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted mb-4">
-                  <PiUsers className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p className="text-body">هنوز عضوی اضافه نشده است</p>
+                <div className="text-center py-8 mb-4">
+                  <PiUsers className="h-12 w-12 mx-auto mb-3 opacity-50 text-muted" />
+                  <p className="text-body text-muted mb-2">هنوز عضوی اضافه نشده است</p>
                   {details.status === 'Draft' && (
                     <Button
                       onClick={handleAddGuest}
@@ -806,15 +806,18 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
               )}
 
               {/* Final Price Summary */}
-              {(pricing?.totalRequiredAmount != null || pricing?.totalRemainingAmount != null) && (
+              {(details.isFree || pricing?.totalRequiredAmount != null || pricing?.totalRemainingAmount != null || details.totalAmountRials != null) && (
                 <div className="border-t border-subtle pt-4 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-body font-medium text-muted">مبلغ کل:</span>
                     <span className="text-heading-3 font-bold text-on-surface">
-                      {formatCurrencyFa(pricing.totalRequiredAmount)} ریال
+                      {details.isFree 
+                        ? 'رایگان'
+                        : `${formatCurrencyFa(pricing?.totalRequiredAmount ?? details.totalAmountRials ?? 0)} ریال`
+                      }
                     </span>
                   </div>
-                  {details.paidAmountRials != null && details.paidAmountRials > 0 && (
+                  {!details.isFree && details.paidAmountRials != null && details.paidAmountRials > 0 && (
                     <div className="flex items-center justify-between">
                       <span className="text-body font-medium text-muted">پرداخت شده:</span>
                       <span className="text-body font-semibold text-green-600 dark:text-green-400">
@@ -822,7 +825,7 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
                       </span>
                     </div>
                   )}
-                  {(pricing?.totalRemainingAmount != null || details.remainingAmountRials != null) && (
+                  {!details.isFree && (pricing?.totalRemainingAmount != null || details.remainingAmountRials != null) && (
                     <div className="flex items-center justify-between">
                       <span className="text-body font-medium text-muted">باقیمانده:</span>
                       <span className="text-heading-3 font-bold text-orange-600 dark:text-orange-400">
@@ -858,17 +861,22 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
         </div>
 
         {/* Action Buttons - Finalize and Pay (Only for Draft, not expired) */}
-        {details.status === 'Draft' && !expired && pricing?.totalRequiredAmount != null && pricing.totalRequiredAmount > 0 && (
-          <div className="flex-shrink-0 sticky bottom-0 left-0 right-0 p-4 bg-surface border-t border-subtle z-10">
-            <Button
-              onClick={handleFinalizeClick}
-              disabled={isFinalizing}
-              className="w-full"
-              leftIcon={<PiReceipt className="h-5 w-5" />}
-            >
-              نهایی‌سازی و پرداخت ({formatCurrencyFa(pricing.totalRequiredAmount)} ریال)
-            </Button>
-          </div>
+        {details.status === 'Draft' && !expired && (
+          (details.isFree || (pricing?.totalRequiredAmount != null && pricing.totalRequiredAmount > 0)) && (
+            <div className="flex-shrink-0 sticky bottom-0 left-0 right-0 p-4 bg-surface border-t border-subtle z-10">
+              <Button
+                onClick={handleFinalizeClick}
+                disabled={isFinalizing}
+                className="w-full"
+                leftIcon={<PiReceipt className="h-5 w-5" />}
+              >
+                {details.isFree 
+                  ? 'نهایی‌سازی (رایگان)'
+                  : `نهایی‌سازی و پرداخت (${formatCurrencyFa(pricing?.totalRequiredAmount ?? 0)} ریال)`
+                }
+              </Button>
+            </div>
+          )
         )}
 
         {/* Action Buttons - Reactivate Reservation (Only for expired) */}
@@ -904,23 +912,38 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
             </p>
             
             <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 mt-0.5">
-                  <PiClock className="h-4 w-4 text-orange-500 dark:text-orange-400" />
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed flex-1">
-                  ظرفیت برای ۳۰ دقیقه برای شما رزرو می‌شود تا پرداخت را انجام دهید
-                </p>
-              </div>
+              {!details.isFree && (
+                <>
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <PiClock className="h-4 w-4 text-orange-500 dark:text-orange-400" />
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed flex-1">
+                      ظرفیت برای ۳۰ دقیقه برای شما رزرو می‌شود تا پرداخت را انجام دهید
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <PiClock className="h-4 w-4 text-orange-500 dark:text-orange-400" />
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed flex-1">
+                      اگر تا ۳۰ دقیقه پرداخت انجام نگیرد، ظرفیت آزاد می‌شود و رزرو به حالت پیش‌نویس بازمی‌گردد
+                    </p>
+                  </div>
+                </>
+              )}
               
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 mt-0.5">
-                  <PiClock className="h-4 w-4 text-orange-500 dark:text-orange-400" />
+              {details.isFree && (
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <PiCheckCircle className="h-4 w-4 text-green-500 dark:text-green-400" />
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed flex-1">
+                    این رزرو رایگان است و نیازی به پرداخت ندارد. پس از نهایی‌سازی، رزرو شما قطعی می‌شود.
+                  </p>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed flex-1">
-                  اگر تا ۳۰ دقیقه پرداخت انجام نگیرد، ظرفیت آزاد می‌شود و رزرو به حالت پیش‌نویس بازمی‌گردد
-                </p>
-              </div>
+              )}
               
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0 mt-0.5">

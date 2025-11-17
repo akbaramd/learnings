@@ -1,6 +1,5 @@
 // src/store/auth/auth.queries.ts
 import { createApi } from '@reduxjs/toolkit/query/react';
-import type { RootState } from '../index';
 import {
   SendOtpRequest,
   SendOtpResponse,
@@ -11,6 +10,8 @@ import {
   GetMeResponse,
   ValidateNationalCodeRequest,
   ValidateNationalCodeResponse,
+  GetSessionsPaginatedRequest,
+  GetSessionsPaginatedResponse,
   UserProfile,
 } from './auth.types';
 import {
@@ -27,6 +28,8 @@ import {
 } from './auth.slice';
 import type { AuthErrorType } from './auth.types';
 import { baseQueryWithReauth } from '@/src/store/api/baseApi';
+import { getDeviceId, getUserAgent, fetchClientInfo, getCachedIpAddress } from '@/src/lib/deviceInfo';
+import type { RefreshTokenRequest } from './auth.types';
 
 // Error handling utility - categorize errors
 export const categorizeAuthError = (error: unknown): { message: string; type: AuthErrorType } => {
@@ -85,11 +88,52 @@ export const authApi = createApi({
   endpoints: (builder) => ({
     // Send OTP mutation (login endpoint)
     sendOtp: builder.mutation<SendOtpResponse, SendOtpRequest>({
-      query: (credentials) => ({
-        url: '/auth/login',
-        method: 'POST',
-        body: credentials,
-      }),
+      queryFn: async (credentials, _api, _extraOptions, baseQuery) => {
+        // Get device info directly (not from request body)
+        let deviceId: string | null = null;
+        let userAgent: string | null = null;
+        let ipAddress: string | null = null;
+
+        if (typeof window !== 'undefined') {
+          // Get device ID and user agent synchronously
+          deviceId = getDeviceId();
+          userAgent = getUserAgent();
+          
+          // Get IP address - try cache first, then fetch if needed
+          ipAddress = getCachedIpAddress();
+          if (!ipAddress) {
+            try {
+              const clientInfo = await fetchClientInfo();
+              ipAddress = clientInfo.ipAddress;
+            } catch (error) {
+              console.warn('[Auth Queries] Failed to fetch IP address:', error);
+              ipAddress = null;
+            }
+          }
+        }
+
+        // Remove deviceId, userAgent, ipAddress from credentials to avoid duplication
+        const cleanCredentials: Omit<SendOtpRequest, 'deviceId' | 'userAgent' | 'ipAddress'> = {
+          nationalCode: credentials.nationalCode,
+          purpose: credentials.purpose,
+          scope: credentials.scope,
+        };
+
+        // Use baseQuery for the actual API call
+        const result = await baseQuery({
+          url: '/auth/login',
+          method: 'POST',
+          body: {
+            ...cleanCredentials,
+            deviceId,
+            userAgent,
+            ipAddress,
+            scope: cleanCredentials.scope || 'app', // Default scope to 'app'
+          },
+        });
+
+        return result as typeof result & { data?: SendOtpResponse };
+      },
       invalidatesTags: ['Auth'],
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
@@ -104,8 +148,10 @@ export const authApi = createApi({
             if (data.data.maskedPhoneNumber) {
               dispatch(setMaskedPhoneNumber(data.data.maskedPhoneNumber));
             }
-            // Store national code for resending OTP
-            dispatch(setNationalCode(arg.nationalCode));
+            // Store national code for resending OTP (handle undefined)
+            if (arg.nationalCode) {
+              dispatch(setNationalCode(arg.nationalCode));
+            }
             dispatch(setAuthStatus('otp-sent'));
           } else {
             // Handle failure response - check if it's user not found
@@ -125,11 +171,53 @@ export const authApi = createApi({
 
     // Verify OTP mutation
     verifyOtp: builder.mutation<VerifyOtpResponse, VerifyOtpRequest>({
-      query: (credentials) => ({
-        url: '/auth/verify-otp',
-        method: 'POST',
-        body: credentials,
-      }),
+      queryFn: async (credentials, _api, _extraOptions, baseQuery) => {
+        // Get device info directly (not from request body)
+        let deviceId: string | null = null;
+        let userAgent: string | null = null;
+        let ipAddress: string | null = null;
+
+        if (typeof window !== 'undefined') {
+          // Get device ID and user agent synchronously
+          deviceId = getDeviceId();
+          userAgent = getUserAgent();
+          
+          // Get IP address - try cache first, then fetch if needed
+          ipAddress = getCachedIpAddress();
+          if (!ipAddress) {
+            try {
+              const clientInfo = await fetchClientInfo();
+              ipAddress = clientInfo.ipAddress;
+            } catch (error) {
+              console.warn('[Auth Queries] Failed to fetch IP address:', error);
+              ipAddress = null;
+            }
+          }
+        }
+
+        // Remove deviceId, userAgent, ipAddress from credentials to avoid duplication
+        const cleanCredentials: Omit<VerifyOtpRequest, 'deviceId' | 'userAgent' | 'ipAddress'> = {
+          challengeId: credentials.challengeId,
+          otpCode: credentials.otpCode,
+          purpose: credentials.purpose,
+          scope: credentials.scope,
+        };
+
+        // Use baseQuery for the actual API call
+        const result = await baseQuery({
+          url: '/auth/verify-otp',
+          method: 'POST',
+          body: {
+            ...cleanCredentials,
+            deviceId,
+            userAgent,
+            ipAddress,
+            scope: cleanCredentials.scope || 'app', // Default scope to 'app'
+          },
+        });
+
+        return result as typeof result & { data?: VerifyOtpResponse };
+      },
       invalidatesTags: ['Auth', 'User'],
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         console.log('[VerifyOtp Mutation] onQueryStarted - Starting OTP verification...');
@@ -216,7 +304,7 @@ export const authApi = createApi({
             dispatch(setErrorWithType({ message: errorMessage || message, type }));
             dispatch(setInitialized(true));
           }
-        } catch (error: unknown) {
+        } catch {
           // baseApi.ts handles 401 automatically → setAnonymous
           // Server-side refresh token handling in generatedClient.ts means:
           // - If we get here with 401, refresh definitively failed
@@ -236,7 +324,7 @@ export const authApi = createApi({
         body: { refreshToken: refreshToken || null },
       }),
       invalidatesTags: ['Auth'],
-      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         console.log('[Logout Mutation] onQueryStarted - Starting logout mutation...');
         try {
           console.log('[Logout Mutation] Setting status to loading...');
@@ -265,8 +353,8 @@ export const authApi = createApi({
             const { message, type } = categorizeAuthError({ data });
             dispatch(setErrorWithType({ message: errorMessage || message, type }));
           }
-        } catch (error: unknown) {
-          console.error('[Logout Mutation] Error during logout:', error);
+        } catch (err: unknown) {
+          console.error('[Logout Mutation] Error during logout:', err);
           // Even if logout fails on server, clear local state
           console.log('[Logout Mutation] Clearing state due to error...');
           dispatch(clearUser());
@@ -274,7 +362,7 @@ export const authApi = createApi({
           dispatch(setAuthStatus('anonymous'));
           console.log('[Logout Mutation] State cleared after error');
           
-          const { message, type } = categorizeAuthError(error);
+          const { message, type } = categorizeAuthError(err);
           dispatch(setErrorWithType({ message, type }));
         }
         console.log('[Logout Mutation] onQueryStarted completed');
@@ -282,11 +370,53 @@ export const authApi = createApi({
     }),
 
     // Refresh token mutation
-    refreshToken: builder.mutation<RefreshResponse, void>({
-      query: () => ({
-        url: '/auth/refresh',
-        method: 'POST',
-      }),
+    refreshToken: builder.mutation<RefreshResponse, RefreshTokenRequest | void>({
+      queryFn: async (request, _api, _extraOptions, baseQuery) => {
+        // Handle void case
+        const req = request || {};
+        
+        // Get device info directly (not from request body)
+        let deviceId: string | null = null;
+        let userAgent: string | null = null;
+        let ipAddress: string | null = null;
+
+        if (typeof window !== 'undefined') {
+          // Get device ID and user agent synchronously
+          deviceId = getDeviceId();
+          userAgent = getUserAgent();
+          
+          // Get IP address - try cache first, then fetch if needed
+          ipAddress = getCachedIpAddress();
+          if (!ipAddress) {
+            try {
+              const clientInfo = await fetchClientInfo();
+              ipAddress = clientInfo.ipAddress;
+            } catch (error) {
+              console.warn('[Auth Queries] Failed to fetch IP address:', error);
+              ipAddress = null;
+            }
+          }
+        }
+
+        // Remove deviceId, userAgent, ipAddress from request to avoid duplication
+        const cleanRequest: Omit<RefreshTokenRequest, 'deviceId' | 'userAgent' | 'ipAddress'> = {
+          refreshToken: req.refreshToken,
+        };
+
+        // Use baseQuery for the actual API call
+        const result = await baseQuery({
+          url: '/auth/refresh',
+          method: 'POST',
+          body: {
+            refreshToken: cleanRequest.refreshToken || null,
+            deviceId,
+            userAgent,
+            ipAddress,
+          },
+        });
+
+        return result as typeof result & { data?: RefreshResponse };
+      },
       invalidatesTags: ['Auth'],
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
@@ -314,6 +444,30 @@ export const authApi = createApi({
       },
     }),
 
+    // Get sessions paginated query
+    getSessionsPaginated: builder.query<GetSessionsPaginatedResponse, GetSessionsPaginatedRequest>({
+      query: (params) => {
+        const searchParams = new URLSearchParams();
+        if (params.pageNumber) searchParams.append('pageNumber', params.pageNumber.toString());
+        if (params.pageSize) searchParams.append('pageSize', params.pageSize.toString());
+        if (params.userId) searchParams.append('userId', params.userId);
+        if (params.deviceId) searchParams.append('deviceId', params.deviceId);
+        if (params.isActive !== undefined) searchParams.append('isActive', params.isActive.toString());
+        if (params.isRevoked !== undefined) searchParams.append('isRevoked', params.isRevoked.toString());
+        if (params.isExpired !== undefined) searchParams.append('isExpired', params.isExpired.toString());
+        if (params.searchTerm) searchParams.append('searchTerm', params.searchTerm);
+        if (params.sortBy) searchParams.append('sortBy', params.sortBy);
+        if (params.sortDirection) searchParams.append('sortDirection', params.sortDirection);
+
+        return {
+          url: `/auth/sessions?${searchParams.toString()}`,
+          method: 'GET',
+        };
+      },
+      providesTags: ['Auth'],
+      keepUnusedDataFor: 60, // Keep sessions data for 1 minute
+    }),
+
     // Validate national code query
     validateNationalCode: builder.query<ValidateNationalCodeResponse, ValidateNationalCodeRequest>({
       query: ({ nationalCode }) => ({
@@ -334,9 +488,11 @@ export const {
   useGetMeQuery,
   useLogoutMutation,
   useRefreshTokenMutation,
+  useGetSessionsPaginatedQuery,
   useValidateNationalCodeQuery,
   // Lazy query hooks
   useLazyGetMeQuery,
+  useLazyGetSessionsPaginatedQuery,
   useLazyValidateNationalCodeQuery,
 } = authApi;
 
