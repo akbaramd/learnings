@@ -23,6 +23,25 @@ const getUpstream = () => {
 const refreshPromises = new Map<string, Promise<{ success: boolean; accessToken?: string; refreshToken?: string }>>();
 const MAX_REFRESH_RETRIES = 1; // Prevent infinite retry loops
 
+// CRITICAL: Shared HTTP agents to prevent memory leaks
+// Creating new agents for each request causes memory accumulation
+// Shared agents with limited connections prevent excessive memory usage
+const sharedHttpAgent = new nodeHttp.Agent({ 
+  keepAlive: true, 
+  maxSockets: 10, // Reduced from 50 to prevent memory issues
+  maxFreeSockets: 2,
+  timeout: 60000,
+  scheduling: 'fifo' as const,
+});
+
+const sharedHttpsAgent = new nodeHttps.Agent({ 
+  keepAlive: true, 
+  maxSockets: 10, // Reduced from 50 to prevent memory issues
+  maxFreeSockets: 2,
+  timeout: 60000,
+  scheduling: 'fifo' as const,
+});
+
 /**
  * Get unique key for refresh promise (prevents multiple refresh attempts for same request)
  * CRITICAL: Uses device ID from request headers (sent by client)
@@ -39,12 +58,30 @@ function getRefreshKey(req: NextRequest): string {
 
 /**
  * Clean up refresh promise after use (prevent memory leaks)
+ * CRITICAL: More aggressive cleanup to prevent map from growing indefinitely
  */
 function cleanupRefreshPromise(key: string) {
   // Use setTimeout to allow concurrent requests to finish
+  // Reduced delay to prevent accumulation
   setTimeout(() => {
     refreshPromises.delete(key);
-  }, 5000); // Clean up after 5 seconds
+    
+    // CRITICAL: If map grows too large, clean up old entries
+    // This prevents memory leaks if cleanup fails for some entries
+    if (refreshPromises.size > 100) {
+      const isDevMode = process.env.NODE_ENV === 'development';
+      if (isDevMode) {
+        console.warn('[RefreshToken] Refresh promises map too large, cleaning up old entries');
+      }
+      // Delete oldest entries (first 50)
+      let count = 0;
+      for (const k of refreshPromises.keys()) {
+        if (count >= 50) break;
+        refreshPromises.delete(k);
+        count++;
+      }
+    }
+  }, 2000); // Reduced from 5 seconds to 2 seconds for faster cleanup
 }
 
 /**
@@ -118,13 +155,24 @@ async function refreshAccessToken(req: NextRequest): Promise<{ success: boolean;
 
       // Create HTTP client for calling BFF endpoint
       // CRITICAL: Store reference for cleanup
+      // Use dedicated agents for refresh requests (no keepAlive to prevent leaks)
       refreshHttp = axios.create({
         baseURL: refreshUrl,
         withCredentials: true,
         timeout: 30000, // Reduced timeout to prevent hanging
         validateStatus: () => true,
-        httpAgent: new nodeHttp.Agent({ keepAlive: false, maxSockets: 1 }), // Prevent connection pooling issues
-        httpsAgent: new nodeHttps.Agent({ keepAlive: false, maxSockets: 1 }),
+        // CRITICAL: Use agents without keepAlive for refresh requests
+        // This ensures connections are closed immediately after use
+        httpAgent: new nodeHttp.Agent({ 
+          keepAlive: false, 
+          maxSockets: 1,
+          timeout: 30000,
+        }),
+        httpsAgent: new nodeHttps.Agent({ 
+          keepAlive: false, 
+          maxSockets: 1,
+          timeout: 30000,
+        }),
       });
       
       // Set headers properly
@@ -190,6 +238,23 @@ async function refreshAccessToken(req: NextRequest): Promise<{ success: boolean;
           // Cancel any pending requests
           refreshHttp.interceptors.request.clear();
           refreshHttp.interceptors.response.clear();
+          
+          // CRITICAL: Destroy HTTP agents to free memory
+          // This ensures all internal resources are released
+          if (refreshHttp.defaults.httpAgent) {
+            try {
+              (refreshHttp.defaults.httpAgent as nodeHttp.Agent).destroy();
+            } catch {
+              // Ignore errors during agent destruction
+            }
+          }
+          if (refreshHttp.defaults.httpsAgent) {
+            try {
+              (refreshHttp.defaults.httpsAgent as nodeHttps.Agent).destroy();
+            } catch {
+              // Ignore errors during agent destruction
+            }
+          }
         } catch (cleanupError) {
           if (isDevMode) {
             console.warn('[RefreshToken] Error cleaning up axios instance:', cleanupError);
@@ -224,12 +289,16 @@ export function createApiInstance(req: NextRequest) {
   const isValidDeviceId = deviceId && deviceId.startsWith('device-') && deviceId.length > 7;
 
   // Create axios instance with interceptors
+  // CRITICAL: Use shared HTTP agents to prevent memory leaks
+  // Creating new agents for each request causes memory accumulation
   const http = axios.create({
     baseURL: getUpstream(),
     withCredentials: true,
     timeout: 60000,
-    httpAgent: new nodeHttp.Agent({ keepAlive: true, maxSockets: 50 }),
-    httpsAgent: new nodeHttps.Agent({ keepAlive: true, maxSockets: 50 }),
+    // CRITICAL: Use shared agents instead of creating new ones
+    // This prevents memory leaks from accumulating HTTP agents
+    httpAgent: sharedHttpAgent,
+    httpsAgent: sharedHttpsAgent,
     validateStatus: () => true,
   });
 
@@ -373,7 +442,7 @@ export function handleApiResponse(response: AxiosResponse) {
   return res;
 }
 
-export function handleApiError(error: AxiosError | Error, _req?: NextRequest) {
+export function handleApiError(error: AxiosError | Error) {
   const isDev = process.env.NODE_ENV === 'development';
   
   if (isDev) {
