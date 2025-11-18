@@ -91,7 +91,16 @@ export function BottomNavigation({ unreadCountData, notificationsLoading = false
   if (!mounted) {
     // Return a placeholder that matches the expected structure
     return (
-      <nav className="border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+      <nav 
+        className="border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+        style={{
+          // Add extra padding at bottom for mobile devices with gesture navigation bars
+          // env(safe-area-inset-bottom) handles iOS home indicator and Android gesture bar
+          // max() ensures minimum 8px padding for devices without safe area support
+          // This prevents navigation from going under system UI indicators
+          paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)',
+        }}
+      >
         <div className="flex h-16 items-center justify-around px-4">
           {navItems.map((item) => (
             <button
@@ -112,7 +121,16 @@ export function BottomNavigation({ unreadCountData, notificationsLoading = false
   }
 
   return (
-    <nav className="border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+    <nav 
+      className="border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+      style={{
+        // Add extra padding at bottom for mobile devices with gesture navigation bars
+        // env(safe-area-inset-bottom) handles iOS home indicator and Android gesture bar
+        // max() ensures minimum 8px padding for devices without safe area support
+        // This prevents navigation from going under system UI indicators
+        paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)',
+      }}
+    >
       <div className="flex h-16 items-center justify-around px-4">
         {navItems.map((item) => {
           const active = isActive(item.path);

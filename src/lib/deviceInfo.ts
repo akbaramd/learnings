@@ -91,6 +91,33 @@ function generateDeviceId(): string {
  * 
  * Storage format: Plain string (e.g., "device-abc123") for maximum persistence
  */
+/**
+ * Get or create a persistent device ID
+ * 
+ * CRITICAL: This function generates the device ID ONLY ONCE.
+ * Once stored in localStorage, it is NEVER regenerated or refreshed.
+ * 
+ * Behavior:
+ * 1. First check: If device ID exists in localStorage, return it immediately (NO REGENERATION)
+ * 2. Only if NOT found: Generate new one and store it permanently
+ * 3. Once stored, it persists forever until user clears browser data
+ * 
+ * IMPORTANT: This function is called at app startup by DeviceIdInitializer
+ * to ensure device ID exists before any API calls are made.
+ * 
+ * Device ID is stored permanently in localStorage as a plain string (no expiry)
+ * It persists across:
+ * - Browser sessions (closing/reopening browser)
+ * - Page refreshes
+ * - Tab closes/opens
+ * - System restarts
+ * 
+ * It only changes if:
+ * 1. User clears browser data (localStorage)
+ * 2. User manually clears it via clearDeviceId()
+ * 
+ * Storage format: Plain string (e.g., "device-abc123") for maximum persistence
+ */
 export function getDeviceId(): string {
   if (typeof window === 'undefined') {
     // Server-side: return a placeholder (will be replaced by client)
@@ -98,11 +125,13 @@ export function getDeviceId(): string {
   }
 
   try {
-    // Check if device ID already exists in localStorage
-    // Priority: Check for plain string first (new format - most reliable)
+    // CRITICAL: Check if device ID already exists in localStorage FIRST
+    // If it exists, return it immediately - NEVER regenerate
     const stored = localStorage.getItem(DEVICE_ID_KEY);
+    
     if (stored) {
-      // First, try to parse as JSON (for backward compatibility with old format)
+      // Handle backward compatibility: Check if stored as JSON object (old format)
+      if (stored.trim().startsWith('{')) {
       try {
         const parsed = JSON.parse(stored);
         // If stored as object with 'id' property (old format)
@@ -110,27 +139,26 @@ export function getDeviceId(): string {
           // Validate the stored ID format
           if (typeof parsed.id === 'string' && parsed.id.startsWith('device-')) {
             // Migrate to new format (plain string) for better persistence
+              // This is a ONE-TIME migration, not a regeneration
             localStorage.setItem(DEVICE_ID_KEY, parsed.id);
-            return parsed.id;
+              return parsed.id; // Return existing ID, don't generate new one
+            }
           }
+        } catch {
+          // If JSON parsing fails, treat as invalid and continue to generation
         }
-        // If stored as JSON string (shouldn't happen, but handle it)
-        if (typeof parsed === 'string' && parsed.startsWith('device-')) {
-          // Migrate to plain string format
-          localStorage.setItem(DEVICE_ID_KEY, parsed);
-          return parsed;
-        }
-      } catch {
-        // If stored as plain string (not JSON) - this is the preferred format
-        if (typeof stored === 'string' && stored.startsWith('device-')) {
-          // Perfect! Already in the correct format - return it
+      } else {
+        // Stored as plain string (preferred format)
+        if (typeof stored === 'string' && stored.startsWith('device-') && stored.length > 7) {
+          // Perfect! Already in the correct format - return it immediately
+          // NO REGENERATION - this is the existing device ID
           return stored;
         }
       }
     }
 
-    // No valid device ID found, generate a new one
-    // This will be stable for this device/browser combination
+    // ONLY generate if device ID does NOT exist in storage
+    // This happens only on first visit or after user clears browser data
     const deviceId = generateDeviceId();
     
     // Store permanently (no expiry) - this is the device's permanent identifier
@@ -138,15 +166,21 @@ export function getDeviceId(): string {
     // This ensures the device ID acts as a constant string that never changes
     localStorage.setItem(DEVICE_ID_KEY, deviceId);
 
-    console.log('[DeviceInfo] Generated new stable device ID:', deviceId);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[DeviceInfo] Generated new device ID (first time only):', deviceId);
+    }
     return deviceId;
   } catch (error) {
     console.error('[DeviceInfo] Error getting device ID:', error);
     // Fallback: generate a UUID even if localStorage fails
     // This ensures we always have a device ID, even in error scenarios
+    // NOTE: This fallback is NOT stored, so it will regenerate on next call
+    // This is acceptable as it only happens if localStorage is completely unavailable
     try {
       const fallbackId = generateDeviceId();
-      console.warn('[DeviceInfo] Generated fallback device ID (not stored):', fallbackId);
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[DeviceInfo] Generated fallback device ID (not stored, will regenerate):', fallbackId);
+      }
       return fallbackId;
     } catch {
       // Last resort: return a placeholder (should never happen)

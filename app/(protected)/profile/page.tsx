@@ -1,7 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/src/hooks/useAuth';
+import { useSession } from 'next-auth/react';
+import { useAppSelector } from '@/src/hooks/store';
+import { selectUser, selectUserName, useGetMeQuery } from '@/src/store/auth';
 import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import {
   PiUser,
@@ -14,10 +16,12 @@ import {
 } from 'react-icons/pi';
 
 function ProfileHeader() {
-  const { user, userName } = useAuth();
+  const { data: session } = useSession();
+  const user = useAppSelector(selectUser);
+  const userName = useAppSelector(selectUserName);
   
   // Use USER information, not member information
-  const displayName = userName || user?.firstName || 'کاربر';
+  const displayName = userName || user?.firstName || session?.user?.name || 'کاربر';
   const nationalId = user?.nationalId || null;
 
   return (
@@ -92,6 +96,16 @@ function MenuItem({
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === 'authenticated' && !!session;
+
+  // Fetch user profile when authenticated
+  useGetMeQuery(undefined, {
+    skip: !isAuthenticated, // Only fetch if authenticated
+    refetchOnMountOrArgChange: true, // Refetch when component mounts to ensure fresh data
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+  });
 
   return (
     <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900" dir="rtl">

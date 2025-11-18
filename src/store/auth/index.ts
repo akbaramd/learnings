@@ -51,8 +51,8 @@ export {
 
 // Export auth query hooks
 export {
-  useSendOtpMutation,
-  useVerifyOtpMutation,
+  // useSendOtpMutation removed - use NextAuth signIn('send-otp', ...) instead
+  // useVerifyOtpMutation removed - use NextAuth signIn('otp', ...) instead
   useLogoutMutation,
   useRefreshTokenMutation,
   useGetMeQuery,
@@ -61,7 +61,6 @@ export {
   useLazyValidateNationalCodeQuery,
 } from './auth.queries';
 
-// Export auth hooks
-export { useAuth } from '../../hooks/useAuth';
+// Note: useAuth hook removed - use NextAuth useSession() instead
 
 

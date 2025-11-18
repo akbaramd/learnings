@@ -304,17 +304,32 @@ export async function getReverseDns(ip: string): Promise<string[]> {
 
 /**
  * Get complete request information
- * Returns deviceId (from body), userAgent, and ipAddress
+ * Priority: Request body > Request headers
+ * 
+ * Returns deviceId, userAgent, and ipAddress
+ * - deviceId: From request body first, then null (must be sent from client)
+ * - userAgent: From request body first, then request headers
+ * - ipAddress: From request body first, then request headers
  */
 export function getRequestInfo(req: NextRequest, body?: Record<string, unknown>): {
   deviceId: string | null;
   userAgent: string | null;
   ipAddress: string | null;
 } {
+  // Priority: body > headers
+  // Device ID must come from body (client sends it)
+  const deviceId = (body?.deviceId as string | null | undefined) || null;
+  
+  // User Agent: body first, then headers
+  const userAgent = (body?.userAgent as string | null | undefined) || getRequestUserAgent(req);
+  
+  // IP Address: body first, then headers
+  const ipAddress = (body?.ipAddress as string | null | undefined) || getClientIp(req);
+  
   return {
-    deviceId: (body?.deviceId as string | null | undefined) || null,
-    userAgent: (body?.userAgent as string | null | undefined) || getRequestUserAgent(req),
-    ipAddress: (body?.ipAddress as string | null | undefined) || getClientIp(req),
+    deviceId,
+    userAgent,
+    ipAddress,
   };
 }
 

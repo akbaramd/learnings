@@ -123,11 +123,6 @@ export interface VerifyOtpData {
   userId: string;
 }
 
-export interface SessionData {
-  authenticated: boolean;
-  accessToken?: string; // Optional: for proactive refresh
-}
-
 export interface LogoutData {
   isSuccess: boolean;
   message: string;
@@ -184,7 +179,7 @@ export interface GetSessionsPaginatedRequest {
 // Response types using ApplicationResult
 export type SendOtpResponse = ApplicationResult<SendOtpData>;
 export type VerifyOtpResponse = ApplicationResult<VerifyOtpData>;
-export type SessionResponse = ApplicationResult<SessionData>;
+// SessionResponse removed - use NextAuth session instead
 export type LogoutResponse = ApplicationResult<LogoutData>;
 export type RefreshResponse = ApplicationResult<RefreshData>;
 export type GetMeResponse = ApplicationResult<UserProfile>;

@@ -25,35 +25,65 @@ export function DeviceIdInitializer() {
   const initializedRef = useRef(false);
 
   useEffect(() => {
-    // Only initialize once
+    // Only initialize once per component mount
     if (initializedRef.current) return;
     initializedRef.current = true;
 
-    // Ensure device ID exists - getDeviceId() will:
-    // 1. Check if device ID exists in localStorage
-    // 2. If exists, return it (persists across sessions)
-    // 3. If not exists, generate new one and store it permanently
+    // CRITICAL: Ensure device ID exists in localStorage
+    // getDeviceId() will:
+    // 1. Check if device ID exists in localStorage FIRST
+    // 2. If exists, return it immediately (NO REGENERATION)
+    // 3. If NOT exists, generate new one ONCE and store it permanently
+    // 4. Once stored, it NEVER changes or refreshes
     try {
+      if (typeof window === 'undefined') {
+        // Server-side: skip initialization
+        return;
+      }
+
+      // Call getDeviceId() - it handles all logic:
+      // - Returns existing ID if found (no regeneration)
+      // - Generates new ID only if not found (one-time generation)
+      // - Stores it permanently (never refreshes)
       const deviceId = getDeviceId();
       
-      if (deviceId && deviceId.startsWith('device-')) {
-        console.log('[DeviceId] Device ID initialized:', deviceId);
-        
-        // Verify it's stored in localStorage (should be, but double-check)
-        if (typeof window !== 'undefined') {
+      // Verify the device ID is valid
+      if (deviceId && deviceId.startsWith('device-') && deviceId.length > 7) {
+        // Double-check it's stored (getDeviceId() should have stored it, but verify)
           const stored = localStorage.getItem(DEVICE_ID_KEY);
-          if (!stored || stored !== deviceId) {
-            // If not properly stored or different, store it now
+        if (stored === deviceId) {
+          // Perfect! Device ID exists and is stored correctly
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[DeviceId] Device ID verified and ready:', deviceId.substring(0, 20) + '...');
+          }
+        } else if (!stored) {
+          // Edge case: getDeviceId() returned a fallback ID (localStorage unavailable)
+          // Store it anyway if possible
+          try {
             localStorage.setItem(DEVICE_ID_KEY, deviceId);
-            console.log('[DeviceId] Device ID stored in localStorage');
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[DeviceId] Device ID stored (fallback case):', deviceId.substring(0, 20) + '...');
+            }
+          } catch {
+            // localStorage still unavailable, can't store
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('[DeviceId] Cannot store device ID (localStorage unavailable)');
+            }
+          }
+        } else {
+          // Stored ID differs from returned ID - this shouldn't happen
+          // Keep the stored one (it's the persistent one)
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[DeviceId] Stored ID differs from returned ID, using stored:', stored.substring(0, 20) + '...');
           }
         }
       } else {
-        console.error('[DeviceId] Invalid device ID generated:', deviceId);
+        console.error('[DeviceId] Invalid device ID format:', deviceId);
       }
     } catch (error) {
       console.error('[DeviceId] Failed to initialize device ID:', error);
       // Non-critical error - app can continue, but device ID may not be available
+      // API calls will still work, but session management may be affected
     }
   }, []);
 

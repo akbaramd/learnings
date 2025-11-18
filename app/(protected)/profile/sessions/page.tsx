@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import { 
   useGetSessionsPaginatedQuery,
   useLogoutBySessionIdMutation,
@@ -438,10 +439,39 @@ export default function SessionsPage() {
       return;
     }
 
+    // Check if this is the current session (same device ID)
+    const isCurrentSession = sessionToDelete.deviceId === currentDeviceId;
+
     try {
+      // Step 1: Call logout API for this session
       await logoutBySessionId({ sessionId: sessionToDelete.id }).unwrap();
       setSessionToDelete(null);
-      // Show success toast
+      
+      // Step 2: If this is the current session, call NextAuth signOut
+      if (isCurrentSession) {
+        try {
+          await signOut({ redirect: false });
+          console.log('[Sessions] NextAuth signOut completed for current session');
+          
+          // Redirect to login page since we logged out the current session
+          const currentPath = window.location.pathname;
+          const encodedReturnUrl = encodeURIComponent(currentPath);
+          window.location.href = `/login?r=${encodedReturnUrl}&logout=true`;
+          return; // Don't continue - we're redirecting
+        } catch (signOutError) {
+          // Even if signOut fails, continue with success message
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[Sessions] NextAuth signOut had an error (continuing anyway):', signOutError);
+          }
+          // Still redirect to login since current session was logged out
+          const currentPath = window.location.pathname;
+          const encodedReturnUrl = encodeURIComponent(currentPath);
+          window.location.href = `/login?r=${encodedReturnUrl}&logout=true`;
+          return;
+        }
+      }
+      
+      // Step 3: Show success toast and refetch (only if not current session)
       success('نشست با موفقیت حذف شد', 'دسترسی این دستگاه به حساب کاربری شما قطع شد');
       // Refetch sessions list
       await refetch();
@@ -451,7 +481,7 @@ export default function SessionsPage() {
       // Show error toast
       showError('خطا در حذف نشست', 'لطفاً دوباره تلاش کنید');
     }
-  }, [sessionToDelete, logoutBySessionId, refetch, success, showError]);
+  }, [sessionToDelete, logoutBySessionId, refetch, success, showError, currentDeviceId]);
 
   // Selection mode handlers
   const handleLongPress = useCallback(() => {
@@ -508,13 +538,18 @@ export default function SessionsPage() {
     }
 
     try {
-      // Delete all selected sessions sequentially
+      // Get all selected session IDs and find which ones are current session
       const sessionIds = Array.from(selectedSessions);
+      const selectedSessionsData = allSessions.filter(s => s.id && sessionIds.includes(s.id));
+      const hasCurrentSession = selectedSessionsData.some(s => s.deviceId === currentDeviceId);
+      
+      // Delete all selected sessions sequentially (queued, one at a time)
       let successCount = 0;
       let failCount = 0;
 
       for (const sessionId of sessionIds) {
         try {
+          // Queue: Process one session at a time
           await logoutBySessionId({ sessionId }).unwrap();
           successCount++;
         } catch (err) {
@@ -523,11 +558,35 @@ export default function SessionsPage() {
         }
       }
 
-      // Clear selection and exit selection mode
+      // Step 2: If current session was included, call NextAuth signOut
+      if (hasCurrentSession) {
+        try {
+          await signOut({ redirect: false });
+          console.log('[Sessions] NextAuth signOut completed after multiple logout');
+          
+          // Redirect to login page since we logged out the current session
+          const currentPath = window.location.pathname;
+          const encodedReturnUrl = encodeURIComponent(currentPath);
+          window.location.href = `/login?r=${encodedReturnUrl}&logout=true`;
+          return; // Don't continue - we're redirecting
+        } catch (signOutError) {
+          // Even if signOut fails, continue with redirect
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[Sessions] NextAuth signOut had an error (continuing anyway):', signOutError);
+          }
+          // Still redirect to login since current session was logged out
+          const currentPath = window.location.pathname;
+          const encodedReturnUrl = encodeURIComponent(currentPath);
+          window.location.href = `/login?r=${encodedReturnUrl}&logout=true`;
+          return;
+        }
+      }
+
+      // Step 3: Clear selection and exit selection mode (only if not current session)
       setSelectedSessions(new Set());
       setIsSelectionMode(false);
 
-      // Show result toast
+      // Step 4: Show result toast
       if (successCount > 0 && failCount === 0) {
         success(
           `${successCount} نشست با موفقیت حذف شد`,
@@ -542,13 +601,13 @@ export default function SessionsPage() {
         showError('خطا در حذف نشست‌ها', 'لطفاً دوباره تلاش کنید');
       }
 
-      // Refetch sessions list
+      // Step 5: Refetch sessions list
       await refetch();
     } catch (err) {
       console.error('[Sessions] Error in bulk delete:', err);
       showError('خطا در حذف نشست‌ها', 'لطفاً دوباره تلاش کنید');
     }
-  }, [selectedSessions, logoutBySessionId, refetch, success, showError]);
+  }, [selectedSessions, logoutBySessionId, refetch, success, showError, allSessions, currentDeviceId]);
 
   return (
     <>

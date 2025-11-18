@@ -1,13 +1,8 @@
 // src/store/auth/auth.queries.ts
 import { createApi } from '@reduxjs/toolkit/query/react';
 import {
-  SendOtpRequest,
-  SendOtpResponse,
-  VerifyOtpRequest,
-  VerifyOtpResponse,
   LogoutRequest,
   LogoutByRefreshTokenRequest,
-  LogoutBySessionIdRequest,
   LogoutAllSessionsRequest,
   LogoutAllOtherSessionsRequest,
   LogoutResponse,
@@ -20,9 +15,6 @@ import {
   UserProfile,
 } from './auth.types';
 import {
-  setChallengeId,
-  setMaskedPhoneNumber,
-  setNationalCode,
   clearChallengeId,
   setUser,
   clearUser,
@@ -91,189 +83,11 @@ export const authApi = createApi({
   refetchOnFocus: false, // Don't refetch on window focus for auth
   refetchOnReconnect: false, // Don't auto-refetch on reconnect - let manual checks handle it
   endpoints: (builder) => ({
-    // Send OTP mutation (login endpoint)
-    sendOtp: builder.mutation<SendOtpResponse, SendOtpRequest>({
-      queryFn: async (credentials, _api, _extraOptions, baseQuery) => {
-        // Get device info directly (not from request body)
-        let deviceId: string | null = null;
-        let userAgent: string | null = null;
-        let ipAddress: string | null = null;
+    // Note: sendOtp mutation removed - now handled by NextAuth
+    // OTP sending is done via NextAuth signIn('send-otp', { nationalCode })
 
-        if (typeof window !== 'undefined') {
-          // Get device ID and user agent synchronously
-          deviceId = getDeviceId();
-          userAgent = getUserAgent();
-          
-          // Get IP address - try cache first, then fetch if needed
-          ipAddress = getCachedIpAddress();
-          if (!ipAddress) {
-            try {
-              const clientInfo = await fetchClientInfo();
-              ipAddress = clientInfo.ipAddress;
-            } catch (error) {
-              console.warn('[Auth Queries] Failed to fetch IP address:', error);
-              ipAddress = null;
-            }
-          }
-        }
-
-        // Remove deviceId, userAgent, ipAddress from credentials to avoid duplication
-        const cleanCredentials: Omit<SendOtpRequest, 'deviceId' | 'userAgent' | 'ipAddress'> = {
-          nationalCode: credentials.nationalCode,
-          purpose: credentials.purpose,
-          scope: credentials.scope,
-        };
-
-        // Use baseQuery for the actual API call
-        const result = await baseQuery({
-          url: '/auth/login',
-          method: 'POST',
-          body: {
-            ...cleanCredentials,
-            deviceId,
-            userAgent,
-            ipAddress,
-            scope: cleanCredentials.scope || 'app', // Default scope to 'app'
-          },
-        });
-
-        return result as typeof result & { data?: SendOtpResponse };
-      },
-      invalidatesTags: ['Auth'],
-      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
-        try {
-          dispatch(setAuthStatus('loading'));
-          dispatch(setError(null));
-
-          const { data } = await queryFulfilled;
-
-          // Check isSuccess flag - must be true for success
-          if (data?.isSuccess === true && data?.data?.challengeId) {
-            dispatch(setChallengeId(data.data.challengeId));
-            if (data.data.maskedPhoneNumber) {
-              dispatch(setMaskedPhoneNumber(data.data.maskedPhoneNumber));
-            }
-            // Store national code for resending OTP (handle undefined)
-            if (arg.nationalCode) {
-              dispatch(setNationalCode(arg.nationalCode));
-            }
-            dispatch(setAuthStatus('otp-sent'));
-          } else {
-            // Handle failure response - check if it's user not found
-            const errorMessage = data?.message || data?.errors?.[0] || 'No challengeId returned from server.';
-            const { message, type } = categorizeAuthError({ data });
-            dispatch(setErrorWithType({ message: errorMessage || message, type }));
-            dispatch(setAuthStatus('error'));
-          }
-        } catch (error: unknown) {
-          // Handle network/exception errors
-          const { message, type } = categorizeAuthError(error);
-          dispatch(setErrorWithType({ message, type }));
-          dispatch(setAuthStatus('error'));
-        }
-      },
-    }),
-
-    // Verify OTP mutation
-    verifyOtp: builder.mutation<VerifyOtpResponse, VerifyOtpRequest>({
-      queryFn: async (credentials, _api, _extraOptions, baseQuery) => {
-        // Get device info directly (not from request body)
-        let deviceId: string | null = null;
-        let userAgent: string | null = null;
-        let ipAddress: string | null = null;
-
-        if (typeof window !== 'undefined') {
-          // Get device ID and user agent synchronously
-          deviceId = getDeviceId();
-          userAgent = getUserAgent();
-          
-          // Get IP address - try cache first, then fetch if needed
-          ipAddress = getCachedIpAddress();
-          if (!ipAddress) {
-            try {
-              const clientInfo = await fetchClientInfo();
-              ipAddress = clientInfo.ipAddress;
-            } catch (error) {
-              console.warn('[Auth Queries] Failed to fetch IP address:', error);
-              ipAddress = null;
-            }
-          }
-        }
-
-        // Remove deviceId, userAgent, ipAddress from credentials to avoid duplication
-        const cleanCredentials: Omit<VerifyOtpRequest, 'deviceId' | 'userAgent' | 'ipAddress'> = {
-          challengeId: credentials.challengeId,
-          otpCode: credentials.otpCode,
-          purpose: credentials.purpose,
-          scope: credentials.scope,
-        };
-
-        // Use baseQuery for the actual API call
-        const result = await baseQuery({
-          url: '/auth/verify-otp',
-          method: 'POST',
-          body: {
-            ...cleanCredentials,
-            deviceId,
-            userAgent,
-            ipAddress,
-            scope: cleanCredentials.scope || 'app', // Default scope to 'app'
-          },
-        });
-
-        return result as typeof result & { data?: VerifyOtpResponse };
-      },
-      invalidatesTags: ['Auth', 'User'],
-      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
-        console.log('[VerifyOtp Mutation] onQueryStarted - Starting OTP verification...');
-        try {
-          dispatch(setAuthStatus('loading'));
-          dispatch(setError(null));
-          console.log('[VerifyOtp Mutation] Set authStatus to loading');
-
-          const { data } = await queryFulfilled;
-          console.log('[VerifyOtp Mutation] Query fulfilled:', {
-            isSuccess: data?.isSuccess,
-            hasUserId: !!data?.data?.userId,
-            userId: data?.data?.userId,
-            fullData: JSON.stringify(data, null, 2),
-          });
-
-          // Check isSuccess flag - must be true for success
-          if (data?.isSuccess === true && data?.data?.userId) {
-            console.log('[VerifyOtp Mutation] ✅ OTP verification successful!');
-            console.log('[VerifyOtp Mutation] Clearing challengeId...');
-            dispatch(clearChallengeId());
-            
-            console.log('[VerifyOtp Mutation] Setting authStatus to authenticated...');
-            dispatch(setAuthStatus('authenticated'));
-            
-            console.log('[VerifyOtp Mutation] Dispatching getMe.initiate() to fetch user profile...');
-            // Fetch user profile after successful verification
-            dispatch(authApi.endpoints.getMe.initiate());
-            console.log('[VerifyOtp Mutation] ✅ All dispatches completed');
-          } else {
-            console.warn('[VerifyOtp Mutation] ⚠️ OTP verification failed:', {
-              isSuccess: data?.isSuccess,
-              hasUserId: !!data?.data?.userId,
-              message: data?.message,
-              errors: data?.errors,
-            });
-            const errorMessage = data?.message || data?.errors?.[0] || 'OTP verification failed.';
-            const { message, type } = categorizeAuthError({ data });
-            dispatch(setErrorWithType({ message: errorMessage || message, type }));
-            dispatch(setAuthStatus('error'));
-            console.log('[VerifyOtp Mutation] Set authStatus to error');
-          }
-        } catch (error: unknown) {
-          console.error('[VerifyOtp Mutation] ❌ Error in onQueryStarted:', error);
-          const { message, type } = categorizeAuthError(error);
-          dispatch(setErrorWithType({ message, type }));
-          dispatch(setAuthStatus('error'));
-          console.log('[VerifyOtp Mutation] Set authStatus to error after catch');
-        }
-      },
-    }),
+    // Note: verifyOtp mutation removed - now handled by NextAuth
+    // OTP verification is done via NextAuth signIn('otp', { challengeId, otp })
 
     // Get user profile query
     getMe: builder.query<GetMeResponse, void>({
@@ -671,8 +485,8 @@ export const authApi = createApi({
 
 // Export hooks for components
 export const {
-  useSendOtpMutation,
-  useVerifyOtpMutation,
+  // useSendOtpMutation removed - use NextAuth signIn('send-otp', ...) instead
+  // useVerifyOtpMutation removed - use NextAuth signIn('otp', ...) instead
   useGetMeQuery,
   useLogoutMutation,
   useLogoutByRefreshTokenMutation,

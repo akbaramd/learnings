@@ -3,7 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useGetCurrentMemberQuery } from '@/src/store/members';
 import { MemberDetailDto } from '@/src/store/members/members.types';
-import { useAuth } from '@/src/hooks/useAuth';
+import { useAppSelector } from '@/src/hooks/store';
+import { selectUser } from '@/src/store/auth';
 import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import { PageHeader } from '@/src/components/ui/PageHeader';
 import {
@@ -97,7 +98,7 @@ function ListSection<T>({
 
 export default function MemberDetailsPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const user = useAppSelector(selectUser);
   const { data: memberData, isLoading: isLoadingMember, error: memberError } = useGetCurrentMemberQuery(undefined, {
     refetchOnMountOrArgChange: false,
     refetchOnFocus: false,

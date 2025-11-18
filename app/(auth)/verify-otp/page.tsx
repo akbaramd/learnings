@@ -6,9 +6,11 @@ import Card from '@/src/components/ui/Card';
 import OtpField from '@/src/components/forms/OtpField';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/src/hooks/useToast';
-import { useSendOtpMutation, useVerifyOtpMutation, selectChallengeId, selectMaskedPhone, selectNationalCode, selectAuthStatus } from '@/src/store/auth';
+import { selectChallengeId, selectMaskedPhone, selectNationalCode, selectAuthStatus, setChallengeId, setMaskedPhoneNumber, setNationalCode, setAuthStatus, clearError } from '@/src/store/auth';
 import { useAppSelector } from '@/src/hooks/store';
-import { useAuth } from '@/src/hooks/useAuth';
+import { useDispatch } from 'react-redux';
+import { signIn, useSession } from 'next-auth/react';
+import { getDeviceId, getUserAgent } from '@/src/lib/deviceInfo';
 
 type UiStatus = 'idle' | 'typing' | 'valid' | 'invalid';
 
@@ -50,9 +52,7 @@ function safeResolveReturnUrl(searchParams: URLSearchParams): string {
 
 export default function VerifyOtpPage() {
   const router = useRouter();
-  
-  // Use useAuth hook for authentication state
-  const { isAuthenticated, isReady } = useAuth();
+  const dispatch = useDispatch();
   
   // Get return URL from query params and sanitize it
   const redirectTo = useMemo(() => {
@@ -60,15 +60,14 @@ export default function VerifyOtpPage() {
     return safeResolveReturnUrl(searchParams);
   }, []);
   
-  // استفاده مستقیم از RTK Query hooks
-  const [sendOtpMutation, { isLoading: isSendingOtp, error: sendError }] = useSendOtpMutation();
-  const [verifyOtpMutation, { isLoading: isVerifyingOtp, error: verifyError }] = useVerifyOtpMutation();
-  
   // دریافت challengeId، masked phone و national code از Redux store
   const challengeId = useAppSelector(selectChallengeId);
   const maskedPhone = useAppSelector(selectMaskedPhone);
   const nationalCode = useAppSelector(selectNationalCode);
   const authStatus = useAppSelector(selectAuthStatus);
+  
+  // NextAuth session for resend OTP
+  const { data: session } = useSession();
   
   const [otp, setOtp] = useState('');
   const [status, setStatus] = useState<UiStatus>('idle');
@@ -93,9 +92,14 @@ export default function VerifyOtpPage() {
     };
   }, []);
   
+  // State for NextAuth signIn
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [isResendingOtp, setIsResendingOtp] = useState(false);
+  const [verifyError, setVerifyError] = useState<{ message?: string } | null>(null);
+  
   // محاسبه وضعیت
-  const isLoading = isSendingOtp || isVerifyingOtp;
-  const error = sendError || verifyError;
+  const isLoading = isResendingOtp || isVerifyingOtp;
+  const error = verifyError;
 
 
   // Show error from mutations
@@ -112,22 +116,8 @@ export default function VerifyOtpPage() {
     }
   }, [error]);
 
-  // Check if user is authenticated and redirect to dashboard
-  // This handles the case where user is already authenticated (e.g., from another tab)
-  useEffect(() => {
-    // Wait for auth to be ready
-    if (!isReady) {
-      return;
-    }
-
-    // If user is authenticated, redirect to dashboard or returnUrl
-    // Only redirect if we haven't already navigated (prevent double redirect)
-    if (isAuthenticated && authStatus === 'authenticated' && !navigatedRef.current) {
-      console.log('[VerifyOtp] 🔄 User already authenticated, redirecting to:', redirectTo);
-      navigatedRef.current = true;
-      window.location.href = redirectTo;
-    }
-  }, [isAuthenticated, isReady, authStatus, redirectTo]);
+  // Note: NextAuth session check will be handled by middleware or protected layout
+  // We don't need to check authentication here anymore
 
   // Redirect if no challengeId or nationalCode (should come from login)
   useEffect(() => {
@@ -177,11 +167,39 @@ export default function VerifyOtpPage() {
 
   const canSubmit = otp.length === 6 && !isLoading && challengeId;
 
-  // Handle resend OTP
+  // Handle session update after resending OTP via NextAuth
+  useEffect(() => {
+    // Check if session has OTP data (from send-otp provider) after resend
+    if (isResendingOtp && session?.user?.id === 'otp-sent' && session.challengeId) {
+      // Store challengeId and maskedPhoneNumber in Redux
+      dispatch(setChallengeId(session.challengeId));
+      if (session.maskedPhoneNumber) {
+        dispatch(setMaskedPhoneNumber(session.maskedPhoneNumber));
+      }
+      if (session.nationalCode) {
+        dispatch(setNationalCode(session.nationalCode));
+      }
+      dispatch(setAuthStatus('otp-sent'));
+      dispatch(clearError());
+      
+      // Reset UI state for resend
+      setIsResendingOtp(false);
+      setResendLoading(false);
+      setTimeLeft(120); // Reset timer to 2 minutes
+      setCanResend(false);
+      setOtp('');
+      setStatus('idle');
+      setErrorText(null);
+      success('کد جدید ارسال شد', `لطفاً کد جدید را بررسی کنید.`);
+    }
+  }, [session, isResendingOtp, dispatch, success]);
+
+  // Handle resend OTP using NextAuth
   const handleResendOtp = useCallback(async () => {
     if (!canResend || resendLoading) return;
     
     setResendLoading(true);
+    setIsResendingOtp(true);
     
     try {
       // اگر national code در store نباشد، به صفحه لاگین برگرد
@@ -190,32 +208,41 @@ export default function VerifyOtpPage() {
         return;
       }
 
-      // استفاده مستقیم از mutation hook با national code ذخیره شده
-      // deviceId, userAgent, and ipAddress are automatically injected by auth.queries.ts
-      await sendOtpMutation({
+      // Get device ID and user agent to send with request
+      // CRITICAL: Use getDeviceId() to ensure SAME device ID as other requests
+      // Device ID comes from localStorage (same source as baseApi.ts)
+      const deviceId = getDeviceId();
+      const userAgent = getUserAgent();
+      
+      // Use NextAuth signIn for resending OTP
+      const result = await signIn('send-otp', {
         nationalCode: nationalCode,
-        purpose: 'login',
-        // deviceId, userAgent, and ipAddress are automatically added by auth.queries.ts
-      }).unwrap();
-
-      // Reset UI state for resend
-      setResendLoading(false);
-      setTimeLeft(120); // Reset timer to 2 minutes
-      setCanResend(false);
-      setOtp('');
-      setStatus('idle');
-      setErrorText(null);
-      // Only show success toast for successful resend
-      success('کد جدید ارسال شد', `لطفاً کد جدید را بررسی کنید.`);
+        deviceId: deviceId || null,
+        userAgent: userAgent || null,
+        redirect: false,
+      });
+      
+      if (result?.error) {
+        // Handle error from NextAuth
+        const errorMessage = result.error === 'CredentialsSignin'
+          ? 'کد ملی نامعتبر است. لطفاً دوباره تلاش کنید.'
+          : result.error;
+        
+        setIsResendingOtp(false);
+        setResendLoading(false);
+        showError('خطا', errorMessage);
+      }
+      // Success case is handled by useEffect watching session changes
       
     } catch (error: unknown) {
+      setIsResendingOtp(false);
       setResendLoading(false);
-      const errorMessage = error && typeof error === 'object' && 'data' in error 
-        ? (error as { data?: { message?: string } }).data?.message || 'ارسال مجدد کد ناموفق بود.'
+      const errorMessage = error instanceof Error
+        ? error.message
         : 'ارسال مجدد کد ناموفق بود.';
       showError('خطا', errorMessage);
     }
-  }, [canResend, resendLoading, success, showError, sendOtpMutation, nationalCode, router]);
+  }, [canResend, resendLoading, showError, nationalCode, router]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
@@ -265,23 +292,36 @@ export default function VerifyOtpPage() {
               return;
             }
 
-            // استفاده مستقیم از mutation hook
+            // Use NextAuth signIn with OTP provider
             try {
-              const result = await verifyOtpMutation({
-                challengeId: challengeId!,
-                otpCode: otp
-              }).unwrap();
+              setIsVerifyingOtp(true);
+              setVerifyError(null);
               
-              // Check if verification was successful
-              // API may return status 200 but with isSuccess: false (e.g., invalid/expired OTP)
-              if (!result?.isSuccess) {
-                // Handle unsuccessful verification (status 200 but isSuccess: false)
-                const errorMessage = result?.message || result?.errors?.[0] || 'کد تأیید نامعتبر است. لطفاً دوباره تلاش کنید.';
+              // Get device ID and user agent to send with request
+              // CRITICAL: Use getDeviceId() to ensure SAME device ID as other requests
+              // Device ID comes from localStorage (same source as baseApi.ts)
+              // This ensures the SAME device ID is used across all authentication requests
+              // Device ID is NEVER regenerated - always returns existing ID from localStorage
+              const deviceId = getDeviceId();
+              const userAgent = getUserAgent();
+              
+              const result = await signIn('otp', {
+                challengeId: challengeId!,
+                otp: otp,
+                deviceId: deviceId || null,
+                userAgent: userAgent || null,
+                redirect: false, // Handle redirect manually
+              });
+              
+              if (result?.error) {
+                // Handle error from NextAuth
+                const errorMessage = result.error === 'CredentialsSignin' 
+                  ? 'کد تأیید نامعتبر است. لطفاً دوباره تلاش کنید.'
+                  : result.error;
                 
                 console.log('[VerifyOtp] ⚠️ OTP verification failed:', {
-                  isSuccess: result?.isSuccess,
-                  message: result?.message,
-                  errors: result?.errors,
+                  error: result.error,
+                  message: errorMessage,
                 });
                 
                 // Update UI state
@@ -295,63 +335,36 @@ export default function VerifyOtpPage() {
                 // Clear OTP field to allow retry
                 setOtp('');
                 
+                setVerifyError({ message: errorMessage });
                 return; // Don't redirect
               }
               
-              // Redirect after successful verification
-              // CRITICAL: Wait for cookies to be set and verified before redirecting
-              // This prevents redirect loops where ProtectedLayout sees 401 before cookies arrive
-              if (result?.isSuccess && !navigatedRef.current) {
+              // Success - NextAuth session is now established
+              if (result?.ok && !navigatedRef.current) {
                 console.log('========================================');
-                console.log('[VerifyOtp] ✅ OTP VERIFIED SUCCESSFULLY');
-                console.log('[VerifyOtp] Result:', JSON.stringify(result, null, 2));
-                console.log('[VerifyOtp] Current authStatus:', authStatus);
-                console.log('[VerifyOtp] Current isAuthenticated:', isAuthenticated);
-                console.log('[VerifyOtp] Current isReady:', isReady);
+                console.log('[VerifyOtp] ✅ OTP VERIFIED SUCCESSFULLY via NextAuth');
                 console.log('[VerifyOtp] Redirect target:', redirectTo);
-                console.log('[VerifyOtp] navigatedRef.current:', navigatedRef.current);
                 console.log('========================================');
                 
                 success('ورود موفق', 'در حال انتقال...');
                 
-                // Set flag in sessionStorage so ProtectedLayout knows we just verified
-                // This prevents ProtectedLayout from redirecting before cookies are available
-                if (typeof window !== 'undefined') {
-                  sessionStorage.setItem('justVerifiedOtp', 'true');
-                  console.log('[VerifyOtp] Set justVerifiedOtp flag in sessionStorage');
-                }
-                
-                // Wait a bit for cookies to be set server-side, then redirect
-                // Cookies are set by the server in the verifyOtp response
-                console.log('[VerifyOtp] Waiting 300ms for cookies to be set server-side...');
-                
-                setTimeout(() => {
-                  if (!navigatedRef.current) {
-                    navigatedRef.current = true;
-                    
-                    // Clear the flag before redirect
-                    if (typeof window !== 'undefined') {
-                      sessionStorage.removeItem('justVerifiedOtp');
-                      console.log('[VerifyOtp] Cleared justVerifiedOtp flag from sessionStorage');
-                    }
-                    
-                    console.log('[VerifyOtp] 🚀 REDIRECTING to:', redirectTo);
-                    // Use window.location.href for full page reload to ensure cookies are refreshed
-                    window.location.href = redirectTo;
-                  }
-                }, 300); // Wait 300ms for cookies to be set
+                // Redirect to target page
+                // NextAuth session is now available
+                navigatedRef.current = true;
+                window.location.href = redirectTo;
               }
             } catch (error: unknown) {
               // Handle network errors or exceptions
               setStatus('invalid');
-              const errorMessage = error && typeof error === 'object' && 'data' in error 
-                ? (error as { data?: { message?: string; errors?: string[] } }).data?.message 
-                  || (error as { data?: { errors?: string[] } }).data?.errors?.[0]
-                  || 'کد تأیید نامعتبر. لطفاً دوباره تلاش کنید.'
+              const errorMessage = error instanceof Error 
+                ? error.message 
                 : 'کد تأیید نامعتبر. لطفاً دوباره تلاش کنید.';
               setErrorText(errorMessage);
               setTouched(true);
               showError('خطا', errorMessage);
+              setVerifyError({ message: errorMessage });
+            } finally {
+              setIsVerifyingOtp(false);
             }
           }}
         >

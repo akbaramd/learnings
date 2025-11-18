@@ -11,7 +11,8 @@ export async function GET(req: NextRequest) {
     // Call the upstream API
     const upstream = await api.api.getUnreadCount({});
     const status = upstream.status ?? 200;
-
+    console.log('upstream', upstream);  
+    console.log('status', status);
     // Strongly typed response structure
     const response: GetUnreadCountResponse = {
       result: status === 200 && upstream.data?.isSuccess && upstream.data.data ? {

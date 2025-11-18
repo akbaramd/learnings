@@ -5,10 +5,9 @@ import Providers from "../src/components/StoreProvider";
 import { ErrorBoundary } from "@/src/components/ErrorBoundary";
 import { vazirmatn } from "@/app/vazirmatn";
 import { PWARegister } from "@/src/components/PWARegister";
-import { ServerAuthProvider } from "@/src/components/auth/ServerAuthProvider";
 import { ClientInfoInitializer } from "@/src/components/ClientInfoInitializer";
 import { DeviceIdInitializer } from "@/src/components/DeviceIdInitializer";
-import { PWAInitializer } from "@/src/components/pwa/PWAInitializer";
+import { NextAuthProvider } from "@/src/components/auth/NextAuthProvider";
 
 export const metadata: Metadata = {
   title: "سامانه رفاهی",
@@ -58,18 +57,7 @@ export default function RootLayout({
       <body className={`${vazirmatn.variable}`}>
         <PWARegister />
         <ErrorBoundary>
-          <ServerAuthProvider
-            authenticated={
-              <Providers>
-                <ClientProviders>
-                  <DeviceIdInitializer />
-                  <ClientInfoInitializer />
-                  <PWAInitializer />
-                  {children}
-                </ClientProviders>
-              </Providers>
-            }
-            notAuthenticated={
+          <NextAuthProvider>
               <Providers>
                 <ClientProviders>
                   <DeviceIdInitializer />
@@ -77,8 +65,7 @@ export default function RootLayout({
                   {children}
                 </ClientProviders>
               </Providers>
-            }
-          />
+          </NextAuthProvider>
         </ErrorBoundary>
       </body>
     </html>

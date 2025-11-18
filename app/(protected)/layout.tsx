@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/src/hooks/useAuth';
+import { useSession } from 'next-auth/react';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { useTheme } from '@/src/hooks/useTheme';
 import { NotificationDot } from '@/src/components/ui/NotificationBadge';
 import { GetUnreadCountResponse, useGetUnreadCountQuery } from '@/src/store/notifications';
 import { BottomNavigation } from '@/src/components/navigation/BottomNavigation';
+import { ProtectedRouteGuard } from '@/src/components/auth/ProtectedRouteGuard';
 import {
   PiBell,
   PiSun,
@@ -110,10 +111,11 @@ function BrandTitle() {
 
 export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const router = useRouter();
-  const { isAuthenticated, isReady } = useAuth();
+  const { data: session, status } = useSession();
 
-  // Auto-fetch notifications when authenticated and ready
-  const shouldPollNotifications = useMemo(() => isReady && isAuthenticated, [isReady, isAuthenticated]);
+  // Auto-fetch notifications when authenticated
+  const isAuthenticated = status === 'authenticated' && !!session;
+  const shouldPollNotifications = useMemo(() => isAuthenticated, [isAuthenticated]);
   
   const { data: unreadCountData, isLoading: notificationsLoading } = useGetUnreadCountQuery(
     undefined,
@@ -132,6 +134,9 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
 
   return (
     <div className="h-screen mx-auto max-w-full sm:max-w-full md:max-w-[30rem] lg:max-w-[30rem] xl:max-w-[30rem] bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex flex-col" dir="rtl">
+      {/* Protected Route Guard - Handles redirects when auth fails */}
+      <ProtectedRouteGuard />
+      
       {/* Top App Bar - Fixed at top */}
       <header className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
         <div className="flex h-14 items-center justify-between px-4">

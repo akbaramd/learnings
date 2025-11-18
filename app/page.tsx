@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef, useMemo, Suspense } from "react";
 import { PiSpinner } from "react-icons/pi";
-import { useAuth } from "@/src/hooks/useAuth";
+import { useSession } from 'next-auth/react';
 
 /**
  * Safe redirect URL resolver
@@ -28,10 +28,11 @@ function safeResolveReturnUrl(returnUrl: string | null): string | null {
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isAuthenticated, isReady, init } = useAuth();
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === 'authenticated' && !!session;
+  const isReady = status !== 'loading';
   const [messageIndex, setMessageIndex] = useState(0);
   const redirectInitiatedRef = useRef(false);
-  const initCalledRef = useRef(false);
 
   // Different messages based on auth status
   const authenticatedMessages = useMemo(() => [
@@ -62,16 +63,7 @@ function HomeContent() {
     return loadingMessages[messageIndex] || loadingMessages[0];
   }, [isReady, loadingMessages, messageIndex]);
 
-  // Initialize auth on mount
-  useEffect(() => {
-    if (!initCalledRef.current) {
-      initCalledRef.current = true;
-      console.log('[Home] Initializing auth...');
-      init().catch((error) => {
-        console.error('[Home] Failed to initialize auth:', error);
-      });
-    }
-  }, [init]);
+  // NextAuth handles initialization automatically - no need to call init
 
   useEffect(() => {
     // Cycle through loading messages only if ready

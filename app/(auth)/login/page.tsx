@@ -6,9 +6,10 @@ import Card from '@/src/components/ui/Card';
 import InputField from '@/src/components/forms/InputField';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
-import { useSendOtpMutation, useLazyValidateNationalCodeQuery, selectChallengeId, selectAuthStatus, selectIsUserNotFoundError, selectAuthErrorInfo, setAuthStatus } from '@/src/store/auth';
+import { useLazyValidateNationalCodeQuery, selectChallengeId, selectAuthStatus, selectIsUserNotFoundError, selectAuthErrorInfo, setChallengeId, setMaskedPhoneNumber, setNationalCode, setAuthStatus, setErrorWithType, clearError } from '@/src/store/auth';
 import { useAppSelector } from '@/src/hooks/store';
-import { useAuth } from '@/src/hooks/useAuth';
+import { useSession, signIn } from 'next-auth/react';
+import { getDeviceId, getUserAgent } from '@/src/lib/deviceInfo';
 import { PiShieldCheck, PiWarningCircle } from 'react-icons/pi';
 import Drawer, { DrawerHeader, DrawerBody, DrawerFooter } from '@/src/components/overlays/Drawer';
 /* ---- Iranian National ID (Melli) utilities ---- */
@@ -42,13 +43,18 @@ export default function LoginPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   
-  // استفاده مستقیم از RTK Query mutation
-  const [sendOtpMutation, { isLoading, error }] = useSendOtpMutation();
+  // State for NextAuth sendOtp
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  
+  // محاسبه وضعیت
+  const isLoading = isSendingOtp;
   
   // Check authentication and redirect if already logged in
   
-  // Use useAuth hook for authentication state
-  const { isAuthenticated, isReady } = useAuth();
+  // Use NextAuth session for authentication state
+  const { data: session, status: sessionStatus } = useSession();
+  const isAuthenticated = sessionStatus === 'authenticated' && !!session;
+  const isReady = sessionStatus !== 'loading';
   
   // دریافت challengeId و auth status از Redux store
   const challengeId = useAppSelector(selectChallengeId);
@@ -129,6 +135,24 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, isReady, isLogoutFlow, returnUrl, router, authStatus, dispatch]);
   
+  // Handle session update after sending OTP via NextAuth
+  useEffect(() => {
+    // Check if session has OTP data (from send-otp provider)
+    if (session?.user?.id === 'otp-sent' && session.challengeId) {
+      // Store challengeId and maskedPhoneNumber in Redux
+      dispatch(setChallengeId(session.challengeId));
+      if (session.maskedPhoneNumber) {
+        dispatch(setMaskedPhoneNumber(session.maskedPhoneNumber));
+      }
+      if (session.nationalCode) {
+        dispatch(setNationalCode(session.nationalCode));
+      }
+      dispatch(setAuthStatus('otp-sent'));
+      // Clear any errors
+      dispatch(clearError());
+    }
+  }, [session, dispatch]);
+
   // Redirect to verify-otp when challengeId is set (OTP sent successfully)
   // Pass logout flag and returnUrl to verify-otp page
   useEffect(() => {
@@ -146,7 +170,7 @@ export default function LoginPage() {
     }
   }, [challengeId, authStatus, router, returnUrl, isLogoutFlow]);
 
-  // Show error from mutation - handle user not found with drawer
+  // Show error from NextAuth - handle user not found with drawer
   useEffect(() => {
     const currentErrorKey = errorInfo.message ? `${isUserNotFoundError}-${errorInfo.message}` : null;
     
@@ -163,19 +187,16 @@ export default function LoginPage() {
         setStatus('invalid');
         setErrorText(null); // Don't show error in input field for user not found
       }, 0);
-    } else if (error && !isUserNotFoundError) {
+    } else if (!isUserNotFoundError && errorInfo.message) {
       // Show regular error in input field
       setTimeout(() => {
         setStatus('invalid');
-        const errorMessage = error && typeof error === 'object' && 'data' in error 
-          ? (error as { data?: { errors?: string[] } }).data?.errors?.[0] || errorInfo.message || 'خطا در ارسال کد'
-          : errorInfo.message || 'خطا در ارسال کد';
-        setErrorText(errorMessage);
+        setErrorText(errorInfo.message || 'خطا در ارسال کد');
         setTouched(true);
       }, 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [error, isUserNotFoundError, errorInfo.message]);
+  }, [isUserNotFoundError, errorInfo.message]);
   
   // Derived field status for InputField
   const fieldStatus = useMemo(() => {
@@ -346,34 +367,60 @@ export default function LoginPage() {
               return;
             }
 
-            // استفاده مستقیم از RTK Query mutation
-            // deviceId, userAgent, and ipAddress are automatically injected by auth.queries.ts
+            // Use NextAuth signIn for sending OTP
             try {
-              // استفاده از mutation hook
-              // Only pass required fields - device info is handled automatically
-              await sendOtpMutation({
-                nationalCode: nationalId,
-                purpose: 'login',
-                // deviceId, userAgent, and ipAddress are automatically added by auth.queries.ts
-              }).unwrap();
+              setIsSendingOtp(true);
+              dispatch(setAuthStatus('loading'));
               
-              // The useEffect will handle the redirect when challengeId is set
-              // The useEffect will also handle user not found errors via selectors
+              // Get device ID and user agent to send with request
+              // CRITICAL: Use getDeviceId() to ensure SAME device ID as other requests
+              // Device ID comes from localStorage (same source as baseApi.ts)
+              // This ensures the SAME device ID is used across all authentication requests
+              // Device ID is NEVER regenerated - always returns existing ID from localStorage
+              const deviceId = getDeviceId();
+              const userAgent = getUserAgent();
+              
+              const result = await signIn('send-otp', {
+                nationalCode: nationalId,
+                deviceId: deviceId || null,
+                userAgent: userAgent || null,
+                redirect: false,
+              });
+              
+              if (result?.error) {
+                // Handle error from NextAuth
+                const errorMessage = result.error === 'CredentialsSignin'
+                  ? 'کد ملی نامعتبر است. لطفاً دوباره تلاش کنید.'
+                  : result.error;
+                
+                // Check if it's a user not found error
+                if (errorMessage.includes('یافت نشد') || errorMessage.includes('not found') || errorMessage.includes('کاربری با کد ملی')) {
+                  dispatch(setErrorWithType({ message: errorMessage, type: 'user_not_found' }));
+                  dispatch(setAuthStatus('error'));
+                } else {
+              setStatus('invalid');
+              setErrorText(errorMessage);
+              setTouched(true);
+              dispatch(setErrorWithType({ message: errorMessage, type: 'invalid_credentials' }));
+              dispatch(setAuthStatus('error'));
+            }
+            return;
+              }
+              
+              // Success - session will be updated by NextAuth
+              // The useEffect will handle extracting challengeId and redirecting
               
             } catch (error: unknown) {
-              // Error handling is now done via Redux store and selectors
-              // The useEffect hook will check isUserNotFoundError and show drawer accordingly
-              // For other errors, show in input field
-              if (!isUserNotFoundError) {
-                const errorData = error && typeof error === 'object' && 'data' in error 
-                  ? (error as { data?: { message?: string } }).data
-                  : null;
-                
-                const errorMessage = errorData?.message || errorInfo.message || 'ارسال کد ناموفق. لطفاً شماره ملی خود را بررسی کنید.';
-                setStatus('invalid');
-                setErrorText(errorMessage);
-                setTouched(true);
-              }
+              const errorMessage = error instanceof Error
+                ? error.message
+                : 'ارسال کد ناموفق. لطفاً شماره ملی خود را بررسی کنید.';
+              setStatus('invalid');
+              setErrorText(errorMessage);
+              setTouched(true);
+              dispatch(setErrorWithType({ message: errorMessage, type: 'unknown' }));
+              dispatch(setAuthStatus('error'));
+            } finally {
+              setIsSendingOtp(false);
             }
           }}
         >

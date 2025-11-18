@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/src/hooks/useAuth';
+import { useSession } from 'next-auth/react';
 import type { SurveyDto } from '@/src/store/surveys';
 import Card from '@/src/components/ui/Card';
 import Button from '@/src/components/ui/Button';
@@ -45,7 +45,8 @@ function formatDate(dateString: string | null | undefined): string {
 export default function PublicSurveyDetailPageClient({ surveyId, survey }: PublicSurveyDetailPageClientProps) {
   const router = useRouter();
   const hasRedirectedRef = useRef(false);
-  const { isAuthenticated } = useAuth();
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === 'authenticated' && !!session;
   const [shareDrawerOpen, setShareDrawerOpen] = useState(false);
   const [videoDrawerOpen, setVideoDrawerOpen] = useState(false);
 
