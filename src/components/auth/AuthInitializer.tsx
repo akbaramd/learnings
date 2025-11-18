@@ -89,11 +89,16 @@ export function AuthInitializer() {
 
     // For all other routes (protected routes and root), require authentication
     if (!isAuthenticated || authStatus === 'anonymous') {
-      const returnUrl = encodeURIComponent(pathname);
       redirectInitiatedRef.current = true;
-      // Add logout=true param if status is anonymous (user just logged out)
-      const logoutParam = authStatus === 'anonymous' ? '&logout=true' : '';
-      router.push(`/login?r=${returnUrl}${logoutParam}`);
+      // If user just logged out (anonymous status), redirect to root (/)
+      // Root page will handle redirect to login
+      if (authStatus === 'anonymous') {
+        router.push('/');
+      } else {
+        // Not logged out, just not authenticated - redirect to login with returnUrl
+        const returnUrl = encodeURIComponent(pathname);
+        router.push(`/login?r=${returnUrl}`);
+      }
     }
   }, [isReady, isAuthenticated, authStatus, pathname, router]);
 

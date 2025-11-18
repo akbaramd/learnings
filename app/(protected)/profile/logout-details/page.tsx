@@ -25,14 +25,16 @@ export default function LogoutDetailsPage() {
     console.log('[Logout] Current isAuthenticated:', isAuthenticated);
 
     // Call logout mutation - it will clear state and set anonymous
-    // AuthInitializer will detect status change and redirect automatically
     try {
       await logout({ refreshToken: undefined }).unwrap();
       console.log('[Logout] Logout API completed successfully');
+      // Redirect to root (/) after logout - will handle redirect there
+      router.push('/');
     } catch (error) {
       console.error('[Logout] Logout API failed:', error);
       // Mutation's onQueryStarted will clear state even on error
-      // AuthInitializer will handle redirect when it detects anonymous status
+      // Redirect to root (/) anyway for security
+      router.push('/');
     }
   };
 

@@ -12,7 +12,10 @@ export type AuthErrorType =
   | 'invalid_credentials' 
   | 'otp_failed' 
   | 'network_error' 
-  | 'server_error' 
+  | 'server_error'
+  | 'session_revoked'        // Session revoked by admin (403)
+  | 'token_version_mismatch' // Token version mismatch (logout-all-devices)
+  | 'session_expired'        // Session expired explicitly
   | 'unknown';
 
 // User roles type for better type safety
@@ -122,6 +125,7 @@ export interface VerifyOtpData {
 
 export interface SessionData {
   authenticated: boolean;
+  accessToken?: string; // Optional: for proactive refresh
 }
 
 export interface LogoutData {
@@ -133,6 +137,7 @@ export interface RefreshData {
   isSuccess: boolean;
   message: string;
   accessToken?: string;
+  refreshToken?: string; // New refresh token after rotation
 }
 
 // Session types

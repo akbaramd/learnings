@@ -8,11 +8,11 @@ import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import { PiEye, PiEyeSlash, PiGear, PiArrowClockwise, PiMapPinDuotone, PiMoney, PiFileText, PiDiamondDuotone, PiShieldCheck, PiTruck } from 'react-icons/pi';
 import { ServicesGrid } from '@/src/components/services/ServiceCard';
 import { TourSection } from '@/src/components/tours/TourSection';
-import { Tour } from '@/src/components/tours/TourCard';
+import { Tour, TourCardSkeleton } from '@/src/components/tours/TourCard';
 import { FacilitySection } from '@/src/components/facilities/FacilitySection';
-import { Facility } from '@/src/components/facilities/FacilityCard';
+import { Facility, FacilityCardSkeleton } from '@/src/components/facilities/FacilityCard';
 import { SurveySection } from '@/src/components/surveys/SurveySection';
-import { Survey } from '@/src/components/surveys/SurveyCard';
+import { Survey, SurveyCardSkeleton } from '@/src/components/surveys/SurveyCard';
 import { useGetToursPaginatedQuery } from '@/src/store/tours/tours.queries';
 import { useGetFacilitiesQuery } from '@/src/store/facilities';
 import { useGetActiveSurveysQuery } from '@/src/store/surveys';
@@ -45,6 +45,26 @@ function formatRelativeFa(date: Date | string | null) {
   const hr = Math.floor(min / 60);
   if (hr < 24) return `${hr} ساعت پیش`;
   return `${Math.floor(hr / 24)} روز پیش`;
+}
+
+/* =========================
+   WalletCardSkeleton
+========================= */
+function WalletCardSkeleton() {
+  return (
+    <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 p-4 text-white shadow-sm animate-pulse">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="h-4 w-24 bg-emerald-500/50 rounded" />
+        <div className="h-8 w-8 bg-emerald-500/50 rounded" />
+      </div>
+      <div className="mb-1 h-8 w-40 bg-emerald-500/50 rounded" />
+      <div className="mb-4 h-4 w-32 bg-emerald-500/50 rounded" />
+      <div className="grid grid-cols-2 gap-2">
+        <div className="h-10 bg-emerald-500/50 rounded-md" />
+        <div className="h-10 bg-emerald-500/50 rounded-md" />
+      </div>
+    </div>
+  );
 }
 
 /* =========================
@@ -92,6 +112,10 @@ function WalletCard() {
 
   const balance = wallet?.balance ?? 0;
   const lastUpdate = wallet?.lastUpdated || lastFetched;
+
+  if (isLoading && !wallet) {
+    return <WalletCardSkeleton />;
+  }
 
   return (
     <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 p-4 text-white shadow-sm">
@@ -304,26 +328,67 @@ export default function HomeDashboard() {
 
             {/* Tours Section */}
             <section className="px-4 my-6">
-              {toursLoading && <div className="text-center py-6">در حال بارگذاری تورها...</div>}
               {toursError && <div className="text-center text-red-600 py-6">خطا در دریافت اطلاعات تورها</div>}
-              {!toursLoading && !toursError && <TourSection seeAllHref="/tours" title="تورها" dir="rtl" tours={tours} />}
+              {toursLoading ? (
+                <div className="space-y-3">
+                  <div className="mb-3 flex items-center justify-between px-1">
+                    <div className="h-5 w-16 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
+                    <div className="h-4 w-20 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
+                  </div>
+                  <div className="flex gap-4 overflow-hidden">
+                    {Array.from({ length: 3 }).map((_, idx) => (
+                      <div key={idx} className="flex-shrink-0 w-[90vw] max-w-[320px]">
+                        <TourCardSkeleton />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                !toursError && <TourSection seeAllHref="/tours" title="تورها" dir="rtl" tours={tours} />
+              )}
             </section>
 
             {/* Facilities Section */}
             <section className="px-4 my-6">
-              {facilitiesLoading && <div className="text-center py-6">در حال بارگذاری تسهیلات...</div>}
               {facilitiesError && <div className="text-center text-red-600 py-6">خطا در دریافت اطلاعات تسهیلات</div>}
-              {!facilitiesLoading && !facilitiesError && (
-                <FacilitySection seeAllHref="/facilities" title="تسهیلات" dir="rtl" facilities={facilities} />
+              {facilitiesLoading ? (
+                <div className="space-y-3">
+                  <div className="mb-3 flex items-center justify-between px-1">
+                    <div className="h-5 w-16 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
+                    <div className="h-4 w-20 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
+                  </div>
+                  <div className="grid grid-cols-1 gap-3">
+                    {Array.from({ length: 3 }).map((_, idx) => (
+                      <FacilityCardSkeleton key={idx} dir="rtl" />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                !facilitiesError && (
+                  <FacilitySection seeAllHref="/facilities" title="تسهیلات" dir="rtl" facilities={facilities} />
+                )
               )}
             </section>
 
             {/* Surveys Section */}
             <section className="px-4 my-6">
-              {surveysLoading && <div className="text-center py-6">در حال بارگذاری نظرسنجی‌ها...</div>}
               {surveysError && <div className="text-center text-red-600 py-6">خطا در دریافت اطلاعات نظرسنجی‌ها</div>}
-              {!surveysLoading && !surveysError && (
-                <SurveySection seeAllHref="/surveys" title="نظرسنجی‌ها" dir="rtl" surveys={surveys} />
+              {surveysLoading ? (
+                <div className="space-y-3">
+                  <div className="mb-3 flex items-center justify-between px-1">
+                    <div className="h-5 w-20 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
+                    <div className="h-4 w-20 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
+                  </div>
+                  <div className="grid grid-cols-1 gap-3">
+                    {Array.from({ length: 3 }).map((_, idx) => (
+                      <SurveyCardSkeleton key={idx} dir="rtl" />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                !surveysError && (
+                  <SurveySection seeAllHref="/surveys" title="نظرسنجی‌ها" dir="rtl" surveys={surveys} />
+                )
               )}
             </section>
           </div>

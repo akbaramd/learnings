@@ -1,13 +1,14 @@
 import "./globals.css";
-import type {Metadata} from "next";
-import {ClientProviders} from "@/src/components/ClientProviders";
+import type { Metadata } from "next";
+import { ClientProviders } from "@/src/components/ClientProviders";
 import Providers from "../src/components/StoreProvider";
-import {ErrorBoundary} from "@/src/components/ErrorBoundary";
-import {vazirmatn} from "@/app/vazirmatn";
-import {PWARegister} from "@/src/components/PWARegister";
-import {AuthInitializer} from "@/src/components/auth/AuthInitializer";
-import {ClientInfoInitializer} from "@/src/components/ClientInfoInitializer";
-import {DeviceIdInitializer} from "@/src/components/DeviceIdInitializer";
+import { ErrorBoundary } from "@/src/components/ErrorBoundary";
+import { vazirmatn } from "@/app/vazirmatn";
+import { PWARegister } from "@/src/components/PWARegister";
+import { ServerAuthProvider } from "@/src/components/auth/ServerAuthProvider";
+import { ClientInfoInitializer } from "@/src/components/ClientInfoInitializer";
+import { DeviceIdInitializer } from "@/src/components/DeviceIdInitializer";
+import { PWAInitializer } from "@/src/components/pwa/PWAInitializer";
 
 export const metadata: Metadata = {
   title: "سامانه رفاهی",
@@ -41,30 +42,43 @@ export const metadata: Metadata = {
     viewportFit: "cover",
   },
   icons: {
-    icon: [
-      { url: "/logo-blue.png", sizes: "any", type: "image/png" },
-    ],
-    apple: [
-      { url: "/logo-blue.png", sizes: "any", type: "image/png" },
-    ],
+    icon: [{ url: "/logo-blue.png", sizes: "any", type: "image/png" }],
+    apple: [{ url: "/logo-blue.png", sizes: "any", type: "image/png" }],
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="fa" dir="rtl">
       <head />
       <body className={`${vazirmatn.variable}`}>
         <PWARegister />
         <ErrorBoundary>
-          <Providers>
-            <ClientProviders>
-              <DeviceIdInitializer />
-              <ClientInfoInitializer />
-              <AuthInitializer />
-              {children}
-            </ClientProviders>
-          </Providers>
+          <ServerAuthProvider
+            authenticated={
+              <Providers>
+                <ClientProviders>
+                  <DeviceIdInitializer />
+                  <ClientInfoInitializer />
+                  <PWAInitializer />
+                  {children}
+                </ClientProviders>
+              </Providers>
+            }
+            notAuthenticated={
+              <Providers>
+                <ClientProviders>
+                  <DeviceIdInitializer />
+                  <ClientInfoInitializer />
+                  {children}
+                </ClientProviders>
+              </Providers>
+            }
+          />
         </ErrorBoundary>
       </body>
     </html>

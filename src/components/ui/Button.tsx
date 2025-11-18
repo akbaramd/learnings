@@ -5,7 +5,7 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { forwardRef, useMemo } from 'react';
 
 type Variant = 'solid' | 'outline' | 'subtle';
-type Color = 'primary' | 'secondary' | 'accent';
+type Color = 'primary' | 'secondary' | 'accent' | 'danger';
 type Size = 'xs' | 'sm' | 'md' | 'lg';
 type Radius = 'xs' | 'sm' | 'md' | 'none';
 
@@ -26,32 +26,66 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
 const getVariantStyles = (variant: Variant, color: Color): string => {
   const baseFocusStyles = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800';
 
+  // Get focus ring color based on color prop
+  const getFocusRingColor = (c: Color): string => {
+    if (c === 'primary') return 'emerald';
+    if (c === 'secondary') return 'gray';
+    if (c === 'danger') return 'red';
+    return 'blue'; // accent
+  };
+
+  const focusColor = getFocusRingColor(color);
+
   switch (variant) {
     case 'solid':
+      if (color === 'danger') {
+        return [
+          'bg-red-600 text-white dark:bg-red-500 dark:text-gray-900',
+          'data-[hover]:bg-red-700 dark:data-[hover]:bg-red-600',
+          baseFocusStyles,
+          `focus-visible:ring-red-500 dark:focus-visible:ring-red-400`,
+        ].join(' ');
+      }
       return [
         // Solid variants use design system backgrounds and on-* text colors
         `bg-${color} text-on-${color}`,
         `data-[hover]:bg-${color}-hover`,
         baseFocusStyles,
-        `focus-visible:ring-${color === 'primary' ? 'emerald' : color === 'secondary' ? 'gray' : 'blue'}-500 dark:focus-visible:ring-${color === 'primary' ? 'emerald' : color === 'secondary' ? 'gray' : 'blue'}-400`,
+        `focus-visible:ring-${focusColor}-500 dark:focus-visible:ring-${focusColor}-400`,
       ].join(' ');
 
     case 'outline':
+      if (color === 'danger') {
+        return [
+          'border border-red-600 text-red-600 dark:border-red-500 dark:text-red-400 bg-transparent',
+          'data-[hover]:bg-red-50 dark:data-[hover]:bg-red-900/20',
+          baseFocusStyles,
+          'focus-visible:ring-red-500 dark:focus-visible:ring-red-400',
+        ].join(' ');
+      }
       return [
         // Outline variants use border colors, transparent background, and text colors
         `border border-${color} text-${color} bg-transparent`,
         `data-[hover]:bg-${color}-subtle`,
         baseFocusStyles,
-        `focus-visible:ring-${color === 'primary' ? 'emerald' : color === 'secondary' ? 'gray' : 'blue'}-500 dark:focus-visible:ring-${color === 'primary' ? 'emerald' : color === 'secondary' ? 'gray' : 'blue'}-400`,
+        `focus-visible:ring-${focusColor}-500 dark:focus-visible:ring-${focusColor}-400`,
       ].join(' ');
 
     case 'subtle':
+      if (color === 'danger') {
+        return [
+          'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+          'data-[hover]:bg-red-100 data-[hover]:text-red-800 dark:data-[hover]:bg-red-900/40 dark:data-[hover]:text-red-200',
+          baseFocusStyles,
+          'focus-visible:ring-red-500 dark:focus-visible:ring-red-400',
+        ].join(' ');
+      }
       return [
         // Subtle variants use subtle backgrounds and text colors
         `bg-${color}-subtle text-${color}`,
         `data-[hover]:bg-${color}-hover data-[hover]:text-on-${color}`,
         baseFocusStyles,
-        `focus-visible:ring-${color === 'primary' ? 'emerald' : color === 'secondary' ? 'gray' : 'blue'}-500 dark:focus-visible:ring-${color === 'primary' ? 'emerald' : color === 'secondary' ? 'gray' : 'blue'}-400`,
+        `focus-visible:ring-${focusColor}-500 dark:focus-visible:ring-${focusColor}-400`,
       ].join(' ');
 
     default:

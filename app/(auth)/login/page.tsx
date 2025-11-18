@@ -122,9 +122,9 @@ export default function LoginPage() {
       return;
     }
     
-    // If user is authenticated, redirect to dashboard (always dashboard if no returnUrl)
+    // If user is authenticated, redirect to root (/) with returnUrl
     if (isAuthenticated) {
-      const redirectTo = returnUrl || '/dashboard';
+      const redirectTo = returnUrl ? `/?r=${encodeURIComponent(returnUrl)}` : '/';
       router.replace(redirectTo);
     }
   }, [isAuthenticated, isReady, isLogoutFlow, returnUrl, router, authStatus, dispatch]);

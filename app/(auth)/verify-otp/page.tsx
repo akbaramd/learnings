@@ -44,8 +44,8 @@ function safeResolveReturnUrl(searchParams: URLSearchParams): string {
     return decodedReturnUrl;
   }
   
-  // Default to dashboard if no returnUrl
-  return '/dashboard';
+  // Default to root (/) if no returnUrl - will handle redirect there
+  return '/';
 }
 
 export default function VerifyOtpPage() {
@@ -114,7 +114,6 @@ export default function VerifyOtpPage() {
 
   // Check if user is authenticated and redirect to dashboard
   // This handles the case where user is already authenticated (e.g., from another tab)
-  // NOTE: This useEffect is now secondary - the main redirect happens in onSubmit after cookie verification
   useEffect(() => {
     // Wait for auth to be ready
     if (!isReady) {
@@ -122,57 +121,11 @@ export default function VerifyOtpPage() {
     }
 
     // If user is authenticated, redirect to dashboard or returnUrl
-    // CRITICAL: Only redirect if authStatus is authenticated (not just isAuthenticated)
-    // This ensures cookies are valid and Redux state is synced
-    // BUT: Only redirect if we haven't already navigated (prevent double redirect)
-    // AND: Only redirect if we're not in the middle of OTP verification (navigatedRef prevents this)
+    // Only redirect if we haven't already navigated (prevent double redirect)
     if (isAuthenticated && authStatus === 'authenticated' && !navigatedRef.current) {
-      console.log('[VerifyOtp] 🔄 useEffect triggered - User authenticated');
-      console.log('[VerifyOtp] useEffect state:', {
-        isAuthenticated,
-      authStatus,
-        isReady,
-        navigatedRef: navigatedRef.current,
-        redirectTo,
-      });
-      console.log('[VerifyOtp] Verifying cookies before redirect (from useEffect)...');
-      
-      // Verify cookies are set before redirecting (same logic as onSubmit)
-      setTimeout(async () => {
-        try {
-          console.log('[VerifyOtp] useEffect: Calling /api/auth/me...');
-          const verifyRes = await fetch('/api/auth/me', {
-            method: 'GET',
-            credentials: 'include',
-          });
-          
-          console.log('[VerifyOtp] useEffect: /api/auth/me response status:', verifyRes.status);
-          
-          if (verifyRes.status === 200 && !navigatedRef.current) {
-            console.log('[VerifyOtp] ✅ useEffect: Cookies verified! Redirecting to:', redirectTo);
-            navigatedRef.current = true;
-            console.log('[VerifyOtp] 🚀 useEffect: REDIRECTING to:', redirectTo);
-            window.location.href = redirectTo;
-          } else {
-            console.log('[VerifyOtp] ⚠️ useEffect: Cannot redirect -', {
-              status: verifyRes.status,
-              navigatedRef: navigatedRef.current,
-            });
-          }
-        } catch (error) {
-          console.error('[VerifyOtp] ❌ useEffect: Error verifying cookies:', error);
-        }
-      }, 100); // Small delay to ensure cookies are set
-    } else {
-      console.log('[VerifyOtp] useEffect: Not redirecting -', {
-        isAuthenticated,
-        authStatus,
-        isReady,
-        navigatedRef: navigatedRef.current,
-        reason: !isAuthenticated ? 'not authenticated' : 
-                authStatus !== 'authenticated' ? 'authStatus not authenticated' :
-                navigatedRef.current ? 'already navigated' : 'unknown',
-      });
+      console.log('[VerifyOtp] 🔄 User already authenticated, redirecting to:', redirectTo);
+      navigatedRef.current = true;
+      window.location.href = redirectTo;
     }
   }, [isAuthenticated, isReady, authStatus, redirectTo]);
 
@@ -368,111 +321,23 @@ export default function VerifyOtpPage() {
                   console.log('[VerifyOtp] Set justVerifiedOtp flag in sessionStorage');
                 }
                 
-                // CRITICAL: Wait a bit for cookies to be set server-side
-                // Then verify cookies are valid by calling /api/auth/me
-                // Only redirect if /api/auth/me returns 200 (cookies are valid)
-                // This prevents redirect loop where ProtectedLayout sees 401
+                // Wait a bit for cookies to be set server-side, then redirect
+                // Cookies are set by the server in the verifyOtp response
                 console.log('[VerifyOtp] Waiting 300ms for cookies to be set server-side...');
-                console.log('[VerifyOtp] NOTE: httpOnly cookies cannot be read via document.cookie - this is normal');
-                console.log('[VerifyOtp] Cookies will be sent automatically with fetch requests if set correctly');
                 
-                setTimeout(async () => {
-                  try {
-                    console.log('[VerifyOtp] ⏳ Verifying cookies by calling /api/auth/me...');
-                    console.log('[VerifyOtp] Using credentials: include to send cookies automatically');
+                setTimeout(() => {
+                  if (!navigatedRef.current) {
+                    navigatedRef.current = true;
                     
-                    const verifyRes = await fetch('/api/auth/me', {
-                      method: 'GET',
-                      credentials: 'include', // CRITICAL: This sends cookies automatically
-                    });
-                    
-                    console.log('[VerifyOtp] /api/auth/me response status:', verifyRes.status);
-                    console.log('[VerifyOtp] /api/auth/me response headers:', {
-                      'x-me-prefetched': verifyRes.headers.get('x-me-prefetched'),
-                      'x-token-refreshed': verifyRes.headers.get('x-token-refreshed'),
-                    });
-                    
-                    // NOTE: httpOnly cookies cannot be read via document.cookie
-                    // This is a security feature - we can only verify they work by checking /api/auth/me response
-                    // If /api/auth/me returns 200, cookies are working correctly
-                    if (typeof document !== 'undefined') {
-                      const cookies = document.cookie.split('; ');
-                      console.log('[VerifyOtp] Browser cookies (NOTE: httpOnly cookies are NOT visible here):', {
-                        visibleCookies: cookies,
-                        allCookiesCount: cookies.length,
-                        note: 'httpOnly cookies (accessToken, refreshToken) are NOT visible in document.cookie - this is normal and secure',
-                      });
+                    // Clear the flag before redirect
+                    if (typeof window !== 'undefined') {
+                      sessionStorage.removeItem('justVerifiedOtp');
+                      console.log('[VerifyOtp] Cleared justVerifiedOtp flag from sessionStorage');
                     }
                     
-                    if (verifyRes.status === 200) {
-                      console.log('[VerifyOtp] ✅ Cookies verified! Status 200');
-                      console.log('[VerifyOtp] Setting navigatedRef.current = true');
-                      navigatedRef.current = true;
-                      
-                      // Clear the flag before redirect
-                      if (typeof window !== 'undefined') {
-                        sessionStorage.removeItem('justVerifiedOtp');
-                        console.log('[VerifyOtp] Cleared justVerifiedOtp flag from sessionStorage');
-                      }
-                      
-                      console.log('[VerifyOtp] 🚀 REDIRECTING to:', redirectTo);
-                      console.log('[VerifyOtp] Using window.location.href for full page reload');
-                      // Use window.location.href for full page reload to ensure cookies are refreshed
-                      window.location.href = redirectTo;
-                    } else {
-                      console.warn('[VerifyOtp] ⚠️ Cookies not valid yet (status:', verifyRes.status, ')');
-                      console.warn('[VerifyOtp] Waiting 500ms more and retrying...');
-                      
-                      // Wait another 500ms and try again (max 3 retries)
-                      setTimeout(async () => {
-                        console.log('[VerifyOtp] 🔄 Retry: Calling /api/auth/me again...');
-                        const retryRes = await fetch('/api/auth/me', {
-                          method: 'GET',
-                          credentials: 'include',
-                        });
-                        
-                        console.log('[VerifyOtp] Retry response status:', retryRes.status);
-                        
-                        if (retryRes.status === 200 && !navigatedRef.current) {
-                          console.log('[VerifyOtp] ✅ Cookies verified on retry! Status 200');
-                          navigatedRef.current = true;
-                          if (typeof window !== 'undefined') {
-                            sessionStorage.removeItem('justVerifiedOtp');
-                            console.log('[VerifyOtp] Cleared justVerifiedOtp flag from sessionStorage');
-                          }
-                          console.log('[VerifyOtp] 🚀 REDIRECTING to:', redirectTo);
-                          window.location.href = redirectTo;
-                        } else if (!navigatedRef.current) {
-                          console.error('[VerifyOtp] ❌ Cookies still not valid after retry (status:', retryRes.status, ')');
-                          console.error('[VerifyOtp] Redirecting anyway (cookies should be set)...');
-                          navigatedRef.current = true;
-                          if (typeof window !== 'undefined') {
-                            sessionStorage.removeItem('justVerifiedOtp');
-                          }
-                          console.log('[VerifyOtp] 🚀 REDIRECTING to:', redirectTo);
-                          window.location.href = redirectTo;
-                        } else {
-                          console.log('[VerifyOtp] Already navigated, skipping redirect');
-                        }
-                      }, 500);
-                    }
-                  } catch (error) {
-                    console.error('[VerifyOtp] ❌ ERROR verifying cookies:', error);
-                    console.error('[VerifyOtp] Error details:', {
-                      name: error instanceof Error ? error.name : 'Unknown',
-                      message: error instanceof Error ? error.message : String(error),
-                      stack: error instanceof Error ? error.stack : undefined,
-                    });
-                    // On error, redirect anyway (cookies should be set)
-                    if (!navigatedRef.current) {
-                      console.log('[VerifyOtp] Redirecting despite error (cookies should be set)');
-                      navigatedRef.current = true;
-                      if (typeof window !== 'undefined') {
-                        sessionStorage.removeItem('justVerifiedOtp');
-                      }
-                      console.log('[VerifyOtp] 🚀 REDIRECTING to:', redirectTo);
-                      window.location.href = redirectTo;
-                    }
+                    console.log('[VerifyOtp] 🚀 REDIRECTING to:', redirectTo);
+                    // Use window.location.href for full page reload to ensure cookies are refreshed
+                    window.location.href = redirectTo;
                   }
                 }, 300); // Wait 300ms for cookies to be set
               }

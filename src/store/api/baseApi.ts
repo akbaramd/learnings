@@ -4,8 +4,9 @@ import {
   FetchArgs,
   BaseQueryFn
 } from '@reduxjs/toolkit/query/react';
-import { setAnonymous, clearUser, setInitialized } from '@/src/store/auth/auth.slice';
+import { setAnonymous, clearUser, setInitialized, setErrorWithType } from '@/src/store/auth/auth.slice';
 import { getCsrfHeader } from '@/src/lib/client-csrf';
+import { getDeviceId } from '@/src/lib/deviceInfo';
 
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: '/api',
@@ -13,6 +14,15 @@ const rawBaseQuery = fetchBaseQuery({
   fetchFn: fetch,
   prepareHeaders: (headers) => {
     headers.set('content-type', 'application/json');
+    
+    // Add DeviceId header (required for session management)
+    // DeviceId is stored in localStorage and persists across sessions
+    if (typeof window !== 'undefined') {
+      const deviceId = getDeviceId();
+      if (deviceId) {
+        headers.set('X-Device-Id', deviceId);
+      }
+    }
     
     // Add CSRF token to headers
     const csrfHeaders = getCsrfHeader();
@@ -78,11 +88,85 @@ export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, unkno
     (result.meta?.response?.status === 401) ||
     (result.data && typeof result.data === 'object' && 'status' in result.data && result.data.status === 401);
 
-  // Also check for token refresh failure messages in the error response
+  // Check if we got a 403 Forbidden error (Session revoked)
+  const got403 = 
+    (result?.error && 'status' in result.error && result.error.status === 403) || 
+    (result.meta?.response?.status === 403) ||
+    (result.data && typeof result.data === 'object' && 'status' in result.data && result.data.status === 403);
+
+  // Check for token refresh failure messages in the error response
   const isTokenRefreshFailure = result.data && typeof result.data === 'object' && 
     ('message' in result.data && 
      (String(result.data.message).includes('Token refresh failed') || 
       String(result.data.message).includes('Session expired')));
+
+  // Check for Token Version Mismatch (logout-all-devices scenario)
+  const isTokenVersionMismatch = result.data && typeof result.data === 'object' && 
+    ('message' in result.data && 
+     (String(result.data.message).toLowerCase().includes('token version mismatch') ||
+      String(result.data.message).toLowerCase().includes('token_version') ||
+      String(result.data.message).toLowerCase().includes('invalid token version')));
+
+  // Check for explicit Session Expired message
+  const isSessionExpired = result.data && typeof result.data === 'object' && 
+    ('message' in result.data && 
+     (String(result.data.message).toLowerCase().includes('session expired') ||
+      String(result.data.message).toLowerCase().includes('session_expired') ||
+      String(result.data.message).toLowerCase().includes('your session has expired')));
+
+  // Handle 403 Forbidden (Session revoked)
+  if (got403) {
+    console.log('[baseQueryWithReauth] 403 Forbidden - Session revoked:', {
+      error: result.error,
+      data: result.data,
+      meta: result.meta,
+    });
+    
+    api.dispatch(clearUser());
+    api.dispatch(setAnonymous());
+    api.dispatch(setInitialized(true));
+    api.dispatch(setErrorWithType({ 
+      message: 'Session revoked. Please login again.', 
+      type: 'session_revoked' 
+    }));
+    return result;
+  }
+
+  // Handle Token Version Mismatch (logout-all-devices)
+  if (isTokenVersionMismatch) {
+    console.log('[baseQueryWithReauth] Token version mismatch - logout all devices triggered:', {
+      error: result.error,
+      data: result.data,
+      meta: result.meta,
+    });
+    
+    api.dispatch(clearUser());
+    api.dispatch(setAnonymous());
+    api.dispatch(setInitialized(true));
+    api.dispatch(setErrorWithType({ 
+      message: 'You have been logged out from all devices. Please login again.', 
+      type: 'token_version_mismatch' 
+    }));
+    return result;
+  }
+
+  // Handle explicit Session Expired
+  if (isSessionExpired) {
+    console.log('[baseQueryWithReauth] Session expired:', {
+      error: result.error,
+      data: result.data,
+      meta: result.meta,
+    });
+    
+    api.dispatch(clearUser());
+    api.dispatch(setAnonymous());
+    api.dispatch(setInitialized(true));
+    api.dispatch(setErrorWithType({ 
+      message: 'Your session has expired. Please login again.', 
+      type: 'session_expired' 
+    }));
+    return result;
+  }
 
   // If we get a 401 or token refresh failure, it means:
   // 1. Server tried to refresh token automatically
