@@ -11,6 +11,41 @@ import { NextRequest } from 'next/server';
 // and prevents issues with session endpoint
 export const runtime = 'nodejs';
 
+/**
+ * Normalize URL to remove IIS pipe paths
+ * IIS URL Rewrite/ARR may add /pipe/{guid} prefix which breaks NextAuth action parsing
+ * Example: /pipe/dd865ec1-ff07-4cbd-82b9-cb89bc3c434a/api/auth/providers -> /api/auth/providers
+ */
+function normalizeIisUrl(req: NextRequest): NextRequest {
+  try {
+    const url = new URL(req.url);
+    const pathname = url.pathname;
+    
+    // Remove pipe path prefix if present (IIS URL Rewrite/ARR issue)
+    // Pattern: /pipe/{guid}/api/auth/... -> /api/auth/...
+    if (pathname.includes('/pipe/') && pathname.includes('/api/auth/')) {
+      const pipeMatch = pathname.match(/\/pipe\/[^/]+\/(.+)/);
+      if (pipeMatch) {
+        const normalizedPath = '/' + pipeMatch[1];
+        const normalizedUrl = new URL(normalizedPath + url.search, url.origin);
+        
+        console.warn(`[NextAuth][IIS] Normalized URL from ${pathname} to ${normalizedPath}`);
+        
+        // Create new request with normalized URL
+        return new NextRequest(normalizedUrl, {
+          method: req.method,
+          headers: req.headers,
+          body: req.body,
+        });
+      }
+    }
+  } catch (error) {
+    console.error('[NextAuth][IIS] Error normalizing URL:', error);
+  }
+  
+  return req;
+}
+
 // Extend NextAuth types to include our custom token fields
 declare module 'next-auth' {
   interface Session {
@@ -409,11 +444,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   // This prevents issues with service workers or routing
   basePath: '/api/auth',
   
-  // CRITICAL: Trust host to prevent issues in development
+  // CRITICAL: Trust host to prevent issues in development and IIS
   // This ensures NextAuth can determine the correct URL for session endpoint
   trustHost: true,
+  
+  // CRITICAL: Set AUTH_URL for IIS deployments
+  // This helps NextAuth determine the correct base URL when behind IIS proxy
+  // Set this environment variable to your production URL (e.g., https://yourdomain.com)
+  // If not set, NextAuth will try to infer from headers (which may fail with IIS pipe paths)
+  ...(process.env.AUTH_URL && { url: process.env.AUTH_URL }),
 });
 
-// Export handlers for GET and POST
-export const { GET, POST } = handlers;
+// Export handlers for GET and POST with URL normalization
+// CRITICAL: Normalize URLs before passing to NextAuth handlers to fix IIS pipe path issues
+export async function GET(req: NextRequest) {
+  // Normalize URL to remove IIS pipe paths
+  const normalizedReq = normalizeIisUrl(req);
+  return handlers.GET(normalizedReq);
+}
+
+export async function POST(req: NextRequest) {
+  // Normalize URL to remove IIS pipe paths
+  const normalizedReq = normalizeIisUrl(req);
+  return handlers.POST(normalizedReq);
+}
 
