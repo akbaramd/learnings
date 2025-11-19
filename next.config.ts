@@ -246,7 +246,18 @@ const pwaConfig = withPWA({
         },
       },
       {
-        urlPattern: /\/api\/.*$/i,
+        // CRITICAL: Exclude NextAuth endpoints from caching
+        // NextAuth session endpoint must always go to network
+        urlPattern: /\/api\/auth\/.*$/i,
+        handler: "NetworkOnly", // Always fetch from network, never cache
+        options: {
+          cacheName: "nextauth-apis",
+          networkTimeoutSeconds: 10,
+        },
+      },
+      {
+        // Other API endpoints can be cached
+        urlPattern: /\/api\/(?!auth\/).*$/i,
         handler: "NetworkFirst",
         options: {
           cacheName: "apis",

@@ -155,7 +155,7 @@ export default function QuestionAnswerPage({ params }: QuestionAnswerPageProps) 
       });
     }
   }, [surveyIdFromParams, responseIdFromParams, questionIdFromParams, getQuestionById]);
-
+    
   // Initialize form with existing answer from question response
   useEffect(() => {
     if (!question) return;

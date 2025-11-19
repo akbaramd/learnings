@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { ThemeProvider } from './theme/ThemeProvider';
 import { ToastProvider } from './ui/toast/ToastContext';
 import { ToastContainer } from './ui/toast/ToastContainer';
@@ -8,7 +9,8 @@ interface ClientProvidersProps {
   children: React.ReactNode;
 }
 
-export function ClientProviders({ children }: ClientProvidersProps) {
+// Memoize to prevent unnecessary re-renders
+export const ClientProviders = React.memo(function ClientProviders({ children }: ClientProvidersProps) {
   return (
     <ThemeProvider>
       <div>
@@ -24,4 +26,4 @@ export function ClientProviders({ children }: ClientProvidersProps) {
       </div>
     </ThemeProvider>
   );
-}
+});

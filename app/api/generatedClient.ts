@@ -18,10 +18,60 @@ const getUpstream = () => {
 };
 
 // Per-request refresh promise map to handle concurrent 401 requests
-// Key: request identifier (host + deviceId), Value: refresh promise
+// Key: request identifier (host + deviceId), Value: { promise, createdAt, timeoutId }
 // This prevents memory leaks by cleaning up promises after use
-const refreshPromises = new Map<string, Promise<{ success: boolean; accessToken?: string; refreshToken?: string }>>();
+interface RefreshPromiseEntry {
+  promise: Promise<{ success: boolean; accessToken?: string; refreshToken?: string }>;
+  createdAt: number;
+  timeoutId?: NodeJS.Timeout;
+}
+
+const refreshPromises = new Map<string, RefreshPromiseEntry>();
 const MAX_REFRESH_RETRIES = 1; // Prevent infinite retry loops
+const PROMISE_MAX_AGE = 60000; // 60 seconds - maximum age for a promise
+const PROMISE_TIMEOUT = 30000; // 30 seconds - timeout for individual promises
+const CLEANUP_INTERVAL = 30000; // 30 seconds - periodic cleanup interval
+
+// Periodic cleanup of stale promises
+let cleanupIntervalId: NodeJS.Timeout | null = null;
+
+/**
+ * Start periodic cleanup if not already running
+ * This ensures stale promises are removed even if immediate cleanup fails
+ */
+function startPeriodicCleanup() {
+  if (cleanupIntervalId) return; // Already running
+  
+  cleanupIntervalId = setInterval(() => {
+    const now = Date.now();
+    const staleKeys: string[] = [];
+    
+    for (const [key, entry] of refreshPromises.entries()) {
+      const age = now - entry.createdAt;
+      if (age > PROMISE_MAX_AGE) {
+        staleKeys.push(key);
+        // Clear timeout if exists
+        if (entry.timeoutId) {
+          clearTimeout(entry.timeoutId);
+        }
+      }
+    }
+    
+    if (staleKeys.length > 0) {
+      const isDevMode = process.env.NODE_ENV === 'development';
+      if (isDevMode) {
+        console.warn(`[RefreshToken] Cleaning up ${staleKeys.length} stale promises`);
+      }
+      staleKeys.forEach(key => refreshPromises.delete(key));
+    }
+    
+    // If map is empty, stop periodic cleanup
+    if (refreshPromises.size === 0 && cleanupIntervalId) {
+      clearInterval(cleanupIntervalId);
+      cleanupIntervalId = null;
+    }
+  }, CLEANUP_INTERVAL);
+}
 
 // CRITICAL: Shared HTTP agents to prevent memory leaks
 // Creating new agents for each request causes memory accumulation
@@ -57,31 +107,38 @@ function getRefreshKey(req: NextRequest): string {
 }
 
 /**
- * Clean up refresh promise after use (prevent memory leaks)
- * CRITICAL: More aggressive cleanup to prevent map from growing indefinitely
+ * Clean up refresh promise immediately after resolution
+ * CRITICAL: Immediate cleanup prevents memory leaks
  */
 function cleanupRefreshPromise(key: string) {
-  // Use setTimeout to allow concurrent requests to finish
-  // Reduced delay to prevent accumulation
-  setTimeout(() => {
-    refreshPromises.delete(key);
-    
-    // CRITICAL: If map grows too large, clean up old entries
-    // This prevents memory leaks if cleanup fails for some entries
-    if (refreshPromises.size > 100) {
-      const isDevMode = process.env.NODE_ENV === 'development';
-      if (isDevMode) {
-        console.warn('[RefreshToken] Refresh promises map too large, cleaning up old entries');
-      }
-      // Delete oldest entries (first 50)
-      let count = 0;
-      for (const k of refreshPromises.keys()) {
-        if (count >= 50) break;
-        refreshPromises.delete(k);
-        count++;
-      }
+  const entry = refreshPromises.get(key);
+  if (entry) {
+    // Clear timeout if exists
+    if (entry.timeoutId) {
+      clearTimeout(entry.timeoutId);
     }
-  }, 2000); // Reduced from 5 seconds to 2 seconds for faster cleanup
+    // Remove from map immediately
+    refreshPromises.delete(key);
+  }
+  
+  // Emergency cleanup if map grows too large
+  if (refreshPromises.size > 100) {
+    const isDevMode = process.env.NODE_ENV === 'development';
+    if (isDevMode) {
+      console.warn('[RefreshToken] Refresh promises map too large, performing emergency cleanup');
+    }
+    // Delete oldest entries (first 50)
+    const entries = Array.from(refreshPromises.entries())
+      .sort((a, b) => a[1].createdAt - b[1].createdAt);
+    
+    for (let i = 0; i < Math.min(50, entries.length); i++) {
+      const [key, entry] = entries[i];
+      if (entry.timeoutId) {
+        clearTimeout(entry.timeoutId);
+      }
+      refreshPromises.delete(key);
+    }
+  }
 }
 
 /**
@@ -99,22 +156,37 @@ async function refreshAccessToken(req: NextRequest): Promise<{ success: boolean;
   const isDevMode = process.env.NODE_ENV === 'development';
 
   // Check if refresh is already in progress for this request
-  const existingPromise = refreshPromises.get(refreshKey);
-  if (existingPromise) {
-    try {
-      const result = await existingPromise;
-      return result;
-    } catch {
-      // If existing promise failed, create a new one
+  const existingEntry = refreshPromises.get(refreshKey);
+  if (existingEntry) {
+    // Check if promise is too old (stale)
+    const age = Date.now() - existingEntry.createdAt;
+    if (age > PROMISE_MAX_AGE) {
+      // Promise is stale, remove it and create a new one
+      if (existingEntry.timeoutId) {
+        clearTimeout(existingEntry.timeoutId);
+      }
       refreshPromises.delete(refreshKey);
+    } else {
+      // Use existing promise
+      try {
+        const result = await existingEntry.promise;
+        return result;
+      } catch {
+        // If existing promise failed, create a new one
+        cleanupRefreshPromise(refreshKey);
+      }
     }
   }
 
-  // Create new refresh promise
-  const refreshPromise = (async (): Promise<{ success: boolean; accessToken?: string; refreshToken?: string }> => {
-    let refreshHttp: ReturnType<typeof axios.create> | null = null;
-    
-    try {
+  // Create new refresh promise with timeout protection
+  const createdAt = Date.now();
+  let timeoutId: NodeJS.Timeout | undefined;
+  
+  const refreshPromise = Promise.race([
+    (async (): Promise<{ success: boolean; accessToken?: string; refreshToken?: string }> => {
+      let refreshHttp: ReturnType<typeof axios.create> | null = null;
+      
+      try {
       // Get the session using custom auth function
       const session = await auth(req);
 
@@ -232,43 +304,69 @@ async function refreshAccessToken(req: NextRequest): Promise<{ success: boolean;
       }
       return { success: false };
     } finally {
-      // CRITICAL: Clean up axios instance to prevent memory leaks
-      if (refreshHttp) {
-        try {
-          // Cancel any pending requests
-          refreshHttp.interceptors.request.clear();
-          refreshHttp.interceptors.response.clear();
-          
-          // CRITICAL: Destroy HTTP agents to free memory
-          // This ensures all internal resources are released
-          if (refreshHttp.defaults.httpAgent) {
-            try {
-              (refreshHttp.defaults.httpAgent as nodeHttp.Agent).destroy();
-            } catch {
-              // Ignore errors during agent destruction
+        // CRITICAL: Clean up axios instance to prevent memory leaks
+        if (refreshHttp) {
+          try {
+            // Cancel any pending requests
+            refreshHttp.interceptors.request.clear();
+            refreshHttp.interceptors.response.clear();
+            
+            // CRITICAL: Destroy HTTP agents to free memory
+            // This ensures all internal resources are released
+            if (refreshHttp.defaults.httpAgent) {
+              try {
+                (refreshHttp.defaults.httpAgent as nodeHttp.Agent).destroy();
+              } catch {
+                // Ignore errors during agent destruction
+              }
             }
-          }
-          if (refreshHttp.defaults.httpsAgent) {
-            try {
-              (refreshHttp.defaults.httpsAgent as nodeHttps.Agent).destroy();
-            } catch {
-              // Ignore errors during agent destruction
+            if (refreshHttp.defaults.httpsAgent) {
+              try {
+                (refreshHttp.defaults.httpsAgent as nodeHttps.Agent).destroy();
+              } catch {
+                // Ignore errors during agent destruction
+              }
             }
-          }
-        } catch (cleanupError) {
-          if (isDevMode) {
-            console.warn('[RefreshToken] Error cleaning up axios instance:', cleanupError);
+          } catch (cleanupError) {
+            if (isDevMode) {
+              console.warn('[RefreshToken] Error cleaning up axios instance:', cleanupError);
+            }
           }
         }
       }
-      
-      // Clean up promise from map after a delay (allows concurrent requests to finish)
-      cleanupRefreshPromise(refreshKey);
+    })(),
+    // Timeout promise - rejects if refresh takes too long
+    new Promise<{ success: boolean; accessToken?: string; refreshToken?: string }>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        if (isDevMode) {
+          console.warn('[RefreshToken] Refresh promise timeout after', PROMISE_TIMEOUT, 'ms');
+        }
+        reject(new Error('Refresh token timeout'));
+      }, PROMISE_TIMEOUT);
+    }),
+  ]).catch((error) => {
+    // Handle timeout or other errors - return failure instead of rejecting
+    if (isDevMode && error instanceof Error && error.message === 'Refresh token timeout') {
+      console.warn('[RefreshToken] Refresh timed out, returning failure');
     }
-  })();
+    return { success: false };
+  }).finally(() => {
+    // CRITICAL: Clean up timeout and promise from map immediately after resolution
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    cleanupRefreshPromise(refreshKey);
+  }) as Promise<{ success: boolean; accessToken?: string; refreshToken?: string }>;
 
-  // Store promise in map
-  refreshPromises.set(refreshKey, refreshPromise);
+  // Store promise in map with metadata
+  refreshPromises.set(refreshKey, {
+    promise: refreshPromise,
+    createdAt,
+    timeoutId,
+  });
+
+  // Start periodic cleanup if not already running
+  startPeriodicCleanup();
 
   return refreshPromise;
 }
@@ -318,10 +416,22 @@ export function createApiInstance(req: NextRequest) {
     // Set content-type header
     config.headers['Content-Type'] = 'application/json';
 
-    // Add authorization header (Bearer token)
-    const accessToken = await getAccessToken();
-    if (accessToken) {
-      config.headers['Authorization'] = `Bearer ${accessToken}`;
+    // CRITICAL: Do NOT add Bearer token to auth endpoints that are used to GET the token
+    // These endpoints should NOT have Authorization header:
+    // - /api/v1/auth/otp (sendOtp - used to get token)
+    // - /api/v1/auth/otp/verify (verifyOtp - used to get token)
+    // - /api/v1/auth/refresh (refreshToken - uses refresh token from cookies, not Bearer)
+    const url = config.url || '';
+    const isAuthEndpoint = 
+      url.includes('/api/v1/auth/otp') || // sendOtp or verifyOtp
+      url.includes('/api/v1/auth/refresh'); // refreshToken
+    
+    // Only add Bearer token if NOT an auth endpoint
+    if (!isAuthEndpoint) {
+      const accessToken = await getAccessToken();
+      if (accessToken) {
+        config.headers['Authorization'] = `Bearer ${accessToken}`;
+      }
     }
 
     // Add device ID header (from client request)

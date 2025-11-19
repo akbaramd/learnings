@@ -1,19 +1,19 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { useTheme } from '@/src/hooks/useTheme';
 import { NotificationDot } from '@/src/components/ui/NotificationBadge';
 import { GetUnreadCountResponse, useGetUnreadCountQuery } from '@/src/store/notifications';
 import { BottomNavigation } from '@/src/components/navigation/BottomNavigation';
-import { ProtectedRouteGuard } from '@/src/components/auth/ProtectedRouteGuard';
 import {
   PiBell,
   PiSun,
   PiMoon,
   PiHouse,
+  PiSpinner,
 } from 'react-icons/pi';
 
 interface ProtectedLayoutProps {
@@ -111,10 +111,15 @@ function BrandTitle() {
 
 export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { data: session, status } = useSession();
+  const redirectInitiatedRef = useRef(false);
+
+  // Determine authentication state
+  const isAuthenticated = status === 'authenticated' && !!session;
+  const isLoading = status === 'loading'; // Still checking session
 
   // Auto-fetch notifications when authenticated
-  const isAuthenticated = status === 'authenticated' && !!session;
   const shouldPollNotifications = useMemo(() => isAuthenticated, [isAuthenticated]);
   
   const { data: unreadCountData, isLoading: notificationsLoading } = useGetUnreadCountQuery(
@@ -128,17 +133,70 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
     }
   );
 
+  // Handle authentication guard and redirects
+  useEffect(() => {
+    // Don't redirect until session status is determined
+    if (isLoading || redirectInitiatedRef.current) {
+      return;
+    }
+
+    // If user is not authenticated, redirect to login
+    if (!isAuthenticated) {
+      redirectInitiatedRef.current = true;
+      
+      // Build login URL with return URL
+      const returnUrl = encodeURIComponent(pathname);
+      const loginUrl = `/login?r=${returnUrl}`;
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[ProtectedLayout] User not authenticated, redirecting to login:', {
+          pathname,
+          status,
+          hasSession: !!session,
+        });
+      }
+      
+      router.push(loginUrl);
+    }
+  }, [status, isLoading, isAuthenticated, pathname, router, session]);
+
   const handleHomeClick = () => {
     router.push('/dashboard');
   };
 
+  // Show loading screen while checking authentication
+  if (isLoading) {
+    return (
+      <div className="h-screen mx-auto max-w-full sm:max-w-full md:max-w-[30rem] lg:max-w-[30rem] xl:max-w-[30rem] bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex flex-col items-center justify-center" dir="rtl">
+        <div className="flex flex-col items-center gap-4">
+          <PiSpinner className="h-8 w-8 text-emerald-600 dark:text-emerald-400 animate-spin" />
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            در حال بررسی احراز هویت...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render content if not authenticated (redirect is in progress)
+  if (!isAuthenticated) {
+    return (
+      <div className="h-screen mx-auto max-w-full sm:max-w-full md:max-w-[30rem] lg:max-w-[30rem] xl:max-w-[30rem] bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex flex-col items-center justify-center" dir="rtl">
+        <div className="flex flex-col items-center gap-4">
+          <PiSpinner className="h-8 w-8 text-emerald-600 dark:text-emerald-400 animate-spin" />
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            در حال انتقال به صفحه ورود...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // User is authenticated - render the protected layout
   return (
-    <div className="h-screen mx-auto max-w-full sm:max-w-full md:max-w-[30rem] lg:max-w-[30rem] xl:max-w-[30rem] bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex flex-col" dir="rtl">
-      {/* Protected Route Guard - Handles redirects when auth fails */}
-      <ProtectedRouteGuard />
-      
+    <div className="h-screen mx-auto max-w-full sm:max-w-full md:max-w-[30rem] lg:max-w-[30rem] xl:max-w-[30rem] bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex flex-col overflow-hidden" dir="rtl">
       {/* Top App Bar - Fixed at top */}
-      <header className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+      <header className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 z-10">
         <div className="flex h-14 items-center justify-between px-4">
           <IconButton 
             aria-label="Go to home"
@@ -160,18 +218,18 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
         </div>
       </header>
 
-      {/* Content - Flexible area with proper background contrast */}
-      <main className="flex-1 overflow-hidden ">
-        <div className="h-full w-full">
-          {children}
-        </div>
+      {/* Content - Scrollable area between header and bottom nav */}
+      <main className="flex-1 min-h-0 relative">
+        {children}
       </main>
 
-      {/* Bottom Navigation */}
-      <BottomNavigation 
-        unreadCountData={unreadCountData || { result: { totalCount: 0 }, errors: null }} 
-        notificationsLoading={notificationsLoading} 
-      />
+      {/* Bottom Navigation - Fixed at bottom */}
+      <div className="flex-shrink-0 z-10">
+        <BottomNavigation 
+          unreadCountData={unreadCountData || { result: { totalCount: 0 }, errors: null }} 
+          notificationsLoading={notificationsLoading} 
+        />
+      </div>
     </div>
   );
 }

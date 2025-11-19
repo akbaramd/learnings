@@ -6,9 +6,10 @@ import Card from '@/src/components/ui/Card';
 import InputField from '@/src/components/forms/InputField';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
-import { useLazyValidateNationalCodeQuery, selectChallengeId, selectAuthStatus, selectIsUserNotFoundError, selectAuthErrorInfo, setChallengeId, setMaskedPhoneNumber, setNationalCode, setAuthStatus, setErrorWithType, clearError } from '@/src/store/auth';
+import { useLazyValidateNationalCodeQuery, selectChallengeId, selectAuthStatus, selectIsUserNotFoundError, selectAuthErrorInfo, setAuthStatus } from '@/src/store/auth';
+import { useSendOtpMutation } from '@/src/store/auth/auth.queries';
 import { useAppSelector } from '@/src/hooks/store';
-import { useSession, signIn } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { getDeviceId, getUserAgent } from '@/src/lib/deviceInfo';
 import { PiShieldCheck, PiWarningCircle } from 'react-icons/pi';
 import Drawer, { DrawerHeader, DrawerBody, DrawerFooter } from '@/src/components/overlays/Drawer';
@@ -43,8 +44,8 @@ export default function LoginPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   
-  // State for NextAuth sendOtp
-  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  // Send OTP mutation
+  const [sendOtp, { isLoading: isSendingOtp }] = useSendOtpMutation();
   
   // محاسبه وضعیت
   const isLoading = isSendingOtp;
@@ -135,23 +136,7 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, isReady, isLogoutFlow, returnUrl, router, authStatus, dispatch]);
   
-  // Handle session update after sending OTP via NextAuth
-  useEffect(() => {
-    // Check if session has OTP data (from send-otp provider)
-    if (session?.user?.id === 'otp-sent' && session.challengeId) {
-      // Store challengeId and maskedPhoneNumber in Redux
-      dispatch(setChallengeId(session.challengeId));
-      if (session.maskedPhoneNumber) {
-        dispatch(setMaskedPhoneNumber(session.maskedPhoneNumber));
-      }
-      if (session.nationalCode) {
-        dispatch(setNationalCode(session.nationalCode));
-      }
-      dispatch(setAuthStatus('otp-sent'));
-      // Clear any errors
-      dispatch(clearError());
-    }
-  }, [session, dispatch]);
+  // No need to handle session update for OTP - mutation handles it in onQueryStarted
 
   // Redirect to verify-otp when challengeId is set (OTP sent successfully)
   // Pass logout flag and returnUrl to verify-otp page
@@ -367,11 +352,8 @@ export default function LoginPage() {
               return;
             }
 
-            // Use NextAuth signIn for sending OTP
+            // Use sendOtp mutation
             try {
-              setIsSendingOtp(true);
-              dispatch(setAuthStatus('loading'));
-              
               // Get device ID and user agent to send with request
               // CRITICAL: Use getDeviceId() to ensure SAME device ID as other requests
               // Device ID comes from localStorage (same source as baseApi.ts)
@@ -380,47 +362,29 @@ export default function LoginPage() {
               const deviceId = getDeviceId();
               const userAgent = getUserAgent();
               
-              const result = await signIn('send-otp', {
+              await sendOtp({
                 nationalCode: nationalId,
+                purpose: 'login',
+                scope: 'app',
                 deviceId: deviceId || null,
                 userAgent: userAgent || null,
-                redirect: false,
-              });
+                ipAddress: null, // Will be extracted server-side from request
+              }).unwrap();
               
-              if (result?.error) {
-                // Handle error from NextAuth
-                const errorMessage = result.error === 'CredentialsSignin'
-                  ? 'کد ملی نامعتبر است. لطفاً دوباره تلاش کنید.'
-                  : result.error;
-                
-                // Check if it's a user not found error
-                if (errorMessage.includes('یافت نشد') || errorMessage.includes('not found') || errorMessage.includes('کاربری با کد ملی')) {
-                  dispatch(setErrorWithType({ message: errorMessage, type: 'user_not_found' }));
-                  dispatch(setAuthStatus('error'));
-                } else {
-              setStatus('invalid');
-              setErrorText(errorMessage);
-              setTouched(true);
-              dispatch(setErrorWithType({ message: errorMessage, type: 'invalid_credentials' }));
-              dispatch(setAuthStatus('error'));
-            }
-            return;
-              }
-              
-              // Success - session will be updated by NextAuth
-              // The useEffect will handle extracting challengeId and redirecting
+              // Success - mutation's onQueryStarted handles storing challengeId and updating status
+              // The useEffect will handle redirecting to verify-otp page
               
             } catch (error: unknown) {
-              const errorMessage = error instanceof Error
-                ? error.message
+              // Error handling is done in mutation's onQueryStarted
+              // But we still need to update UI state
+              const errorMessage = error && typeof error === 'object' && 'data' in error
+                ? (error as { data?: { message?: string; errors?: string[] } }).data?.errors?.[0] 
+                  || (error as { data?: { message?: string } }).data?.message
                 : 'ارسال کد ناموفق. لطفاً شماره ملی خود را بررسی کنید.';
+              
               setStatus('invalid');
-              setErrorText(errorMessage);
+              setErrorText(errorMessage || 'ارسال کد ناموفق. لطفاً شماره ملی خود را بررسی کنید.');
               setTouched(true);
-              dispatch(setErrorWithType({ message: errorMessage, type: 'unknown' }));
-              dispatch(setAuthStatus('error'));
-            } finally {
-              setIsSendingOtp(false);
             }
           }}
         >

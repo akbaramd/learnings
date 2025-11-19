@@ -51,7 +51,7 @@ export {
 
 // Export auth query hooks
 export {
-  // useSendOtpMutation removed - use NextAuth signIn('send-otp', ...) instead
+  useSendOtpMutation,
   // useVerifyOtpMutation removed - use NextAuth signIn('otp', ...) instead
   useLogoutMutation,
   useRefreshTokenMutation,

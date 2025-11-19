@@ -47,8 +47,12 @@ export const ScrollableArea = forwardRef<HTMLDivElement, ScrollableAreaProps>(
       return 'overflow-y-auto overflow-x-hidden'; // default 'y'
     })();
 
+    // Build classes
+    // min-h-0 is CRITICAL for flex layouts - allows scrolling to work properly
+    // flex-1 or h-full can be provided via className if needed
     const classes = [
       'relative',
+      'min-h-0', // Critical for flex scrolling - prevents flex item from overflowing
       overflowClasses,
       smooth && 'scroll-smooth',
       className,

@@ -1,9 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { signOut } from 'next-auth/react';
-import { useLogoutMutation, selectIsAuthenticated } from '@/src/store/auth';
-import { useAppSelector } from '@/src/hooks/store';
+import { useLogoutMutation } from '@/src/store/auth';
+import { performLogout } from '@/src/lib/logout';
 import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import { PageHeader } from '@/src/components/ui/PageHeader';
 import { Button } from '@/src/components/ui/Button';
@@ -14,7 +13,6 @@ import {
 
 export default function LogoutDetailsPage() {
   const router = useRouter();
-  const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
 
   const handleBack = () => {
@@ -22,47 +20,18 @@ export default function LogoutDetailsPage() {
   };
 
   const handleLogout = async () => {
-    console.log('[Logout] Starting logout process...');
-    console.log('[Logout] Current isAuthenticated:', isAuthenticated);
-
-    try {
-      // Step 1: Call logout API mutation - it will clear Redux state
-      await logout({ refreshToken: undefined }).unwrap();
-      console.log('[Logout] Logout API completed successfully');
-      
-      // Step 2: Call NextAuth signOut to clear NextAuth session
-      // This ensures complete logout from both Redux and NextAuth
-      try {
-        await signOut({ redirect: false });
-        console.log('[Logout] NextAuth signOut completed successfully');
-      } catch (signOutError) {
-        // Even if signOut fails (e.g., CSRF warning), continue with redirect
-        // The session will be cleared on next page load anyway
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('[Logout] NextAuth signOut had an error (continuing anyway):', signOutError);
-        }
+    // Use the standard logout utility following NextAuth best practices
+    // Pattern: Backend API → NextAuth signOut → Redirect
+    await performLogout(
+      async () => {
+        // Step 1: Call backend logout API (clears server-side session, cookies, and Redux state)
+        await logout({ refreshToken: undefined }).unwrap();
+      },
+      {
+        returnUrl: window.location.pathname,
+        showToast: true,
       }
-      
-      // Step 3: Redirect to login page after successful logout
-      const currentPath = window.location.pathname;
-      const encodedReturnUrl = encodeURIComponent(currentPath);
-      window.location.href = `/login?r=${encodedReturnUrl}&logout=true`;
-    } catch (error) {
-      console.error('[Logout] Logout API failed:', error);
-      // Mutation's onQueryStarted will clear Redux state even on error
-      // Still try to clear NextAuth session
-      try {
-        await signOut({ redirect: false });
-      } catch (signOutError) {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('[Logout] NextAuth signOut had an error (continuing anyway):', signOutError);
-        }
-      }
-      // Redirect to login page anyway for security
-      const currentPath = window.location.pathname;
-      const encodedReturnUrl = encodeURIComponent(currentPath);
-      window.location.href = `/login?r=${encodedReturnUrl}&logout=true`;
-    }
+    );
   };
 
   const handleCancel = () => {

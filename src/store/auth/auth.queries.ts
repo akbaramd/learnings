@@ -12,15 +12,21 @@ import {
   ValidateNationalCodeResponse,
   GetSessionsPaginatedRequest,
   GetSessionsPaginatedResponse,
+  SendOtpRequest,
+  SendOtpResponse,
   UserProfile,
 } from './auth.types';
 import {
   clearChallengeId,
+  setChallengeId,
+  setMaskedPhoneNumber,
+  setNationalCode,
   setUser,
   clearUser,
   setAuthStatus,
   setError,
   setErrorWithType,
+  clearError,
   setInitialized,
 } from './auth.slice';
 import type { AuthErrorType } from './auth.types';
@@ -83,8 +89,55 @@ export const authApi = createApi({
   refetchOnFocus: false, // Don't refetch on window focus for auth
   refetchOnReconnect: false, // Don't auto-refetch on reconnect - let manual checks handle it
   endpoints: (builder) => ({
-    // Note: sendOtp mutation removed - now handled by NextAuth
-    // OTP sending is done via NextAuth signIn('send-otp', { nationalCode })
+    // Send OTP mutation
+    sendOtp: builder.mutation<SendOtpResponse, SendOtpRequest>({
+      query: (request) => ({
+        url: '/auth/send-otp',
+        method: 'POST',
+        body: {
+          nationalCode: request.nationalCode || null,
+          purpose: request.purpose || 'login',
+          scope: request.scope || 'app',
+          deviceId: request.deviceId || null,
+          userAgent: request.userAgent || null,
+          ipAddress: request.ipAddress || null,
+        },
+      }),
+      invalidatesTags: ['Auth'],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          dispatch(setAuthStatus('loading'));
+          dispatch(setError(null));
+
+          const { data } = await queryFulfilled;
+
+          // Check isSuccess flag
+          if (data?.isSuccess === true && data?.data?.challengeId) {
+            // Store challengeId and maskedPhoneNumber in Redux
+            dispatch(setChallengeId(data.data.challengeId));
+            if (data.data.maskedPhoneNumber) {
+              dispatch(setMaskedPhoneNumber(data.data.maskedPhoneNumber));
+            }
+            if (arg.nationalCode) {
+              dispatch(setNationalCode(arg.nationalCode));
+            }
+            dispatch(setAuthStatus('otp-sent'));
+            dispatch(clearError());
+          } else {
+            // Handle failure response
+            const errorMessage = data?.message || data?.errors?.[0] || 'Failed to send OTP.';
+            const { message, type } = categorizeAuthError({ data });
+            dispatch(setErrorWithType({ message: errorMessage || message, type }));
+            dispatch(setAuthStatus('error'));
+          }
+        } catch (error: unknown) {
+          // Handle error
+          const { message, type } = categorizeAuthError(error);
+          dispatch(setErrorWithType({ message: message || 'Failed to send OTP. Please try again.', type }));
+          dispatch(setAuthStatus('error'));
+        }
+      },
+    }),
 
     // Note: verifyOtp mutation removed - now handled by NextAuth
     // OTP verification is done via NextAuth signIn('otp', { challengeId, otp })
@@ -485,7 +538,7 @@ export const authApi = createApi({
 
 // Export hooks for components
 export const {
-  // useSendOtpMutation removed - use NextAuth signIn('send-otp', ...) instead
+  useSendOtpMutation,
   // useVerifyOtpMutation removed - use NextAuth signIn('otp', ...) instead
   useGetMeQuery,
   useLogoutMutation,
