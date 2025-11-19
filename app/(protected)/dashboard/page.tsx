@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { IconButton } from '@/src/components/ui/IconButton';
-import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import { PiEye, PiEyeSlash, PiGear, PiArrowClockwise, PiMapPinDuotone, PiMoney, PiFileText, PiDiamondDuotone, PiShieldCheck, PiTruck } from 'react-icons/pi';
 import { ServicesGrid } from '@/src/components/services/ServiceCard';
 import { TourSection } from '@/src/components/tours/TourSection';
@@ -313,9 +312,8 @@ export default function HomeDashboard() {
   }
 
   return (
-    <div className="h-full w-full flex flex-col overflow-hidden" dir="rtl">
-        <ScrollableArea className="flex-1 min-h-0" hideScrollbar={true}>
-          <div className="space-y-4">
+    <div className="w-full flex flex-col" dir="rtl">
+        <div className="space-y-4">
             {/* Wallet */}
             <section>
               <WalletCard />
@@ -391,8 +389,7 @@ export default function HomeDashboard() {
                 )
               )}
             </section>
-          </div>
-        </ScrollableArea>
-      </div>
+        </div>
+    </div>
   );
 }

@@ -8,7 +8,9 @@ const next = require("next");
 
 const dev = process.env.NODE_ENV !== "production";
 const port = process.env.PORT || 3000;
-const hostname = "localhost";
+// Use 0.0.0.0 to allow access from network (for mobile testing)
+// Set HOSTNAME=localhost if you only want local access
+const hostname = process.env.HOSTNAME || "0.0.0.0";
 
 // Initialize Next.js app
 // Next.js will automatically use the standalone build if available
@@ -53,11 +55,20 @@ app.prepare().then(() => {
       console.error(err);
       process.exit(1);
     })
-    .listen(port, async () => {
-      console.log(`> Ready on http://localhost:${port}`);
-      if (!dev) {
-        console.log("> Running in production mode");
-        console.log("> Standalone build files will be used automatically by Next.js");
-      }
-    });
+      .listen(port, hostname, async () => {
+        const localUrl = `http://localhost:${port}`;
+        const networkUrl = hostname === '0.0.0.0' 
+          ? `http://${require('os').networkInterfaces()?.[Object.keys(require('os').networkInterfaces())[0]]?.[0]?.address || 'YOUR_IP'}:${port}`
+          : localUrl;
+        
+        console.log(`> Ready on ${localUrl}`);
+        if (hostname === '0.0.0.0') {
+          console.log(`> Network access: ${networkUrl}`);
+          console.log(`> Use this URL on your mobile device (same Wi-Fi network)`);
+        }
+        if (!dev) {
+          console.log("> Running in production mode");
+          console.log("> Standalone build files will be used automatically by Next.js");
+        }
+      });
 });

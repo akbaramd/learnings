@@ -149,6 +149,29 @@
 /* Utilities */
 @utility tap-highlight-none { -webkit-tap-highlight-color: transparent; }
 
+/* Protected Layout Content Area - Scrollable with hidden scrollbar */
+@layer components {
+  .protected-content-scroll {
+    /* Flex container for vertical scrolling */
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    
+    /* Hide scrollbar but keep scrolling functionality */
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  
+  .protected-content-scroll::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari, Opera */
+    width: 0;
+    height: 0;
+  }
+}
+
 /* Dynamic Height Classes */
 @utility h-screen { height: 100vh; }
 @utility h-full { height: 100%; }

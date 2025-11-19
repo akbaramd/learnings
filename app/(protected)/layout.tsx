@@ -114,6 +114,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const redirectInitiatedRef = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Determine authentication state
   const isAuthenticated = status === 'authenticated' && !!session;
@@ -164,6 +165,36 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
     router.push('/dashboard');
   };
 
+  // CRITICAL: Set viewport height dynamically to handle mobile browser UI
+  // This ensures correct height calculation on page refresh
+  useEffect(() => {
+    const setViewportHeight = () => {
+      if (containerRef.current) {
+        // Use window.innerHeight for accurate mobile viewport height
+        // This accounts for browser UI (address bar, etc.)
+        const vh = window.innerHeight;
+        containerRef.current.style.height = `${vh}px`;
+        containerRef.current.style.maxHeight = `${vh}px`;
+      }
+    };
+
+    // Set height immediately
+    setViewportHeight();
+
+    // Update on resize (handles browser UI changes)
+    window.addEventListener('resize', setViewportHeight);
+    window.addEventListener('orientationchange', setViewportHeight);
+
+    // Also update after a short delay to catch late browser UI adjustments
+    const timeoutId = setTimeout(setViewportHeight, 100);
+
+    return () => {
+      window.removeEventListener('resize', setViewportHeight);
+      window.removeEventListener('orientationchange', setViewportHeight);
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
   // Show loading screen while checking authentication
   if (isLoading) {
     return (
@@ -201,8 +232,14 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   // User is authenticated - render the protected layout
   return (
     <div 
-      className="h-dvh mx-auto max-w-full sm:max-w-full md:max-w-[30rem] lg:max-w-[30rem] xl:max-w-[30rem] bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex flex-col overflow-hidden" 
+      ref={containerRef}
+      className="mx-auto max-w-full sm:max-w-full md:max-w-[30rem] lg:max-w-[30rem] xl:max-w-[30rem] bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex flex-col overflow-hidden" 
       dir="rtl"
+      style={{
+        // Fallback to dvh, but JavaScript will override with exact pixel value
+        height: '100dvh',
+        maxHeight: '100dvh',
+      }}
     >
       {/* Top App Bar - Fixed at top */}
       <header className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 z-10">
@@ -228,9 +265,18 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
       </header>
 
       {/* Content - Scrollable area between header and bottom nav */}
-      {/* CRITICAL: flex-1 min-h-0 overflow-hidden ensures content doesn't push bottom nav down */}
-      <main className="flex-1 min-h-0 overflow-hidden relative">
-        {children}
+      {/* CRITICAL: 
+          - flex-1: Takes remaining space between header and bottom nav
+          - min-h-0: Prevents flex item from overflowing (critical for scrolling)
+          - overflow-hidden: Prevents main from scrolling (children will scroll)
+          - flex flex-col: Makes main a flex container for children
+      */}
+      <main className="flex-1 min-h-0 overflow-hidden flex flex-col">
+        {/* Content wrapper - This is the actual scrollable area */}
+        {/* Uses protected-content-scroll class for hidden scrollbar with scrolling */}
+        <div className="protected-content-scroll">
+          {children}
+        </div>
       </main>
 
       {/* Bottom Navigation - Fixed at bottom */}
