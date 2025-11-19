@@ -55,6 +55,13 @@
     direction: rtl;
     font-family: 'Vazirmatn', 'Tahoma', 'Arial', sans-serif;
     font-weight: 500;
+    /* Ensure full height for layout containers */
+    height: 100%;
+  }
+  
+  /* Ensure root element uses full viewport height */
+  #__next, [data-nextjs-root] {
+    height: 100%;
   }
   
   /* RTL Support */

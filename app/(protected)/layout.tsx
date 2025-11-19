@@ -167,7 +167,10 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   // Show loading screen while checking authentication
   if (isLoading) {
     return (
-      <div className="h-screen mx-auto max-w-full sm:max-w-full md:max-w-[30rem] lg:max-w-[30rem] xl:max-w-[30rem] bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex flex-col items-center justify-center" dir="rtl">
+      <div 
+        className="h-dvh mx-auto max-w-full sm:max-w-full md:max-w-[30rem] lg:max-w-[30rem] xl:max-w-[30rem] bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex flex-col items-center justify-center" 
+        dir="rtl"
+      >
         <div className="flex flex-col items-center gap-4">
           <PiSpinner className="h-8 w-8 text-emerald-600 dark:text-emerald-400 animate-spin" />
           <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -181,7 +184,10 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   // Don't render content if not authenticated (redirect is in progress)
   if (!isAuthenticated) {
     return (
-      <div className="h-screen mx-auto max-w-full sm:max-w-full md:max-w-[30rem] lg:max-w-[30rem] xl:max-w-[30rem] bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex flex-col items-center justify-center" dir="rtl">
+      <div 
+        className="h-dvh mx-auto max-w-full sm:max-w-full md:max-w-[30rem] lg:max-w-[30rem] xl:max-w-[30rem] bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex flex-col items-center justify-center" 
+        dir="rtl"
+      >
         <div className="flex flex-col items-center gap-4">
           <PiSpinner className="h-8 w-8 text-emerald-600 dark:text-emerald-400 animate-spin" />
           <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -194,7 +200,10 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
 
   // User is authenticated - render the protected layout
   return (
-    <div className="h-screen mx-auto max-w-full sm:max-w-full md:max-w-[30rem] lg:max-w-[30rem] xl:max-w-[30rem] bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex flex-col overflow-hidden" dir="rtl">
+    <div 
+      className="h-dvh mx-auto max-w-full sm:max-w-full md:max-w-[30rem] lg:max-w-[30rem] xl:max-w-[30rem] bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex flex-col overflow-hidden" 
+      dir="rtl"
+    >
       {/* Top App Bar - Fixed at top */}
       <header className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 z-10">
         <div className="flex h-14 items-center justify-between px-4">
@@ -219,7 +228,8 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
       </header>
 
       {/* Content - Scrollable area between header and bottom nav */}
-      <main className="flex-1 min-h-0 relative">
+      {/* CRITICAL: flex-1 min-h-0 overflow-hidden ensures content doesn't push bottom nav down */}
+      <main className="flex-1 min-h-0 overflow-hidden relative">
         {children}
       </main>
 

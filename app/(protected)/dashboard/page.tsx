@@ -313,8 +313,8 @@ export default function HomeDashboard() {
   }
 
   return (
-    <div className="h-full flex flex-col" dir="rtl">
-        <ScrollableArea className="flex-1" hideScrollbar={true}>
+    <div className="h-full w-full flex flex-col overflow-hidden" dir="rtl">
+        <ScrollableArea className="flex-1 min-h-0" hideScrollbar={true}>
           <div className="space-y-4">
             {/* Wallet */}
             <section>
