@@ -16,6 +16,9 @@ declare module 'next-auth' {
   interface Session {
     accessToken?: string;
     refreshToken?: string;
+    challengeId?: string;
+    maskedPhoneNumber?: string;
+    nationalCode?: string;
     user: {
       id: string;
       name?: string | null;
@@ -28,6 +31,9 @@ declare module 'next-auth' {
     accessToken?: string;
     refreshToken?: string;
     userId?: string;
+    challengeId?: string;
+    maskedPhoneNumber?: string;
+    nationalCode?: string;
   }
 }
 
@@ -101,6 +107,68 @@ async function refreshAccessToken(refreshToken: string): Promise<{
 // NextAuth configuration
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
+    // Provider for sending OTP (does not authenticate, just stores OTP data in session)
+    Credentials({
+      id: 'send-otp',
+      name: 'Send OTP',
+      credentials: {
+        nationalCode: { label: 'National Code', type: 'text' },
+        deviceId: { label: 'Device ID', type: 'text', required: false },
+        userAgent: { label: 'User Agent', type: 'text', required: false },
+        ipAddress: { label: 'IP Address', type: 'text', required: false },
+      },
+      async authorize(credentials, req) {
+        if (!credentials?.nationalCode) {
+          return null;
+        }
+
+        try {
+          // Extract deviceId, userAgent, ipAddress from credentials
+          const bodyParams: Record<string, unknown> = {
+            deviceId: (credentials.deviceId as string | null | undefined) || null,
+            userAgent: (credentials.userAgent as string | null | undefined) || null,
+            ipAddress: (credentials.ipAddress as string | null | undefined) || null,
+          };
+
+          // Create API instance from request
+          const api = createApiInstance(req as NextRequest);
+          const requestInfo = getRequestInfo(req as NextRequest, bodyParams);
+
+          // Extract national code
+          const nationalCode = String(credentials.nationalCode);
+
+          // Call send OTP endpoint directly to upstream
+          const response = await api.api.sendOtp({
+            nationalCode,
+            purpose: 'login',
+            scope: 'app',
+            deviceId: requestInfo.deviceId || null,
+            userAgent: requestInfo.userAgent || null,
+            ipAddress: requestInfo.ipAddress || null,
+          });
+
+          // Extract challengeId and maskedPhoneNumber from upstream response
+          if (response.status === 200 && response.data?.isSuccess && response.data?.data?.challengeId) {
+            const challengeId = response.data.data.challengeId;
+            const maskedPhoneNumber = response.data.data.maskedPhoneNumber || undefined;
+
+            // Return user object with OTP data (not authenticated yet)
+            // The id 'otp-sent' is used to identify this as an OTP-sent session
+            return {
+              id: 'otp-sent',
+              challengeId,
+              maskedPhoneNumber,
+              nationalCode,
+            };
+          }
+
+          return null;
+        } catch (error) {
+          console.error('[NextAuth] Error sending OTP:', error);
+          return null;
+        }
+      },
+    }),
     // Provider for verifying OTP (authenticates user)
     Credentials({
       id: 'otp',
@@ -180,14 +248,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
   callbacks: {
     async jwt({ token, user }) {
-      // Initial sign in - store tokens (for verify-otp provider)
+      // Initial sign in - store tokens or OTP data
       if (user) {
+        // For send-otp provider: store OTP data (not authenticated yet)
+        if (user.id === 'otp-sent') {
+          return {
+            ...token,
+            challengeId: user.challengeId,
+            maskedPhoneNumber: user.maskedPhoneNumber,
+            nationalCode: user.nationalCode,
+            userId: 'otp-sent', // Mark as OTP-sent session
+          };
+        }
+        
+        // For otp provider: store tokens (authenticated)
         return {
           ...token,
           accessToken: user.accessToken,
           refreshToken: user.refreshToken,
           userId: user.userId,
           accessTokenExpires: Date.now() + 15 * 60 * 1000, // 15 minutes
+          // Clear OTP data after successful authentication
+          challengeId: undefined,
+          maskedPhoneNumber: undefined,
+          nationalCode: undefined,
         };
       }
 
@@ -197,6 +281,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         refreshToken?: string;
         accessTokenExpires?: number;
         userId?: string;
+        challengeId?: string;
+        maskedPhoneNumber?: string;
+        nationalCode?: string;
         error?: string;
       };
 
@@ -253,8 +340,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         accessToken?: string;
         refreshToken?: string;
         userId?: string;
+        challengeId?: string;
+        maskedPhoneNumber?: string;
+        nationalCode?: string;
         error?: string;
       };
+
+      // For OTP-sent sessions (not authenticated yet)
+      if (customToken.userId === 'otp-sent') {
+        return {
+          ...session,
+          user: {
+            ...session.user,
+            id: 'otp-sent',
+          },
+          challengeId: customToken.challengeId,
+          maskedPhoneNumber: customToken.maskedPhoneNumber,
+          nationalCode: customToken.nationalCode,
+        };
+      }
 
       // CRITICAL: If there's a refresh error or no access token, return session without tokens
       // This ensures session check completes quickly and NextAuth will mark as unauthenticated
@@ -276,6 +380,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (customToken.userId) {
           session.user.id = customToken.userId;
         }
+        // Clear OTP data for authenticated sessions
+        session.challengeId = undefined;
+        session.maskedPhoneNumber = undefined;
+        session.nationalCode = undefined;
       }
 
       return session;
