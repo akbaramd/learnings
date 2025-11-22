@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { IconButton } from '@/src/components/ui/IconButton';
-import { PiEye, PiEyeSlash, PiGear, PiArrowClockwise, PiMapPinDuotone, PiMoney, PiFileText, PiDiamondDuotone, PiShieldCheck, PiTruck } from 'react-icons/pi';
+import { PiEye, PiEyeSlash, PiGear, PiArrowClockwise } from 'react-icons/pi';
 import { ServicesGrid } from '@/src/components/services/ServiceCard';
 import { TourSection } from '@/src/components/tours/TourSection';
 import { Tour, TourCardSkeleton } from '@/src/components/tours/TourCard';
@@ -12,6 +12,9 @@ import { FacilitySection } from '@/src/components/facilities/FacilitySection';
 import { Facility, FacilityCardSkeleton } from '@/src/components/facilities/FacilityCard';
 import { SurveySection } from '@/src/components/surveys/SurveySection';
 import { Survey, SurveyCardSkeleton } from '@/src/components/surveys/SurveyCard';
+import { TutorialSection } from '@/src/components/tutorials';
+import { Tutorial } from '@/src/components/tutorials/TutorialCard';
+import { PiMoney, PiFileText, PiMapPinDuotone } from 'react-icons/pi';
 import { useGetToursPaginatedQuery } from '@/src/store/tours/tours.queries';
 import { useGetFacilitiesQuery } from '@/src/store/facilities';
 import { useGetActiveSurveysQuery } from '@/src/store/surveys';
@@ -180,9 +183,6 @@ const services = [
   { id: 'tour', title: 'تور', icon: <PiMapPinDuotone className="h-5 w-5" />, accent: 'blue', disabled: false },
   { id: 'facility', title: 'تسهیلات', icon: <PiMoney className="h-5 w-5" />, accent: 'emerald', disabled: false },
   { id: 'survey', title: 'نظرسنجی', icon: <PiFileText className="h-5 w-5" />, accent: 'amber', disabled: false },
-  { id: 'flight', title: 'به زودی ...', icon: <PiDiamondDuotone className="h-5 w-5" />, accent: 'indigo', disabled: true },
-  { id: 'insurance', title: 'به زودی ...', icon: <PiShieldCheck className="h-5 w-5" />, accent: 'rose', disabled: true },
-  { id: 'car', title: 'به زودی ...', icon: <PiTruck className="h-5 w-5" />, accent: 'cyan', disabled: true },
 ];
 
 /* =========================
@@ -291,6 +291,32 @@ function useSurveysList(): { surveys: Survey[]; isLoading: boolean; isError: boo
 }
 
 /* =========================
+   Tutorials Data
+========================= */
+
+// فقط آموزش‌های ویدیویی موجود
+const tutorials: Tutorial[] = [
+  {
+    id: 'facility-tutorial',
+    title: 'آموزش درخواست تسهیلات',
+    description: 'راهنمای کامل نحوه ثبت درخواست تسهیلات و پیگیری وضعیت آن',
+    videoSrc: '/video/facilities.mp4',
+    category: 'facility',
+    icon: <PiMoney className="h-6 w-6" />,
+    accentColor: 'emerald',
+  },
+  {
+    id: 'survey-tutorial',
+    title: 'آموزش شرکت در نظرسنجی',
+    description: 'راهنمای کامل نحوه شرکت در نظرسنجی‌ها و پاسخ به سوالات',
+    videoSrc: '/video/survey.mp4',
+    category: 'survey',
+    icon: <PiFileText className="h-6 w-6" />,
+    accentColor: 'amber',
+  },
+];
+
+/* =========================
    Page (Final)
 ========================= */
 
@@ -322,6 +348,16 @@ export default function HomeDashboard() {
             {/* Services */}
             <section className="px-4">
               <ServicesGrid items={services} onSelect={handleServiceSelect} />
+            </section>
+
+            {/* Tutorials Section */}
+            <section className="px-4">
+              <TutorialSection 
+                title="آموزش‌ها" 
+                dir="rtl" 
+                tutorials={tutorials}
+                isLoading={false}
+              />
             </section>
 
             {/* Tours Section */}

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createApiInstance, handleApiError } from '@/app/api/generatedClient';
 import { GetReservationsPaginatedResponse } from '@/src/store/tours/tours.types';
 import { AxiosError } from 'axios';
-import { ReservationStatus } from '@/src/services/Api';
+import { TourReservationStatus } from '@/src/services/Api';
 
 /**
  * GET /api/tours/reservations
@@ -28,10 +28,10 @@ export async function GET(req: NextRequest) {
       ? Number(pageSizeRaw)
       : 10;
 
-    // Validate status against ReservationStatus enum
-    const validStatuses = Object.values(ReservationStatus) as string[];
-    const status: ReservationStatus | undefined = statusRaw && validStatuses.includes(statusRaw)
-      ? (statusRaw as ReservationStatus)
+    // Validate status against TourReservationStatus enum
+    const validStatuses = Object.values(TourReservationStatus) as string[];
+    const status: TourReservationStatus | undefined = statusRaw && validStatuses.includes(statusRaw)
+      ? (statusRaw as TourReservationStatus)
       : undefined;
 
     const upstream = await api.api.meGetReservationsPaginated({
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
       fromDate,
       toDate,
     }, {});
-    
+
     const statusCode = upstream.status ?? 200;
 
     const response: GetReservationsPaginatedResponse = {

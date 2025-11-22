@@ -10,6 +10,23 @@
  * ---------------------------------------------------------------
  */
 
+export enum TourReservationStatus {
+  Draft = "Draft",
+  Confirmed = "Confirmed",
+  OnHold = "OnHold",
+  Cancelled = "Cancelled",
+  Expired = "Expired",
+  SystemCancelled = "SystemCancelled",
+  ProcessingFailed = "ProcessingFailed",
+  CancellationProcessing = "CancellationProcessing",
+  CancellationProcessed = "CancellationProcessed",
+  Waitlisted = "Waitlisted",
+  CancellationRequested = "CancellationRequested",
+  AmendmentRequested = "AmendmentRequested",
+  NoShow = "NoShow",
+  Rejected = "Rejected",
+}
+
 export enum SettingType {
   String = "String",
   Integer = "Integer",
@@ -37,20 +54,10 @@ export enum ResultStatus {
 }
 
 export enum ReservationStatus {
-  Draft = "Draft",
+  PendingPayment = "PendingPayment",
   Confirmed = "Confirmed",
-  OnHold = "OnHold",
-  Cancelled = "Cancelled",
+  Canceled = "Canceled",
   Expired = "Expired",
-  SystemCancelled = "SystemCancelled",
-  ProcessingFailed = "ProcessingFailed",
-  CancellationProcessing = "CancellationProcessing",
-  CancellationProcessed = "CancellationProcessed",
-  Waitlisted = "Waitlisted",
-  CancellationRequested = "CancellationRequested",
-  AmendmentRequested = "AmendmentRequested",
-  NoShow = "NoShow",
-  Rejected = "Rejected",
 }
 
 export enum PaymentStatus {
@@ -67,6 +74,115 @@ export enum PaymentStatus {
 export enum AutoSaveMode {
   Merge = "Merge",
   Overwrite = "Overwrite",
+}
+
+export enum AccommodationType {
+  Hotel = "Hotel",
+  Suite = "Suite",
+  House = "House",
+}
+
+export interface AccommodationDetailsDto {
+  /** @format uuid */
+  id?: string;
+  name?: string | null;
+  type?: string | null;
+  typeText?: string | null;
+  description?: string | null;
+  isActive?: boolean;
+  address?: AddressDto;
+  features?: FeatureDto[] | null;
+  /** @format int32 */
+  maxGuests?: number | null;
+  isCancellable?: boolean;
+  /** @format int32 */
+  cancellableUntilHoursBeforeCheckIn?: number | null;
+  primaryPhotoUrl?: string | null;
+  /** @format double */
+  lowestPriceRials?: number | null;
+  /** @format double */
+  highestPriceRials?: number | null;
+  /** @format int32 */
+  totalCapacity?: number;
+  /** @format int32 */
+  totalRooms?: number;
+  /** @format int32 */
+  activeRooms?: number;
+  canAccommodateGuests?: boolean;
+  rooms?: RoomDto[] | null;
+  photos?: PhotoDto[] | null;
+  /** @format date-time */
+  createdAt?: string;
+  /** @format date-time */
+  lastModifiedAt?: string | null;
+  /** @format int32 */
+  totalReservations?: number | null;
+  /** @format int32 */
+  activeReservations?: number | null;
+  /** @format int32 */
+  confirmedReservations?: number | null;
+  /** @format int32 */
+  pendingReservations?: number | null;
+  canBookSameDay?: boolean;
+  hasAvailableRooms?: boolean;
+  canAccommodateCurrentGuests?: boolean;
+  recentPrices?: DailyPriceDto[] | null;
+}
+
+export interface AccommodationDetailsDtoApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: AccommodationDetailsDto;
+}
+
+export interface AccommodationDto {
+  /** @format uuid */
+  id?: string;
+  name?: string | null;
+  type?: string | null;
+  typeText?: string | null;
+  description?: string | null;
+  isActive?: boolean;
+  address?: AddressDto;
+  features?: FeatureSummaryDto[] | null;
+  /** @format int32 */
+  maxGuests?: number | null;
+  isCancellable?: boolean;
+  /** @format int32 */
+  cancellableUntilHoursBeforeCheckIn?: number | null;
+  primaryPhotoUrl?: string | null;
+  /** @format double */
+  lowestPriceRials?: number | null;
+  /** @format double */
+  highestPriceRials?: number | null;
+  /** @format int32 */
+  totalCapacity?: number;
+  /** @format int32 */
+  totalRooms?: number;
+  /** @format int32 */
+  activeRooms?: number;
+  canAccommodateGuests?: boolean;
+  rooms?: RoomSummaryDto[] | null;
+  photos?: PhotoSummaryDto[] | null;
+  /** @format date-time */
+  createdAt?: string;
+  /** @format date-time */
+  lastModifiedAt?: string | null;
+}
+
+export interface AccommodationSummaryDto {
+  /** @format uuid */
+  id?: string;
+  name?: string | null;
+  type?: string | null;
+  typeText?: string | null;
+  isActive?: boolean;
+  cityName?: string | null;
+  provinceName?: string | null;
+  keyFeatures?: FeatureSummaryDto[] | null;
+  primaryPhotoUrl?: string | null;
 }
 
 export interface ActiveSurveysResponse {
@@ -95,6 +211,28 @@ export interface AddClaimsRequest {
   claimValues?: string[] | null;
 }
 
+export interface AddGuestBody {
+  fullName?: string | null;
+  nationalNumber?: string | null;
+}
+
+export interface AddGuestResponse {
+  /** @format uuid */
+  guestId?: string;
+  /** @format uuid */
+  reservationId?: string;
+  /** @format int32 */
+  currentGuestCount?: number;
+}
+
+export interface AddGuestResponseApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: AddGuestResponse;
+}
+
 export interface AddGuestToReservationResponse {
   /** @format uuid */
   participantId?: string;
@@ -110,6 +248,19 @@ export interface AddGuestToReservationResponseApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: AddGuestToReservationResponse;
+}
+
+export interface AddressDto {
+  street?: string | null;
+  postalCode?: string | null;
+  /** @format uuid */
+  cityId?: string;
+  /** @format uuid */
+  provinceId?: string;
+  coordinates?: GeoLocationDto;
+  cityName?: string | null;
+  provinceName?: string | null;
+  fullAddress?: string | null;
 }
 
 export interface AgencyDetailDto {
@@ -479,6 +630,24 @@ export interface BillItemDto {
   lineTotalRials?: number;
   /** @format date-time */
   createdAt?: string;
+}
+
+export interface BookedDateRangeDto {
+  /** @format uuid */
+  reservationId?: string;
+  trackingCode?: string | null;
+  /** @format date-time */
+  checkInDate?: string;
+  /** @format date-time */
+  checkOutDate?: string;
+  /** @format int32 */
+  nights?: number;
+  status?: string | null;
+  statusText?: string | null;
+  /** @format int32 */
+  guestCount?: number;
+  /** @format uuid */
+  externalUserId?: string;
 }
 
 export interface BulkUpdateSettingsCommand {
@@ -1030,6 +1199,23 @@ export interface CycleStatisticsDto {
   cycleProgressPercentage?: number;
 }
 
+export interface DailyPriceDto {
+  /** @format uuid */
+  id?: string;
+  /** @format uuid */
+  roomPricingId?: string;
+  /** @format uuid */
+  accommodationId?: string;
+  /** @format uuid */
+  roomId?: string | null;
+  /** @format date-time */
+  date?: string;
+  /** @format double */
+  priceRials?: number;
+  currency?: string | null;
+  isActive?: boolean;
+}
+
 export interface DiscountCodeSnapshotDto {
   /** @format uuid */
   discountCodeId?: string;
@@ -1384,10 +1570,29 @@ export interface FeatureDetailDto {
   description?: string | null;
 }
 
+export interface FeatureDto {
+  /** @format uuid */
+  id?: string;
+  name?: string | null;
+  description?: string | null;
+  iconClass?: string | null;
+  category?: string | null;
+  categoryText?: string | null;
+  /** @format int32 */
+  displayOrder?: number;
+  isActive?: boolean;
+  /** @format date-time */
+  createdAt?: string;
+  /** @format date-time */
+  lastModifiedAt?: string | null;
+}
+
 export interface FeatureSummaryDto {
   /** @format uuid */
-  featureId?: string;
+  id?: string;
   name?: string | null;
+  category?: string | null;
+  iconClass?: string | null;
 }
 
 export interface FinalizeReservationResponse {
@@ -1399,12 +1604,8 @@ export interface FinalizeReservationResponse {
   billId?: string | null;
   /** @format double */
   totalAmountRials?: number;
-  isFree?: boolean;
   /** @format date-time */
   expiryDate?: string | null;
-  /** @format int32 */
-  participantCount?: number;
-  tourTitle?: string | null;
 }
 
 export interface FinalizeReservationResponseApplicationResult {
@@ -1425,6 +1626,31 @@ export interface FinancialTermsDto {
   /** @format double */
   interestRatePercentage?: number | null;
   hasFinancialTerms?: boolean;
+}
+
+export interface GeoLocationDto {
+  /** @format double */
+  latitude?: number;
+  /** @format double */
+  longitude?: number;
+}
+
+export interface GetAccommodationsPaginatedResult {
+  items?: AccommodationDto[] | null;
+  /** @format int32 */
+  totalCount?: number;
+  /** @format int32 */
+  pageNumber?: number;
+  /** @format int32 */
+  pageSize?: number;
+}
+
+export interface GetAccommodationsPaginatedResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: GetAccommodationsPaginatedResult;
 }
 
 export interface GetFacilitiesResult {
@@ -1496,6 +1722,41 @@ export interface GetPreviousQuestionsResponseApplicationResult {
   data?: GetPreviousQuestionsResponse;
 }
 
+export interface GetReservationsPaginatedResult {
+  items?: ReservationDto[] | null;
+  /** @format int32 */
+  totalCount?: number;
+  /** @format int32 */
+  pageNumber?: number;
+  /** @format int32 */
+  pageSize?: number;
+}
+
+export interface GetReservationsPaginatedResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: GetReservationsPaginatedResult;
+}
+
+export interface GetRoomReservationsInDateRangeDto {
+  room?: RoomSummaryDto;
+  reservations?: ReservationSummaryDto[] | null;
+  bookedDateRanges?: BookedDateRangeDto[] | null;
+  bookedDates?: string[] | null;
+  /** @format int32 */
+  totalCount?: number;
+}
+
+export interface GetRoomReservationsInDateRangeDtoApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: GetRoomReservationsInDateRangeDto;
+}
+
 export interface GetSettingByKeyResponse {
   setting?: SettingDetailDto;
   found?: boolean;
@@ -1536,6 +1797,23 @@ export interface GetSpecificQuestionResponseApplicationResult {
   data?: GetSpecificQuestionResponse;
 }
 
+export interface GetUserReservationsResult {
+  reservations?: ReservationDto[] | null;
+  /** @format int32 */
+  totalCount?: number;
+  accommodation?: AccommodationSummaryDto;
+  room?: RoomSummaryDto;
+  summary?: UserReservationSummary;
+}
+
+export interface GetUserReservationsResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: GetUserReservationsResult;
+}
+
 export interface GoNextQuestionResponse {
   /** @format uuid */
   currentQuestionId?: string | null;
@@ -1574,6 +1852,17 @@ export interface GoPreviousQuestionResponseApplicationResult {
   data?: GoPreviousQuestionResponse;
 }
 
+export interface GuestDto {
+  /** @format uuid */
+  id?: string;
+  /** @format uuid */
+  reservationId?: string;
+  fullName?: string | null;
+  phoneNumber?: string | null;
+  /** @format date-time */
+  createdAt?: string;
+}
+
 export interface GuestParticipantDto {
   firstName?: string | null;
   lastName?: string | null;
@@ -1585,6 +1874,15 @@ export interface GuestParticipantDto {
   emergencyContactName?: string | null;
   emergencyContactPhone?: string | null;
   notes?: string | null;
+}
+
+export interface GuestSummaryDto {
+  /** @format uuid */
+  id?: string;
+  /** @format uuid */
+  reservationId?: string;
+  fullName?: string | null;
+  phoneNumber?: string | null;
 }
 
 export interface GuidApplicationResult {
@@ -2079,12 +2377,25 @@ export interface PhotoDetailDto {
   displayOrder?: number;
 }
 
+export interface PhotoDto {
+  /** @format uuid */
+  id?: string;
+  /** @format uuid */
+  accommodationId?: string;
+  photoUrl?: string | null;
+  caption?: string | null;
+  isPrimary?: boolean;
+  /** @format int32 */
+  displayOrder?: number;
+  /** @format date-time */
+  createdAt?: string;
+}
+
 export interface PhotoSummaryDto {
   /** @format uuid */
   id?: string;
-  url?: string | null;
-  /** @format int32 */
-  displayOrder?: number;
+  photoUrl?: string | null;
+  isPrimary?: boolean;
 }
 
 export interface PreferenceValueDto {
@@ -2116,9 +2427,18 @@ export interface PreviousQuestionsNavigationDto {
 }
 
 export interface PriceSnapshotDto {
-  participantType?: string | null;
+  /** @format date-time */
+  checkInDate?: string;
+  /** @format date-time */
+  checkOutDate?: string;
+  /** @format int32 */
+  nights?: number;
   /** @format double */
-  finalPriceRials?: number;
+  totalPriceRials?: number;
+  currency?: string | null;
+  /** @format date-time */
+  snapshotTakenAt?: string;
+  dailyRates?: Record<string, number>;
 }
 
 export interface PricingDetailDto {
@@ -2653,6 +2973,13 @@ export interface RequiredFeatureDto {
   name?: string | null;
 }
 
+export interface ReservationDailyPriceDto {
+  /** @format date-time */
+  date?: string;
+  /** @format double */
+  amountRials?: number;
+}
+
 export interface ReservationDetailDto {
   /** @format uuid */
   id?: string;
@@ -2708,7 +3035,7 @@ export interface ReservationDetailDto {
   capacity?: CapacitySummaryDto;
   tour?: TourBriefDto;
   participants?: ParticipantDto[] | null;
-  priceSnapshots?: PriceSnapshotDto[] | null;
+  priceSnapshots?: TourPriceSnapshotDto[] | null;
   notes?: string | null;
   tenantId?: string | null;
   /** @format date-time */
@@ -2727,82 +3054,113 @@ export interface ReservationDetailDtoApplicationResult {
   data?: ReservationDetailDto;
 }
 
-export interface ReservationDto {
+export interface ReservationDetailsDto {
   /** @format uuid */
   id?: string;
   /** @format uuid */
-  tourId?: string;
+  roomId?: string;
+  /** @format uuid */
+  accommodationId?: string;
   trackingCode?: string | null;
   status?: string | null;
+  statusText?: string | null;
+  /** @format date-time */
+  checkInDate?: string;
+  /** @format date-time */
+  checkOutDate?: string;
+  /** @format int32 */
+  nights?: number;
+  /** @format int32 */
+  guestCount?: number;
+  /** @format uuid */
+  externalUserId?: string;
+  /** @format double */
+  totalPriceRials?: number;
+  currency?: string | null;
   /** @format date-time */
   reservationDate?: string;
   /** @format date-time */
-  expiryDate?: string | null;
+  holdExpiresAt?: string | null;
   /** @format date-time */
   confirmationDate?: string | null;
-  /** @format double */
-  totalAmountRials?: number | null;
-  /** @format double */
-  paidAmountRials?: number | null;
-  /** @format double */
-  remainingAmountRials?: number | null;
-  isFullyPaid?: boolean;
-  isFree?: boolean;
-  /** @format int32 */
-  participantCount?: number;
-  /** @format int32 */
-  mainParticipantCount?: number;
-  /** @format int32 */
-  guestParticipantCount?: number;
-  isExpired?: boolean;
-  isConfirmed?: boolean;
-  isPending?: boolean;
-  isDraft?: boolean;
-  isPaying?: boolean;
-  isCancelled?: boolean;
-  isTerminal?: boolean;
-  /** @format uuid */
-  capacityId?: string | null;
+  /** @format date-time */
+  cancellationDate?: string | null;
+  cancellationReason?: string | null;
   /** @format uuid */
   billId?: string | null;
-  tourTitle?: string | null;
-  /** @format date-time */
-  tourStart?: string | null;
-  /** @format date-time */
-  tourEnd?: string | null;
-  tourStatus?: string | null;
-  tourIsActive?: boolean | null;
+  notes?: string | null;
+  tenantId?: string | null;
+  isExpired?: boolean;
+  isActive?: boolean;
+  canBeCancelled?: boolean;
+  canAddGuest?: boolean;
+  canAddGuestError?: string | null;
+  accommodation?: AccommodationDto;
+  room?: RoomDto;
+  guests?: GuestDto[] | null;
+  priceSnapshot?: PriceSnapshotDto;
 }
 
-export interface ReservationDtoPaginatedResult {
-  items?: ReservationDto[] | null;
-  /** @format int32 */
-  totalCount?: number;
-  /** @format int32 */
-  pageNumber?: number;
-  /** @format int32 */
-  pageSize?: number;
-}
-
-export interface ReservationDtoPaginatedResultApplicationResult {
+export interface ReservationDetailsDtoApplicationResult {
   isSuccess?: boolean;
   status?: ResultStatus;
   message?: string | null;
   errors?: string[] | null;
-  data?: ReservationDtoPaginatedResult;
+  data?: ReservationDetailsDto;
+}
+
+export interface ReservationDto {
+  /** @format uuid */
+  id?: string;
+  /** @format uuid */
+  roomId?: string;
+  /** @format uuid */
+  accommodationId?: string;
+  trackingCode?: string | null;
+  status?: string | null;
+  statusText?: string | null;
+  /** @format date-time */
+  checkInDate?: string;
+  /** @format date-time */
+  checkOutDate?: string;
+  /** @format int32 */
+  nights?: number;
+  /** @format int32 */
+  guestCount?: number;
+  /** @format uuid */
+  externalUserId?: string;
+  /** @format double */
+  totalPriceRials?: number;
+  currency?: string | null;
+  /** @format date-time */
+  reservationDate?: string;
+  /** @format date-time */
+  holdExpiresAt?: string | null;
+  /** @format date-time */
+  confirmationDate?: string | null;
+  /** @format date-time */
+  cancellationDate?: string | null;
+  cancellationReason?: string | null;
+  /** @format uuid */
+  billId?: string | null;
+  notes?: string | null;
+  tenantId?: string | null;
+  isExpired?: boolean;
+  isActive?: boolean;
+  canBeCancelled?: boolean;
+  canAddGuest?: boolean;
+  canAddGuestError?: string | null;
+  accommodation?: AccommodationSummaryDto;
+  room?: RoomSummaryDto;
+  guests?: GuestSummaryDto[] | null;
 }
 
 export interface ReservationPricingResponse {
   /** @format uuid */
   reservationId?: string;
   /** @format double */
-  totalRequiredAmount?: number;
-  /** @format double */
-  totalPaidAmount?: number;
-  /** @format double */
-  totalRemainingAmount?: number;
-  isFullyPaid?: boolean;
-  participants?: ParticipantPricingDto[] | null;
+  totalAmountRials?: number;
+  dailyPrices?: ReservationDailyPriceDto[] | null;
 }
 
 export interface ReservationPricingResponseApplicationResult {
@@ -2816,12 +3174,17 @@ export interface ReservationPricingResponseApplicationResult {
 export interface ReservationSummaryDto {
   /** @format uuid */
   id?: string;
-  /** @format uuid */
-  tourId?: string;
   trackingCode?: string | null;
   status?: string | null;
+  statusText?: string | null;
   /** @format date-time */
-  reservationDate?: string;
+  checkInDate?: string;
+  /** @format date-time */
+  checkOutDate?: string;
+  /** @format int32 */
+  nights?: number;
+  /** @format double */
+  totalPriceRials?: number;
 }
 
 export interface ResponseDetailsDto {
@@ -3009,6 +3372,37 @@ export interface RestrictedTourSummaryDto {
   title?: string | null;
 }
 
+export interface RoomDto {
+  /** @format uuid */
+  id?: string;
+  /** @format uuid */
+  accommodationId?: string;
+  accommodationName?: string | null;
+  roomType?: string | null;
+  roomTypeText?: string | null;
+  /** @format int32 */
+  bedCount?: number;
+  /** @format int32 */
+  capacity?: number;
+  number?: string | null;
+  /** @format int32 */
+  floor?: number | null;
+  description?: string | null;
+  isActive?: boolean;
+  canAccommodateGuests?: boolean;
+}
+
+export interface RoomSummaryDto {
+  /** @format uuid */
+  id?: string;
+  number?: string | null;
+  roomType?: string | null;
+  roomTypeText?: string | null;
+  /** @format int32 */
+  capacity?: number;
+  isActive?: boolean;
+}
+
 export interface SectionDetailDto {
   /** @format uuid */
   id?: string;
@@ -3191,6 +3585,18 @@ export interface SimpleSettingDto {
   displayOrder?: number;
 }
 
+export interface StartReservationBody {
+  /** @format uuid */
+  roomId?: string;
+  /** @format date-time */
+  checkInDate?: string;
+  /** @format date-time */
+  checkOutDate?: string;
+  /** @format int32 */
+  guestCount?: number;
+  notes?: string | null;
+}
+
 export interface StartReservationCommandResult {
   /** @format uuid */
   reservationId?: string;
@@ -3202,6 +3608,26 @@ export interface StartReservationCommandResultApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: StartReservationCommandResult;
+}
+
+export interface StartReservationDto {
+  /** @format uuid */
+  reservationId?: string;
+  trackingCode?: string | null;
+  isExistingReservation?: boolean;
+  /** @format double */
+  totalPriceRials?: number;
+  currency?: string | null;
+  /** @format date-time */
+  holdExpiresAt?: string | null;
+}
+
+export interface StartReservationDtoApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: StartReservationDto;
 }
 
 export interface StartReservationRequest {
@@ -3716,7 +4142,7 @@ export interface TourDetailWithUserReservationDto {
   userReservationDate?: string | null;
   /** @format date-time */
   userReservationExpiryDate?: string | null;
-  reservation?: ReservationDto;
+  reservation?: TourReservationDto;
 }
 
 export interface TourDetailWithUserReservationDtoApplicationResult {
@@ -3725,6 +4151,148 @@ export interface TourDetailWithUserReservationDtoApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: TourDetailWithUserReservationDto;
+}
+
+export interface TourFeatureDto {
+  /** @format uuid */
+  featureId?: string;
+  name?: string | null;
+}
+
+export interface TourFinalizeReservationResponse {
+  /** @format uuid */
+  reservationId?: string;
+  trackingCode?: string | null;
+  status?: string | null;
+  /** @format uuid */
+  billId?: string | null;
+  /** @format double */
+  totalAmountRials?: number;
+  isFree?: boolean;
+  /** @format date-time */
+  expiryDate?: string | null;
+  /** @format int32 */
+  participantCount?: number;
+  tourTitle?: string | null;
+}
+
+export interface TourFinalizeReservationResponseApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: TourFinalizeReservationResponse;
+}
+
+export interface TourPhotoSummaryDto {
+  /** @format uuid */
+  id?: string;
+  url?: string | null;
+  /** @format int32 */
+  displayOrder?: number;
+}
+
+export interface TourPriceSnapshotDto {
+  participantType?: string | null;
+  /** @format double */
+  finalPriceRials?: number;
+}
+
+export interface TourReservationDto {
+  /** @format uuid */
+  id?: string;
+  /** @format uuid */
+  tourId?: string;
+  trackingCode?: string | null;
+  status?: string | null;
+  /** @format date-time */
+  reservationDate?: string;
+  /** @format date-time */
+  expiryDate?: string | null;
+  /** @format date-time */
+  confirmationDate?: string | null;
+  /** @format double */
+  totalAmountRials?: number | null;
+  /** @format double */
+  paidAmountRials?: number | null;
+  /** @format double */
+  remainingAmountRials?: number | null;
+  isFullyPaid?: boolean;
+  isFree?: boolean;
+  /** @format int32 */
+  participantCount?: number;
+  /** @format int32 */
+  mainParticipantCount?: number;
+  /** @format int32 */
+  guestParticipantCount?: number;
+  isExpired?: boolean;
+  isConfirmed?: boolean;
+  isPending?: boolean;
+  isDraft?: boolean;
+  isPaying?: boolean;
+  isCancelled?: boolean;
+  isTerminal?: boolean;
+  /** @format uuid */
+  capacityId?: string | null;
+  /** @format uuid */
+  billId?: string | null;
+  tourTitle?: string | null;
+  /** @format date-time */
+  tourStart?: string | null;
+  /** @format date-time */
+  tourEnd?: string | null;
+  tourStatus?: string | null;
+  tourIsActive?: boolean | null;
+}
+
+export interface TourReservationDtoPaginatedResult {
+  items?: TourReservationDto[] | null;
+  /** @format int32 */
+  totalCount?: number;
+  /** @format int32 */
+  pageNumber?: number;
+  /** @format int32 */
+  pageSize?: number;
+}
+
+export interface TourReservationDtoPaginatedResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: TourReservationDtoPaginatedResult;
+}
+
+export interface TourReservationPricingResponse {
+  /** @format uuid */
+  reservationId?: string;
+  /** @format double */
+  totalRequiredAmount?: number;
+  /** @format double */
+  totalPaidAmount?: number;
+  /** @format double */
+  totalRemainingAmount?: number;
+  isFullyPaid?: boolean;
+  participants?: ParticipantPricingDto[] | null;
+}
+
+export interface TourReservationPricingResponseApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: TourReservationPricingResponse;
+}
+
+export interface TourReservationSummaryDto {
+  /** @format uuid */
+  id?: string;
+  /** @format uuid */
+  tourId?: string;
+  trackingCode?: string | null;
+  status?: string | null;
+  /** @format date-time */
+  reservationDate?: string;
 }
 
 export interface TourWithUserReservationDto {
@@ -3754,15 +4322,15 @@ export interface TourWithUserReservationDto {
   isFullyBooked?: boolean;
   isNearlyFull?: boolean;
   agencies?: AgencySummaryDto[] | null;
-  features?: FeatureSummaryDto[] | null;
-  photos?: PhotoSummaryDto[] | null;
+  features?: TourFeatureDto[] | null;
+  photos?: TourPhotoSummaryDto[] | null;
   /** @format double */
   lowestPriceRials?: number | null;
   /** @format double */
   highestPriceRials?: number | null;
   hasDiscount?: boolean;
   pricing?: PricingDetailDto[] | null;
-  reservation?: ReservationSummaryDto;
+  reservation?: TourReservationSummaryDto;
 }
 
 export interface TourWithUserReservationDtoPaginatedResult {
@@ -4074,6 +4642,25 @@ export interface UserRequestHistoryDto {
   isCompleted?: boolean;
   isRejected?: boolean;
   isCancelled?: boolean;
+}
+
+export interface UserReservationSummary {
+  /** @format int32 */
+  totalReservations?: number;
+  /** @format int32 */
+  activeReservations?: number;
+  /** @format int32 */
+  confirmedReservations?: number;
+  /** @format int32 */
+  pendingPaymentReservations?: number;
+  /** @format int32 */
+  canceledReservations?: number;
+  /** @format int32 */
+  expiredReservations?: number;
+  /** @format int32 */
+  futureReservations?: number;
+  /** @format int32 */
+  pastReservations?: number;
 }
 
 export interface UserResponseStatusDto {
@@ -4599,7 +5186,7 @@ export class Api<
 > extends HttpClient<SecurityDataType> {
   api = {
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 🌐 Sends an OTP (One-Time Password) code to the user's phone number for authentication purposes
+     * @description 🌐 Sends an OTP (One-Time Password) code to the user's phone number for authentication purposes
      *
      * @tags Authentication
      * @name SendOtp
@@ -4627,7 +5214,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 Verifies an OTP code and returns authentication tokens if successful
+     * @description 🌐 Verifies an OTP code and returns authentication tokens if successful
      *
      * @tags Authentication
      * @name VerifyOtp
@@ -4655,7 +5242,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 RefreshToken an OTP code and returns authentication tokens if successful
+     * @description 🌐 RefreshToken an OTP code and returns authentication tokens if successful
      *
      * @tags Authentication
      * @name RefreshToken
@@ -4683,7 +5270,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Retrieves the profile information of the currently authenticated user
+     * @description 🔒 Retrieves the profile information of the currently authenticated user
      *
      * @tags Authentication
      * @name GetCurrentUser
@@ -4712,7 +5299,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Logs out the user and revokes both access and refresh tokens
+     * @description 🔒 Logs out the user and revokes both access and refresh tokens
      *
      * @tags Authentication
      * @name Logout
@@ -4742,7 +5329,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Logs out the user by revoking the session associated with the provided refresh token. Gets session from refresh token and revokes it.
+     * @description 🔒 Logs out the user by revoking the session associated with the provided refresh token. Gets session from refresh token and revokes it.
      *
      * @tags Authentication
      * @name LogoutByRefreshToken
@@ -4776,7 +5363,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Logs out the user from a specific session by revoking the session with the provided session ID. This allows users to logout from specific devices/sessions.
+     * @description 🔒 Logs out the user from a specific session by revoking the session with the provided session ID. This allows users to logout from specific devices/sessions.
      *
      * @tags Authentication
      * @name LogoutBySessionId
@@ -4810,7 +5397,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Logs out the user from all active sessions across all devices. This revokes all refresh tokens and sessions for the user.
+     * @description 🔒 Logs out the user from all active sessions across all devices. This revokes all refresh tokens and sessions for the user.
      *
      * @tags Authentication
      * @name LogoutAllSessions
@@ -4840,7 +5427,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Logs out the user from all other active sessions except the current one. CurrentSessionId is automatically extracted from claims. This allows users to keep their current session active while logging out from other devices.
+     * @description 🔒 Logs out the user from all other active sessions except the current one. CurrentSessionId is automatically extracted from claims. This allows users to keep their current session active while logging out from other devices.
      *
      * @tags Authentication
      * @name LogoutAllOtherSessions
@@ -4870,7 +5457,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Returns a paginated list of user sessions with full details including DeviceId (primary field), UserAgent, IpAddress, and security information. If userId is not provided, returns sessions for the current authenticated user.
+     * @description 🔒 Returns a paginated list of user sessions with full details including DeviceId (primary field), UserAgent, IpAddress, and security information. If userId is not provided, returns sessions for the current authenticated user.
      *
      * @tags Authentication
      * @name GetSessionsPaginated
@@ -4918,7 +5505,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 Validates a national code format and checks if a member exists with this national code
+     * @description 🌐 Validates a national code format and checks if a member exists with this national code
      *
      * @tags Authentication
      * @name ValidateNationalCode
@@ -4949,7 +5536,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Returns a paginated list of BillDto for the current user with filtering and sorting.
+     * @description 🔒 Returns a paginated list of BillDto for the current user with filtering and sorting.
      *
      * @tags Bills
      * @name GetMyBills
@@ -5001,7 +5588,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Admin/operator variant. Requires explicit externalUserId.
+     * @description 🔒 Admin/operator variant. Requires explicit externalUserId.
      *
      * @tags Discount Codes
      * @name ValidateDiscountCodeForUser
@@ -5035,7 +5622,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Returns BillDetailDto including items, payments, and refunds. User can only access their own bills.
+     * @description 🔒 Returns BillDetailDto including items, payments, and refunds. User can only access their own bills.
      *
      * @tags Bills
      * @name GetBillDetailsById
@@ -5068,7 +5655,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Returns a paginated list of payments (PaymentDto) associated with a given bill ID. Supports search, sorting, and pagination.
+     * @description 🔒 Returns a paginated list of payments (PaymentDto) associated with a given bill ID. Supports search, sorting, and pagination.
      *
      * @tags Payments
      * @name GetBillPayments
@@ -5111,7 +5698,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Returns BillDetailDto including items, payments, and refunds.
+     * @description 🔒 Returns BillDetailDto including items, payments, and refunds.
      *
      * @tags Bills
      * @name GetBillDetailsByNumber
@@ -5144,7 +5731,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Resolves a bill by tracking code (reference) and bill type; returns BillDetailDto.
+     * @description 🔒 Resolves a bill by tracking code (reference) and bill type; returns BillDetailDto.
      *
      * @tags Bills
      * @name GetBillDetailsByTrackingCode
@@ -5177,7 +5764,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Transitions a draft bill to the issued state.
+     * @description 🔒 Transitions a draft bill to the issued state.
      *
      * @tags Bills
      * @name IssueBill
@@ -5206,7 +5793,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Cancels an active bill; returns operation result.
+     * @description 🔒 Cancels an active bill; returns operation result.
      *
      * @tags Bills
      * @name CancelBill
@@ -5240,7 +5827,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Returns a list of all distinct claims from registered claim providers.
+     * @description 🔒 Returns a list of all distinct claims from registered claim providers.
      *
      * @tags Claims
      * @name GetClaims
@@ -5678,6 +6265,386 @@ export class Api<
       }),
 
     /**
+     * @description 🌐 This endpoint is publicly accessible.
+     *
+     * @tags Hotel Accommodations
+     * @name HotelsGetAccommodationDetails
+     * @request GET:/api/v1/hotels/accommodations/{accommodationId}
+     */
+    hotelsGetAccommodationDetails: (
+      accommodationId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        AccommodationDetailsDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/accommodations/${accommodationId}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🌐 This endpoint is publicly accessible.
+     *
+     * @tags Hotel Accommodations
+     * @name HotelsGetAccommodationsPaginated
+     * @request GET:/api/v1/hotels/accommodations
+     */
+    hotelsGetAccommodationsPaginated: (
+      query?: {
+        /**
+         * @format int32
+         * @default 1
+         */
+        page?: number;
+        /**
+         * @format int32
+         * @default 10
+         */
+        pageSize?: number;
+        searchTerm?: string;
+        type?: AccommodationType;
+        isActive?: boolean;
+        /** @format uuid */
+        provinceId?: string;
+        /** @format uuid */
+        cityId?: string;
+        featureIds?: string[];
+        /** @format int64 */
+        minPriceRials?: number;
+        /** @format int64 */
+        maxPriceRials?: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        GetAccommodationsPaginatedResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/accommodations`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name HotelsStartReservation
+     * @request POST:/api/v1/hotels/reservations
+     * @secure
+     */
+    hotelsStartReservation: (
+      data: StartReservationBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        StartReservationDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name HotelsGetReservationsPaginated
+     * @request GET:/api/v1/hotels/reservations
+     * @secure
+     */
+    hotelsGetReservationsPaginated: (
+      query?: {
+        /**
+         * @format int32
+         * @default 1
+         */
+        page?: number;
+        /**
+         * @format int32
+         * @default 10
+         */
+        pageSize?: number;
+        searchTerm?: string;
+        status?: ReservationStatus;
+        /** @format uuid */
+        accommodationId?: string;
+        /** @format uuid */
+        roomId?: string;
+        /** @format uuid */
+        externalUserId?: string;
+        /** @format date-time */
+        checkInDateFrom?: string;
+        /** @format date-time */
+        checkInDateTo?: string;
+        /** @format date-time */
+        checkOutDateFrom?: string;
+        /** @format date-time */
+        checkOutDateTo?: string;
+        /** @format date-time */
+        reservationDateFrom?: string;
+        /** @format date-time */
+        reservationDateTo?: string;
+        /** @format int64 */
+        minPriceRials?: number;
+        /** @format int64 */
+        maxPriceRials?: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        GetReservationsPaginatedResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name HotelsFinalizeReservation
+     * @request POST:/api/v1/hotels/reservations/{reservationId}/finalize
+     * @secure
+     */
+    hotelsFinalizeReservation: (
+      reservationId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        FinalizeReservationResponseApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/${reservationId}/finalize`,
+        method: "POST",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name HotelsAddGuestToReservation
+     * @request POST:/api/v1/hotels/reservations/{reservationId}/guests
+     * @secure
+     */
+    hotelsAddGuestToReservation: (
+      reservationId: string,
+      data: AddGuestBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        AddGuestResponseApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/${reservationId}/guests`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name HotelsGetReservationDetails
+     * @request GET:/api/v1/hotels/reservations/{reservationId}
+     * @secure
+     */
+    hotelsGetReservationDetails: (
+      reservationId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ReservationDetailsDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/${reservationId}`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name HotelsGetReservationPricing
+     * @request GET:/api/v1/hotels/reservations/{reservationId}/pricing
+     * @secure
+     */
+    hotelsGetReservationPricing: (
+      reservationId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ReservationPricingResponseApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/${reservationId}/pricing`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name HotelsGetUserReservations
+     * @request GET:/api/v1/hotels/reservations/user/me
+     * @secure
+     */
+    hotelsGetUserReservations: (
+      query?: {
+        /** @format uuid */
+        accommodationId?: string;
+        /** @format uuid */
+        roomId?: string;
+        status?: ReservationStatus;
+        onlyActive?: boolean;
+        onlyFuture?: boolean;
+        onlyPast?: boolean;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        GetUserReservationsResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/user/me`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name HotelsGetRoomReservationsInDateRange
+     * @request GET:/api/v1/hotels/reservations/rooms/{roomId}/calendar
+     * @secure
+     */
+    hotelsGetRoomReservationsInDateRange: (
+      roomId: string,
+      query: {
+        /** @format date-time */
+        startDate: string;
+        /** @format date-time */
+        endDate: string;
+        /** @default true */
+        onlyActive?: boolean;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        GetRoomReservationsInDateRangeDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/rooms/${roomId}/calendar`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
      * @description 🔒 This endpoint requires authentication.
      *
      * @tags Me · Tours
@@ -5743,7 +6710,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Returns membership information for the currently authenticated user
+     * @description 🔒 Returns membership information for the currently authenticated user
      *
      * @tags Membership
      * @name GetCurrentMember
@@ -5772,7 +6739,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Synchronizes the current member from external source and returns MemberDto
+     * @description 🔒 Synchronizes the current member from external source and returns MemberDto
      *
      * @tags Membership
      * @name SyncCurrentMember
@@ -5801,7 +6768,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Returns a paginated list of notifications for a specific user with optional filtering.
+     * @description 🔒 Returns a paginated list of notifications for a specific user with optional filtering.
      *
      * @tags Notifications
      * @name GetUserNotificationsPaginated
@@ -5843,7 +6810,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Returns all notifications for a specific user with optional filtering.
+     * @description 🔒 Returns all notifications for a specific user with optional filtering.
      *
      * @tags Notifications
      * @name GetAllUserNotifications
@@ -5881,7 +6848,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Gets the count of unread notifications for a specific user.
+     * @description 🔒 Gets the count of unread notifications for a specific user.
      *
      * @tags Notifications
      * @name GetUnreadCount
@@ -5910,7 +6877,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Gets the count of unread notifications grouped by context for a specific user.
+     * @description 🔒 Gets the count of unread notifications grouped by context for a specific user.
      *
      * @tags Notifications
      * @name GetUnreadCountByContext
@@ -5939,7 +6906,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Gets the count of unread notifications grouped by action for a specific user.
+     * @description 🔒 Gets the count of unread notifications grouped by action for a specific user.
      *
      * @tags Notifications
      * @name GetUnreadCountByAction
@@ -5968,7 +6935,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Marks a specific notification as read for a user.
+     * @description 🔒 Marks a specific notification as read for a user.
      *
      * @tags Notifications
      * @name MarkAsRead
@@ -6000,7 +6967,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Marks all notifications as read for a specific user.
+     * @description 🔒 Marks all notifications as read for a specific user.
      *
      * @tags Notifications
      * @name MarkAllAsRead
@@ -6028,7 +6995,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Marks all notifications of a specific context as read for a user.
+     * @description 🔒 Marks all notifications of a specific context as read for a user.
      *
      * @tags Notifications
      * @name MarkByContextAsRead
@@ -6060,7 +7027,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Marks all notifications of a specific action as read for a user.
+     * @description 🔒 Marks all notifications of a specific action as read for a user.
      *
      * @tags Notifications
      * @name MarkByActionAsRead
@@ -6346,7 +7313,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetActiveOffices
@@ -6373,7 +7340,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name CreateOffice
@@ -6402,7 +7369,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetAllOffices
@@ -6429,7 +7396,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetOfficeById
@@ -6456,7 +7423,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name UpdateOffice
@@ -6489,7 +7456,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name DeleteOffice
@@ -6516,7 +7483,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetOfficeByCode
@@ -6543,7 +7510,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetOfficeByExternalCode
@@ -6573,7 +7540,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Returns all roles with optional filtering and includes.
+     * @description 🔒 Returns all roles with optional filtering and includes.
      *
      * @tags Roles
      * @name GetAllRoles
@@ -6611,7 +7578,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Creates a new role in the system.
+     * @description 🔒 Creates a new role in the system.
      *
      * @tags Roles
      * @name CreateRole
@@ -6640,7 +7607,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Returns a paginated list of roles with optional search and filtering.
+     * @description 🔒 Returns a paginated list of roles with optional search and filtering.
      *
      * @tags Roles
      * @name GetRolesPaginated
@@ -6683,7 +7650,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Returns a role by its unique identifier with claims and user count.
+     * @description 🔒 Returns a role by its unique identifier with claims and user count.
      *
      * @tags Roles
      * @name GetRoleById
@@ -6711,7 +7678,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Updates an existing role's details.
+     * @description 🔒 Updates an existing role's details.
      *
      * @tags Roles
      * @name UpdateRole
@@ -6744,7 +7711,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Adds claims to an existing role.
+     * @description 🔒 Adds claims to an existing role.
      *
      * @tags Roles
      * @name AddClaimsToRole
@@ -6777,7 +7744,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Removes claims from an existing role.
+     * @description 🔒 Removes claims from an existing role.
      *
      * @tags Roles
      * @name RemoveClaimsFromRole
@@ -6810,7 +7777,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name CreateSection
@@ -6828,7 +7795,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name CreateCategory
@@ -6846,7 +7813,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name SetSetting
@@ -6864,7 +7831,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name GetSettings
@@ -6896,7 +7863,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name BulkUpdateSettings
@@ -6917,7 +7884,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name UpdateSetting
@@ -6939,7 +7906,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name GetSettingsBySection
@@ -6963,7 +7930,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 🌐 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name GetSettingByKey
@@ -7958,7 +8925,7 @@ export class Api<
         pageNumber: number;
         /** @format int32 */
         pageSize: number;
-        status?: ReservationStatus;
+        status?: TourReservationStatus;
         search?: string;
         /** @format date-time */
         fromDate?: string;
@@ -7968,7 +8935,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<
-        ReservationDtoPaginatedResultApplicationResult,
+        TourReservationDtoPaginatedResultApplicationResult,
         void | {
           /** @example "internal_server_error" */
           error?: string;
@@ -8158,7 +9125,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<
-        FinalizeReservationResponseApplicationResult,
+        TourFinalizeReservationResponseApplicationResult,
         void | {
           /** @example "internal_server_error" */
           error?: string;
@@ -8188,7 +9155,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<
-        ReservationPricingResponseApplicationResult,
+        TourReservationPricingResponseApplicationResult,
         void | {
           /** @example "internal_server_error" */
           error?: string;
@@ -8236,7 +9203,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Returns a paginated list of tours with optional search and filtering.
+     * @description 🔒 Returns a paginated list of tours with optional search and filtering.
      *
      * @tags Tours
      * @name GetToursPaginated
@@ -8304,7 +9271,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Returns a paginated list of users with optional search filter.
+     * @description 🔒 Returns a paginated list of users with optional search filter.
      *
      * @tags Users
      * @name GetUsersPaginated
@@ -8344,7 +9311,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Creates a new user with the provided information.
+     * @description 🔒 Creates a new user with the provided information.
      *
      * @tags Users
      * @name CreateUser
@@ -8375,7 +9342,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Returns full UserDetail DTO with roles, claims, preferences and tokens.
+     * @description 🔒 Returns full UserDetail DTO with roles, claims, preferences and tokens.
      *
      * @tags Users
      * @name GetUserDetail
@@ -8405,7 +9372,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 🔒 🔒 🔒 Updates an existing user with the provided information.
+     * @description 🔒 Updates an existing user with the provided information.
      *
      * @tags Users
      * @name UpdateUser

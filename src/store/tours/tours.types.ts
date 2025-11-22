@@ -3,7 +3,7 @@ import {
   TourBriefDto,
   TourDetailWithUserReservationDto,
   ReservationDetailDto,
-  ReservationPricingResponse,
+  TourReservationPricingResponse,
   StartReservationRequest,
   GuestParticipantDto,
   ParticipantDto,
@@ -17,7 +17,7 @@ import {
   TourWithUserReservationDtoPaginatedResultApplicationResult,
   TourDetailWithUserReservationDtoApplicationResult,
   ReservationDetailDtoApplicationResult,
-  ReservationPricingResponseApplicationResult,
+  TourReservationPricingResponseApplicationResult,
   StartReservationCommandResultApplicationResult,
   AddGuestToReservationResponseApplicationResult,
   RemoveGuestFromReservationResponseApplicationResult,
@@ -32,7 +32,7 @@ export type {
   TourBriefDto,
   TourDetailWithUserReservationDto,
   ReservationDetailDto,
-  ReservationPricingResponse,
+  TourReservationPricingResponse,
   StartReservationRequest,
   GuestParticipantDto,
   ParticipantDto,
@@ -53,7 +53,7 @@ export type GetTourDetailResponse = TourDetailWithUserReservationDtoApplicationR
 
 export type GetReservationDetailResponse = ReservationDetailDtoApplicationResult;
 
-export type GetReservationPricingResponse = ReservationPricingResponseApplicationResult;
+export type GetReservationPricingResponse = TourReservationPricingResponseApplicationResult;
 
 export type StartReservationResponse = StartReservationCommandResultApplicationResult;
 
@@ -66,9 +66,9 @@ export type FinalizeReservationResponse = FinalizeReservationResponseApplication
 export type ReactivateReservationResponse = ReactivateReservationResponseApplicationResult;
 
 // Reservations paginated types
-import { ReservationDtoPaginatedResultApplicationResult, ReservationDto } from '@/src/services/Api';
+import { TourReservationDtoPaginatedResultApplicationResult, TourReservationDto } from '@/src/services/Api';
 
-export type GetReservationsPaginatedResponse = ReservationDtoPaginatedResultApplicationResult;
+export type GetReservationsPaginatedResponse = TourReservationDtoPaginatedResultApplicationResult;
 
 export interface GetReservationsPaginatedRequest {
   pageNumber: number;
@@ -112,7 +112,7 @@ export interface ToursState {
   items: TourWithUserReservationDto[];
   selectedTour: TourDetailWithUserReservationDto | null;
   reservations: ReservationDetailDto[];
-  reservationsList: ReservationDto[]; // Paginated reservations list
+  reservationsList: TourReservationDto[]; // Paginated reservations list
   selectedReservation: ReservationDetailDto | null;
   pagination: PaginationInfo | null;
   reservationsPagination: PaginationInfo | null; // Pagination for reservations list

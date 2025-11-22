@@ -13,6 +13,8 @@ import {
   PiUserFill,
   PiReceipt,
   PiReceiptFill,
+  PiHeadset,
+  PiHeadsetFill,
 } from 'react-icons/pi';
 
 interface NavItem {
@@ -44,6 +46,13 @@ const navItems: NavItem[] = [
     path: '/notifications',
     icon: <PiBell className="h-5 w-5" />,
     activeIcon: <PiBellFill className="h-5 w-5" />,
+  },
+  {
+    id: 'support',
+    label: 'پشتیبانی',
+    path: '/support',
+    icon: <PiHeadset className="h-5 w-5" />,
+    activeIcon: <PiHeadsetFill className="h-5 w-5" />,
   },
   {
     id: 'profile',

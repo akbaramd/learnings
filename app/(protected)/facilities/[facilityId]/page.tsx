@@ -14,6 +14,7 @@ import { PageHeader } from '@/src/components/ui/PageHeader';
 import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
+import FacilityVideoTutorialDrawer from '@/src/components/overlays/FacilityVideoTutorialDrawer';
 import {
   PiMoney,
   PiArrowRight,
@@ -21,6 +22,7 @@ import {
   PiCheckCircle,
   PiClock,
   PiFileText,
+  PiVideo,
 } from 'react-icons/pi';
 
 interface FacilityDetailPageProps {
@@ -42,6 +44,7 @@ function formatCurrencyFa(amount: number | null | undefined): string {
 export default function FacilityDetailPage({ params }: FacilityDetailPageProps) {
   const router = useRouter();
   const [facilityIdFromParams, setFacilityIdFromParams] = useState<string>('');
+  const [isVideoDrawerOpen, setIsVideoDrawerOpen] = useState(false);
 
   // Redux selectors
   const isLoading = useSelector(selectFacilitiesLoading);
@@ -96,6 +99,23 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
     } else if (cycle.id) {
       // Otherwise, navigate to request creation page
       router.push(`/facilities/cycles/${cycle.id}/request`);
+    }
+  };
+
+  const handleOpenVideoDrawer = () => {
+    setIsVideoDrawerOpen(true);
+  };
+
+  const handleCloseVideoDrawer = () => {
+    setIsVideoDrawerOpen(false);
+  };
+
+  const handleRequestFromVideo = () => {
+    setIsVideoDrawerOpen(false);
+    // Find first active cycle and navigate to request page
+    const activeCycle = cycles.find(cycle => cycle.isActive === true);
+    if (activeCycle?.id) {
+      router.push(`/facilities/cycles/${activeCycle.id}/request`);
     }
   };
 
@@ -191,6 +211,12 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
         onBack={handleBack}
         rightActions={[
           {
+            icon: <PiVideo className="h-4 w-4" />,
+            onClick: handleOpenVideoDrawer,
+            label: 'آموزش ویدویی',
+            'aria-label': 'آموزش ویدویی',
+          },
+          {
             icon: <PiArrowRight className="h-4 w-4" />,
             onClick: handleViewCycles,
             label: 'مشاهده دوره‌ها',
@@ -211,9 +237,20 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
                   {guideMessage.title}
                 </h3>
-                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed mb-3">
                   {guideMessage.description}
                 </p>
+                <Button
+                  variant="outline"
+                  color="primary"
+                  size="sm"
+                  block
+                  onClick={handleOpenVideoDrawer}
+                  leftIcon={<PiVideo className="h-4 w-4" />}
+                  className="font-medium"
+                >
+                  نحوه درخواست (ویدیو)
+                </Button>
               </div>
             </div>
           </Card>
@@ -496,6 +533,18 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
           </Card>
         </div>
       </ScrollableArea>
+
+      {/* Video Tutorial Drawer */}
+      <FacilityVideoTutorialDrawer
+        open={isVideoDrawerOpen}
+        onClose={handleCloseVideoDrawer}
+        videoSrc="/video/facilities.mp4"
+        title="آموزش ویدویی سیستم تسهیلات"
+        subtitle="راهنمای استفاده از سیستم درخواست تسهیلات"
+        showRequestButton={activeCycle !== undefined}
+        onRequestClick={handleRequestFromVideo}
+        requestButtonText="ثبت درخواست تسهیلات"
+      />
     </div>
   );
 }
