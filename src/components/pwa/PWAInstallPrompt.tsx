@@ -1,9 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PiDownload, PiX, PiDeviceMobile, PiCheckCircle } from 'react-icons/pi';
+import { 
+  PiDownload, 
+  PiDeviceMobile, 
+  PiCheckCircle, 
+  PiArrowRight,
+  PiAppWindow,
+  PiSparkle
+} from 'react-icons/pi';
 import { Button } from '@/src/components/ui/Button';
-import { Card } from '@/src/components/ui/Card';
+import Drawer from '@/src/components/overlays/Drawer';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -174,80 +181,147 @@ export function PWAInstallPrompt() {
     console.log('[PWA Install] Dismissal saved to localStorage, timestamp:', new Date(timestamp).toISOString());
   };
 
+  const handleClose = (open: boolean) => {
+    if (!open) {
+      handleDismiss();
+    }
+  };
+
   // Don't show if already installed or no prompt available
   if (isInstalled || !showPrompt || !deferredPrompt) {
     return null;
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 max-w-md mx-auto animate-in slide-in-from-bottom-4 duration-300">
-      <Card
-        variant="default"
-        radius="lg"
-        padding="md"
-        className="bg-white dark:bg-gray-800 border-2 border-emerald-500 dark:border-emerald-400 shadow-lg"
-      >
-        <div className="flex items-start gap-3">
-          {/* Icon */}
-          <div className="flex-shrink-0">
-            <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center">
-              <PiDeviceMobile className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+    <Drawer
+      open={showPrompt}
+      onClose={handleClose}
+      side="bottom"
+      size="lg"
+      rtlAware
+      closeOnBackdrop={true}
+      closeOnEsc={true}
+    >
+      <Drawer.Header>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/50">
+            <PiDeviceMobile className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              نصب اپلیکیشن
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              اپلیکیشن را روی دستگاه خود نصب کنید
+            </p>
+          </div>
+        </div>
+      </Drawer.Header>
+
+      <Drawer.Body className="p-0">
+        <div className="p-4 space-y-4">
+          {/* Hero Section */}
+          <div className="text-center py-4">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-emerald-100 to-emerald-200 dark:from-emerald-900/50 dark:to-emerald-800/50 mb-4">
+              <PiAppWindow className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              دسترسی سریع‌تر و راحت‌تر
+            </h4>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              با نصب اپلیکیشن، آیکون آن در صفحه اصلی دستگاه شما نمایش داده می‌شود و می‌توانید به راحتی به آن دسترسی داشته باشید.
+            </p>
+          </div>
+
+          {/* Benefits */}
+          <div className="space-y-3">
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+              <PiCheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                  دسترسی سریع از صفحه اصلی
+                </h5>
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                  آیکون اپلیکیشن در صفحه اصلی دستگاه شما نمایش داده می‌شود و با یک کلیک می‌توانید به آن دسترسی پیدا کنید.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+              <PiCheckCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                  کار آفلاین
+                </h5>
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                  حتی بدون اتصال به اینترنت می‌توانید از بخش‌های مختلف اپلیکیشن استفاده کنید.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+              <PiCheckCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                  تجربه بهتر
+                </h5>
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                  عملکرد سریع‌تر، بارگذاری بهتر و تجربه کاربری مشابه اپلیکیشن‌های موبایل.
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
-              نصب اپلیکیشن
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-3">
-              این اپلیکیشن را روی دستگاه خود نصب کنید تا دسترسی سریع‌تر و تجربه بهتری داشته باشید.
-            </p>
-
-            {/* Benefits */}
-            <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-1 mb-4">
-              <li className="flex items-center gap-2">
-                <PiCheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                <span>دسترسی سریع‌تر</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <PiCheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                <span>کار آفلاین</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <PiCheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                <span>تجربه بهتر</span>
-              </li>
-            </ul>
-
-            {/* Actions */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant="solid"
-                color="primary"
-                size="sm"
-                onClick={handleInstall}
-                disabled={isInstalling}
-                loading={isInstalling}
-                leftIcon={<PiDownload className="h-4 w-4" />}
-                className="flex-1"
-              >
-                {isInstalling ? 'در حال نصب...' : 'نصب اپلیکیشن'}
-              </Button>
-              <Button
-                variant="subtle"
-                size="sm"
-                onClick={handleDismiss}
-                className="px-3"
-                aria-label="بستن"
-              >
-                <PiX className="h-5 w-5" />
-              </Button>
+          {/* After Install Info */}
+          <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-start gap-3">
+              <PiSparkle className="h-5 w-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  پس از نصب
+                </h5>
+                <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1.5 leading-relaxed">
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-600 dark:text-emerald-400 mt-1">•</span>
+                    <span>آیکون اپلیکیشن در صفحه اصلی دستگاه شما نمایش داده می‌شود</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-600 dark:text-emerald-400 mt-1">•</span>
+                    <span>می‌توانید از طریق آیکون مستقیماً به اپلیکیشن دسترسی داشته باشید</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-600 dark:text-emerald-400 mt-1">•</span>
+                    <span>اپلیکیشن به صورت مستقل اجرا می‌شود و تجربه بهتری ارائه می‌دهد</span>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
-      </Card>
-    </div>
+      </Drawer.Body>
+
+      <Drawer.Footer>
+        <div className="flex items-center gap-3 w-full">
+          <Button
+            variant="solid"
+            color="primary"
+            size="md"
+            onClick={handleInstall}
+            disabled={isInstalling}
+            loading={isInstalling}
+            leftIcon={<PiDownload className="h-5 w-5" />}
+            rightIcon={<PiArrowRight className="h-4 w-4" />}
+            className="flex-1 font-medium"
+            block
+          >
+            {isInstalling ? 'در حال نصب...' : 'نصب اپلیکیشن'}
+          </Button>
+        </div>
+        <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-3">
+          می‌توانید بعداً از منوی مرورگر نیز نصب کنید
+        </p>
+      </Drawer.Footer>
+    </Drawer>
   );
 }
 
