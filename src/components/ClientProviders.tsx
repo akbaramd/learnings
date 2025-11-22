@@ -4,6 +4,7 @@ import React from 'react';
 import { ThemeProvider } from './theme/ThemeProvider';
 import { ToastProvider } from './ui/toast/ToastContext';
 import { ToastContainer } from './ui/toast/ToastContainer';
+import { PWAInstallPrompt } from './pwa/PWAInstallPrompt';
 
 interface ClientProvidersProps {
   children: React.ReactNode;
@@ -22,6 +23,7 @@ export const ClientProviders = React.memo(function ClientProviders({ children }:
               mobile: 'bottom' 
             }} 
           />
+          <PWAInstallPrompt />
         </ToastProvider>
       </div>
     </ThemeProvider>
