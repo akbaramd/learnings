@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { PiHeadset } from "react-icons/pi";
 import { ClientThemeSwitcher } from "../../src/components/theme/ClientThemeSwitcher";
 
@@ -14,7 +13,6 @@ import { ClientThemeSwitcher } from "../../src/components/theme/ClientThemeSwitc
  */
 export default function LoginLayout({ children }: { children: ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   // CRITICAL: Set viewport height dynamically to handle mobile browser UI
   // This ensures correct height calculation on page refresh
@@ -75,7 +73,7 @@ export default function LoginLayout({ children }: { children: ReactNode }) {
 
       {/* Support Button - positioned absolutely on the opposite side */}
       <button
-        onClick={() => router.push('/support')}
+        onClick={() => window.open('https://widget.raychat.io/5d259dc6961e95bd413e1358?version=2', '_blank', 'noopener,noreferrer')}
         className="fixed bottom-4 left-4 z-50 flex items-center justify-center w-12 h-12 rounded-full bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white shadow-lg transition-colors"
         aria-label="پشتیبانی"
         title="پشتیبانی"
