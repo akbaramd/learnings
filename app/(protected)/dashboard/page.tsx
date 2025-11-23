@@ -14,7 +14,7 @@ import { SurveySection } from '@/src/components/surveys/SurveySection';
 import { Survey, SurveyCardSkeleton } from '@/src/components/surveys/SurveyCard';
 import { TutorialSection } from '@/src/components/tutorials';
 import { Tutorial } from '@/src/components/tutorials/TutorialCard';
-import { PiMoney, PiFileText, PiMapPinDuotone } from 'react-icons/pi';
+import { PiMoney, PiFileText, PiMapPinDuotone, PiInfo } from 'react-icons/pi';
 import { useGetToursPaginatedQuery } from '@/src/store/tours/tours.queries';
 import { useGetFacilitiesQuery } from '@/src/store/facilities';
 import { useGetActiveSurveysQuery } from '@/src/store/surveys';
@@ -380,6 +380,25 @@ export default function HomeDashboard() {
               ) : (
                 !toursError && <TourSection seeAllHref="/tours" title="تورها" dir="rtl" tours={tours} />
               )}
+            </section>
+
+            {/* Future Services Alert */}
+            <section className="px-4 my-4">
+              <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <PiInfo className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                      سرویس‌های جدید در راه است
+                    </h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                      سرویس‌های جدیدی در آینده به این قسمت اضافه خواهد شد. برای اطلاع از آخرین به‌روزرسانی‌ها، صفحه را دنبال کنید.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </section>
 
             {/* Facilities Section */}

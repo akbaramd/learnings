@@ -22,6 +22,9 @@ import {
   PiArrowCounterClockwise,
   PiBuilding,
   PiCalendarCheck,
+  PiInfo,
+  PiClipboardText,
+  PiBuildings,
 } from 'react-icons/pi';
 
 interface RequestDetailPageProps {
@@ -327,6 +330,126 @@ export default function RequestDetailPage({ params }: RequestDetailPageProps) {
                     </div>
                   </div>
                 )}
+              </div>
+            </Card>
+          )}
+
+          {/* Rejection Details Card */}
+          {(request.status === 'Rejected' || request.isRejected) && (
+            <Card variant="default" radius="lg" padding="md" className="border-red-200 dark:border-red-800/50">
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <PiXCircle className="h-6 w-6 text-red-500 dark:text-red-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-md font-semibold text-red-900 dark:text-red-100 mb-2">
+                      جزئیات رد درخواست
+                    </h3>
+                    
+                    {/* Rejection Reason */}
+                    {request.rejectionReasonDetails && (
+                      <div className="space-y-2 mb-3">
+                        {request.rejectionReasonDetails.name && (
+                          <div>
+                            <div className="text-xs font-medium text-red-700 dark:text-red-300 mb-1">
+                              دلیل رد درخواست
+                            </div>
+                            <div className="text-sm text-red-900 dark:text-red-100 bg-red-50 dark:bg-red-900/20 rounded-lg p-3 border border-red-200 dark:border-red-800/50">
+                              {request.rejectionReasonDetails.name}
+                            </div>
+                          </div>
+                        )}
+                        {request.rejectionReasonDetails.reason && (
+                          <div>
+                            <div className="text-xs font-medium text-red-700 dark:text-red-300 mb-1">
+                              توضیحات دلیل رد
+                            </div>
+                            <div className="text-sm text-red-900 dark:text-red-100 bg-red-50 dark:bg-red-900/20 rounded-lg p-3 border border-red-200 dark:border-red-800/50">
+                              {request.rejectionReasonDetails.reason}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Additional Rejection Description */}
+                    {request.rejectionDescription && (
+                      <div className="mb-3">
+                        <div className="text-xs font-medium text-red-700 dark:text-red-300 mb-1">
+                          توضیحات تکمیلی
+                        </div>
+                        <div className="text-sm text-red-900 dark:text-red-100 bg-red-50 dark:bg-red-900/20 rounded-lg p-3 border border-red-200 dark:border-red-800/50 leading-relaxed">
+                          {request.rejectionDescription}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Rejection Date */}
+                    {request.rejectedAt && (
+                      <div className="pt-2 border-t border-red-200 dark:border-red-800/50">
+                        <div className="text-xs text-red-600 dark:text-red-400">
+                          تاریخ رد: {formatDateFa(request.rejectedAt)}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Fallback if no detailed info */}
+                    {!request.rejectionReasonDetails && !request.rejectionDescription && request.rejectionReason && (
+                      <div className="text-sm text-red-900 dark:text-red-100 bg-red-50 dark:bg-red-900/20 rounded-lg p-3 border border-red-200 dark:border-red-800/50">
+                        {request.rejectionReason}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Documents Action Card */}
+          {(request.status === 'PendingDocuments' || 
+            (request.requiresApplicantAction && request.statusDetails?.requiresApplicantAction)) && (
+            <Card variant="default" radius="lg" padding="md" className="border-orange-200 dark:border-orange-800/50 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/10 dark:to-amber-900/10">
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                      <PiClipboardText className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-md font-semibold text-orange-900 dark:text-orange-100 mb-2">
+                      تکمیل مدارک مورد نیاز
+                    </h3>
+                    <p className="text-sm text-orange-800 dark:text-orange-200 leading-relaxed mb-4">
+                      برای ادامه فرآیند بررسی درخواست، لازم است مدارک مورد نیاز را تکمیل کنید.
+                    </p>
+                    
+                    {/* Action Instructions */}
+                    <div className="bg-white dark:bg-gray-800/50 rounded-lg p-4 border border-orange-200 dark:border-orange-800/50 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 mt-0.5">
+                          <PiBuildings className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+                            مراجعه به سازمان
+                          </div>
+                          <div className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                            لطفاً به سازمان مربوطه مراجعه کرده و مدارک مورد نیاز را تکمیل و ارسال کنید.
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 pt-2 border-t border-orange-100 dark:border-orange-800/30">
+                        <PiInfo className="h-4 w-4 text-orange-500 dark:text-orange-400 flex-shrink-0" />
+                        <p className="text-xs text-orange-700 dark:text-orange-300 leading-relaxed">
+                          پس از تکمیل و ارسال مدارک، درخواست شما مجدداً بررسی خواهد شد.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </Card>
           )}
