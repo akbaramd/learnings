@@ -24,12 +24,22 @@ export async function POST(
       }, { status: 400 });
     }
 
-    const body = await req.json();
-    const { reason, rejectorUserId } = body;
+    const body = await req.json().catch(() => ({}));
+    const { rejectionReasonId, rejectionDescription } = body;
+
+    // Validate that at least one rejection field is provided
+    if (!rejectionReasonId && !rejectionDescription) {
+      return NextResponse.json({
+        isSuccess: false,
+        message: 'Either rejection reason ID or rejection description is required',
+        errors: ['Either rejection reason ID or rejection description is required'],
+        data: null,
+      }, { status: 400 });
+    }
 
     const upstream = await api.api.rejectFacilityRequest(requestId, {
-      reason,
-      rejectorUserId,
+      rejectionReasonId,
+      rejectionDescription: rejectionDescription || null,
     }, {});
     
     const status = upstream.status ?? 200;
