@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/src/components/ui/PageHeader';
 import { Button } from '@/src/components/ui/Button';
+import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
+import { Card } from '@/src/components/ui/Card';
 import { useMarkAsReadMutation, useMarkAllAsReadMutation, Notification, useLazyGetUnreadCountQuery, useLazyGetNotificationsPaginatedQuery } from '@/src/store/notifications';
 import {
   PiBell,
@@ -14,6 +16,7 @@ import {
   PiCheckCircle,
   PiArrowClockwise,
   PiCheckCircle as PiCheckCircle2,
+  PiSparkle,
 } from 'react-icons/pi';
 
 function formatRelativeFa(dateString: string) {
@@ -85,74 +88,113 @@ function getContextLabel(context?: string | null): string {
   return normalizedContext || 'عمومی';
 }
 
-function NotificationItem({ notification }: { notification: Notification }) {
-  const [markAsRead] = useMarkAsReadMutation();
+function NotificationItem({ 
+  notification, 
+  onMarkAsRead 
+}: { 
+  notification: Notification;
+  onMarkAsRead: (id: string) => void;
+}) {
+  const itemRef = useRef<HTMLDivElement>(null);
+  const hasMarkedAsReadRef = useRef(false);
 
-  const handleMarkAsRead = async () => {
-    if (notification.id && !notification.isRead) {
-      try {
-        await markAsRead(notification.id).unwrap();
-      } catch (error) {
-        console.error('Failed to mark notification as read:', error);
-      }
+  // Auto-mark as read when item comes into view
+  useEffect(() => {
+    if (notification.isRead || hasMarkedAsReadRef.current || !notification.id) {
+      return;
     }
-  };
+
+    const currentElement = itemRef.current;
+    if (!currentElement) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasMarkedAsReadRef.current) {
+            hasMarkedAsReadRef.current = true;
+            onMarkAsRead(notification.id!);
+          }
+        });
+      },
+      { threshold: 0.5 } // Mark as read when 50% visible
+    );
+
+    observer.observe(currentElement);
+
+    return () => {
+      observer.unobserve(currentElement);
+    };
+  }, [notification.id, notification.isRead, onMarkAsRead]);
 
   return (
-    <div 
-      className={`rounded-lg border p-4 cursor-pointer transition-all duration-300 ${
-        notification.isRead 
-          ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 opacity-75' 
-          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm ring-2 ring-blue-200 dark:ring-blue-900/30'
-      } hover:shadow-md hover:scale-[1.01]`}
-      onClick={handleMarkAsRead}
+    <Card
+      ref={itemRef}
+      variant="default"
+      radius="lg"
+      padding="md"
+      className={`
+        transition-all duration-300 ease-in-out
+        ${notification.isRead 
+          ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 opacity-80' 
+          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-md ring-2 ring-emerald-200 dark:ring-emerald-900/30'
+        }
+        hover:shadow-lg hover:scale-[1.01]
+      `}
     >
       <div className="flex items-start gap-3">
-        <div className={`mt-1 p-2 rounded-full ${
-          notification.isRead 
+        <div className={`
+          flex-shrink-0 mt-0.5 p-2.5 rounded-xl transition-all duration-300
+          ${notification.isRead 
             ? 'bg-gray-100 dark:bg-gray-700' 
-            : 'bg-blue-50 dark:bg-blue-900/20'
-        }`}>
+            : 'bg-gradient-to-br from-emerald-50 to-blue-50 dark:from-emerald-900/20 dark:to-blue-900/20'
+          }
+        `}>
           {getNotificationIcon(notification.context)}
         </div>
-        <div className="flex-1">
-          <div className="flex items-center justify-between">
-            <h3 className={`text-sm font-semibold ${
-              notification.isRead 
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <h3 className={`
+              text-sm font-semibold leading-tight
+              ${notification.isRead 
                 ? 'text-gray-600 dark:text-gray-300' 
                 : 'text-gray-900 dark:text-gray-100'
-            }`}>
+              }
+            `}>
               {notification.title || 'اعلان'}
             </h3>
             {!notification.isRead && (
-              <div className="h-2.5 w-2.5 rounded-full bg-blue-500 animate-pulse"></div>
+              <div className="flex-shrink-0 h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse shadow-sm"></div>
             )}
           </div>
-          <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-3">
             {notification.message || 'پیام اعلان'}
           </p>
-          <div className="mt-2.5 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-            <PiClock className="h-3.5 w-3.5" />
-            <span>{notification.createdAt ? formatRelativeFa(notification.createdAt) : 'نامشخص'}</span>
-          </div>
-          {notification.context && (
-            <div className="mt-2">
-              <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${
-                notification.context === 'payment' 
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+              <PiClock className="h-3.5 w-3.5 flex-shrink-0" />
+              <span>{notification.createdAt ? formatRelativeFa(notification.createdAt) : 'نامشخص'}</span>
+            </div>
+            {notification.context && (
+              <span className={`
+                inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium
+                ${notification.context === 'payment' 
                   ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
                   : notification.context === 'security'
-                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                  ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
                   : notification.context === 'promotion'
                   ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
                   : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-              }`}>
+                }
+              `}>
                 {getContextLabel(notification.context)}
               </span>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -160,8 +202,10 @@ export default function NotificationsPage() {
   const router = useRouter();
   const [page, setPage] = useState(1);
   const [allNotifications, setAllNotifications] = useState<Notification[]>([]);
+  const [markedAsReadIds, setMarkedAsReadIds] = useState<Set<string>>(new Set());
   const pageSize = 10;
-  const isFirstPageRef = useRef(true);
+  const isInitialLoadRef = useRef(true);
+  const loadedPageNumbersRef = useRef<Set<number>>(new Set());
   
   // Lazy query hooks
   const [triggerGetUnreadCount, { data: unreadCountData }] = useLazyGetUnreadCountQuery();
@@ -171,12 +215,16 @@ export default function NotificationsPage() {
     error: notificationsError 
   }] = useLazyGetNotificationsPaginatedQuery();
   
+  const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead, { isLoading: markAllLoading }] = useMarkAllAsReadMutation();
 
   // Load initial data when component mounts
   useEffect(() => {
     const loadInitialData = async () => {
       try {
+        isInitialLoadRef.current = true;
+        loadedPageNumbersRef.current.clear();
+        
         // Load unread count
         await triggerGetUnreadCount();
         
@@ -187,42 +235,122 @@ export default function NotificationsPage() {
         });
       } catch (error) {
         console.error('Failed to load initial notification data:', error);
+      } finally {
+        isInitialLoadRef.current = false;
       }
     };
 
     loadInitialData();
   }, [triggerGetUnreadCount, triggerGetNotificationsPaginated, pageSize]);
 
-  // Update notifications when new data arrives
+  // Update notifications when new data arrives - with proper deduplication
   useEffect(() => {
-    if (notificationsData?.result?.items) {
-      const newItems = notificationsData.result.items;
+    if (!notificationsData?.result?.items) return;
+
+    const newItems = notificationsData.result.items;
+    const currentPage = notificationsData.result.pageNumber || 1;
+
+    setAllNotifications(prev => {
+      // Create a map of existing notifications by ID for quick lookup
+      const existingMap = new Map(prev.map(n => [n.id, n]));
       
-      // Use setTimeout to avoid synchronous setState in effect
-      setTimeout(() => {
-        if (isFirstPageRef.current) {
-          // First page - replace all notifications
-          setAllNotifications(newItems);
-          isFirstPageRef.current = false;
-        } else {
-          // Subsequent pages - append to existing notifications
-          setAllNotifications(prev => [...prev, ...newItems]);
+      // If this is the first page or a refresh, replace all
+      if (isInitialLoadRef.current || currentPage === 1) {
+        return newItems;
+      }
+      
+      // For subsequent pages, merge without duplicates
+      const merged = [...prev];
+      newItems.forEach(newItem => {
+        if (newItem.id && !existingMap.has(newItem.id)) {
+          merged.push(newItem);
+        } else if (newItem.id && existingMap.has(newItem.id)) {
+          // Update existing notification if it changed
+          const index = merged.findIndex(n => n.id === newItem.id);
+          if (index !== -1) {
+            merged[index] = newItem;
+          }
         }
-      }, 0);
+      });
+      
+      return merged;
+    });
+
+    // Track loaded pages
+    if (!loadedPageNumbersRef.current.has(currentPage)) {
+      loadedPageNumbersRef.current.add(currentPage);
     }
   }, [notificationsData]);
 
+  // Handle mark as read - update in place
+  const handleMarkAsRead = useCallback(async (notificationId: string) => {
+    if (markedAsReadIds.has(notificationId)) {
+      return; // Already marked or in progress
+    }
+
+    setMarkedAsReadIds(prev => new Set(prev).add(notificationId));
+
+    // Optimistically update UI
+    setAllNotifications(prev =>
+      prev.map(n =>
+        n.id === notificationId ? { ...n, isRead: true } : n
+      )
+    );
+
+    try {
+      await markAsRead(notificationId).unwrap();
+      // Refresh unread count
+      await triggerGetUnreadCount();
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+      // Revert optimistic update on error
+      setAllNotifications(prev =>
+        prev.map(n =>
+          n.id === notificationId ? { ...n, isRead: false } : n
+        )
+      );
+      setMarkedAsReadIds(prev => {
+        const next = new Set(prev);
+        next.delete(notificationId);
+        return next;
+      });
+    }
+  }, [markAsRead, triggerGetUnreadCount, markedAsReadIds]);
+
   // Get current data from API responses
-  const notifications = allNotifications;
+  const notifications = useMemo(() => {
+    // Sort by created date (newest first) and ensure no duplicates
+    const uniqueMap = new Map<string, Notification>();
+    allNotifications.forEach(n => {
+      if (n.id && !uniqueMap.has(n.id)) {
+        uniqueMap.set(n.id, n);
+      }
+    });
+    return Array.from(uniqueMap.values()).sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA; // Newest first
+    });
+  }, [allNotifications]);
+
   const totalCount = notificationsData?.result?.totalCount || 0;
   const totalPages = notificationsData?.result?.totalPages || 1;
   const unreadCount = unreadCountData?.result?.totalCount || 0;
 
-  const handleMarkAllAsRead = async () => {
+  const handleMarkAllAsRead = useCallback(async () => {
     try {
       await markAllAsRead().unwrap();
-      // Reset first page flag
-      isFirstPageRef.current = true;
+      
+      // Optimistically update all notifications
+      setAllNotifications(prev =>
+        prev.map(n => ({ ...n, isRead: true }))
+      );
+      
+      // Reset state
+      isInitialLoadRef.current = true;
+      loadedPageNumbersRef.current.clear();
+      setMarkedAsReadIds(new Set());
+      
       // Refresh both unread count and notifications
       await Promise.all([
         triggerGetUnreadCount(),
@@ -231,35 +359,44 @@ export default function NotificationsPage() {
           pageSize: pageSize,
         })
       ]);
-      // Reset to first page
+      
       setPage(1);
     } catch (error) {
       console.error('Failed to mark all notifications as read:', error);
     }
-  };
+  }, [markAllAsRead, triggerGetUnreadCount, triggerGetNotificationsPaginated, pageSize]);
 
-  const handleLoadMore = async () => {
-    if (page < totalPages && !notificationsLoading) {
-      const nextPage = page + 1;
-      setPage(nextPage);
-      
-      try {
-        await triggerGetNotificationsPaginated({
-          pageNumber: nextPage,
-          pageSize: pageSize,
-        });
-      } catch (error) {
-        console.error('Failed to load more notifications:', error);
-        // Revert page on error
-        setPage(page);
-      }
+  const handleLoadMore = useCallback(async () => {
+    if (page >= totalPages || notificationsLoading) return;
+    
+    const nextPage = page + 1;
+    
+    // Prevent loading the same page twice
+    if (loadedPageNumbersRef.current.has(nextPage)) {
+      return;
     }
-  };
-
-  const handleRefresh = async () => {
+    
+    setPage(nextPage);
+    
     try {
-      // Reset first page flag
-      isFirstPageRef.current = true;
+      await triggerGetNotificationsPaginated({
+        pageNumber: nextPage,
+        pageSize: pageSize,
+      });
+    } catch (error) {
+      console.error('Failed to load more notifications:', error);
+      // Revert page on error
+      setPage(page);
+    }
+  }, [page, totalPages, notificationsLoading, triggerGetNotificationsPaginated, pageSize]);
+
+  const handleRefresh = useCallback(async () => {
+    try {
+      // Reset state
+      isInitialLoadRef.current = true;
+      loadedPageNumbersRef.current.clear();
+      setMarkedAsReadIds(new Set());
+      
       await Promise.all([
         triggerGetUnreadCount(),
         triggerGetNotificationsPaginated({
@@ -267,11 +404,12 @@ export default function NotificationsPage() {
           pageSize: pageSize,
         })
       ]);
+      
       setPage(1);
     } catch (error) {
       console.error('Failed to refresh notifications:', error);
     }
-  };
+  }, [triggerGetUnreadCount, triggerGetNotificationsPaginated, pageSize]);
 
   if (notificationsLoading && page === 1) {
     return (
@@ -334,12 +472,16 @@ export default function NotificationsPage() {
       />
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-4">
-          {notifications.length === 0 ? (
+      <ScrollableArea className="flex-1" hideScrollbar={true}>
+        <div className="p-2">
+          {notificationsLoading && page === 1 ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+            </div>
+          ) : notifications.length === 0 ? (
             <div className="text-center py-16">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
-                <PiInfo className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 mb-4">
+                <PiSparkle className="h-8 w-8 text-gray-400 dark:text-gray-500" />
               </div>
               <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-2">
                 هیچ اعلانی وجود ندارد
@@ -349,14 +491,18 @@ export default function NotificationsPage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {notifications.map((notification) => (
-                <NotificationItem key={notification.id} notification={notification} />
+                <NotificationItem 
+                  key={notification.id} 
+                  notification={notification}
+                  onMarkAsRead={handleMarkAsRead}
+                />
               ))}
               
               {/* Load More Button */}
               {page < totalPages && (
-                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <Button
                     variant="outline"
                     onClick={handleLoadMore}
@@ -372,14 +518,14 @@ export default function NotificationsPage() {
               
               {/* Results Counter */}
               {totalCount > 0 && (
-                <div className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                <div className="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">
                   نمایش {notifications.length} از {totalCount} اعلان
                 </div>
               )}
             </div>
           )}
         </div>
-      </div>
+      </ScrollableArea>
     </div>
   );
 }

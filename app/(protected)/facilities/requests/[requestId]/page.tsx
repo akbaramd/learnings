@@ -25,6 +25,8 @@ import {
   PiInfo,
   PiClipboardText,
   PiBuildings,
+  PiArrowRight,
+  PiSparkle,
 } from 'react-icons/pi';
 
 interface RequestDetailPageProps {
@@ -239,31 +241,38 @@ export default function RequestDetailPage({ params }: RequestDetailPageProps) {
 
       <ScrollableArea className="flex-1" hideScrollbar={true}>
         <div className="p-2 space-y-2">
-          {/* Status Card */}
-          <Card variant="default" radius="lg" padding="md">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {getStatusInfo(request.status).icon}
-                  <div>
-                    <div className="text-md font-semibold text-gray-900 dark:text-gray-100">
+          {/* Status Card - Enhanced UI/UX */}
+          <Card variant="default" radius="lg" padding="md" className="bg-gradient-to-br from-gray-50 to-slate-50 dark:from-gray-800/50 dark:to-slate-800/50 border-gray-200 dark:border-gray-700">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-white dark:bg-gray-800/80 flex items-center justify-center shadow-sm border border-gray-200 dark:border-gray-700">
+                      {getStatusInfo(request.status).icon}
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-0.5">
                       {getStatusInfo(request.status).label}
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {request.id?.substring(0, 8)}
+                    <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                      شناسه: {request.id?.substring(0, 8)}
                     </div>
                   </div>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusInfo(request.status).badgeClass}`}>
+                <span className={`px-3 py-1.5 rounded-full text-xs font-semibold flex-shrink-0 ${getStatusInfo(request.status).badgeClass}`}>
                   {getStatusInfo(request.status).label}
                 </span>
               </div>
               
               {/* Status Description */}
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                  {getStatusInfo(request.status).description}
-                </p>
+              <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-start gap-2">
+                  <PiInfo className="h-4 w-4 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                    {getStatusInfo(request.status).description}
+                  </p>
+                </div>
               </div>
             </div>
           </Card>
@@ -334,38 +343,65 @@ export default function RequestDetailPage({ params }: RequestDetailPageProps) {
             </Card>
           )}
 
-          {/* Rejection Details Card */}
+          {/* Approval Success Card - Simple Message */}
+          {(request.status === 'Approved' || request.isCompleted) && (
+            <Card variant="default" radius="lg" padding="md" className="border-emerald-200 dark:border-emerald-800/50 bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/10 dark:to-green-900/10">
+              <div className="flex items-start gap-3">
+                <PiCheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                    لطفاً منتظر بمانید. در آخر دوره، لیست پذیرفته شدگان به بانک ارسال می‌شود و وضعیت دوره به «ارسال شده به بانک» تغییر می‌کند.
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Rejection Details Card - Modern & Minimal */}
           {(request.status === 'Rejected' || request.isRejected) && (
-            <Card variant="default" radius="lg" padding="md" className="border-red-200 dark:border-red-800/50">
+            <Card variant="default" radius="lg" padding="md" className="border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-slate-50 dark:from-gray-800/50 dark:to-slate-800/50">
               <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 mt-0.5">
-                    <PiXCircle className="h-6 w-6 text-red-500 dark:text-red-400" />
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-100 to-pink-100 dark:from-rose-900/30 dark:to-pink-900/30 flex items-center justify-center">
+                      <PiXCircle className="h-6 w-6 text-rose-600 dark:text-rose-400" />
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-md font-semibold text-red-900 dark:text-red-100 mb-2">
-                      جزئیات رد درخواست
-                    </h3>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-3">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        درخواست رد شده
+                      </h3>
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">
+                        رد شده
+                      </span>
+                    </div>
                     
                     {/* Rejection Reason */}
                     {request.rejectionReasonDetails && (
-                      <div className="space-y-2 mb-3">
+                      <div className="space-y-3 mb-4">
                         {request.rejectionReasonDetails.name && (
-                          <div>
-                            <div className="text-xs font-medium text-red-700 dark:text-red-300 mb-1">
-                              دلیل رد درخواست
+                          <div className="bg-white dark:bg-gray-800/80 rounded-lg p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
+                            <div className="flex items-start gap-2 mb-2">
+                              <PiInfo className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
+                              <div className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                                دلیل رد درخواست
+                              </div>
                             </div>
-                            <div className="text-sm text-red-900 dark:text-red-100 bg-red-50 dark:bg-red-900/20 rounded-lg p-3 border border-red-200 dark:border-red-800/50">
+                            <div className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed pr-6">
                               {request.rejectionReasonDetails.name}
                             </div>
                           </div>
                         )}
                         {request.rejectionReasonDetails.reason && (
-                          <div>
-                            <div className="text-xs font-medium text-red-700 dark:text-red-300 mb-1">
-                              توضیحات دلیل رد
+                          <div className="bg-white dark:bg-gray-800/80 rounded-lg p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
+                            <div className="flex items-start gap-2 mb-2">
+                              <PiFileText className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
+                              <div className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                                توضیحات
+                              </div>
                             </div>
-                            <div className="text-sm text-red-900 dark:text-red-100 bg-red-50 dark:bg-red-900/20 rounded-lg p-3 border border-red-200 dark:border-red-800/50">
+                            <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed pr-6">
                               {request.rejectionReasonDetails.reason}
                             </div>
                           </div>
@@ -375,65 +411,87 @@ export default function RequestDetailPage({ params }: RequestDetailPageProps) {
 
                     {/* Additional Rejection Description */}
                     {request.rejectionDescription && (
-                      <div className="mb-3">
-                        <div className="text-xs font-medium text-red-700 dark:text-red-300 mb-1">
-                          توضیحات تکمیلی
+                      <div className="mb-4 bg-white dark:bg-gray-800/80 rounded-lg p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <div className="flex items-start gap-2 mb-2">
+                          <PiWarning className="h-4 w-4 text-amber-500 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                          <div className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                            توضیحات تکمیلی
+                          </div>
                         </div>
-                        <div className="text-sm text-red-900 dark:text-red-100 bg-red-50 dark:bg-red-900/20 rounded-lg p-3 border border-red-200 dark:border-red-800/50 leading-relaxed">
+                        <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed pr-6">
                           {request.rejectionDescription}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Rejection Date */}
-                    {request.rejectedAt && (
-                      <div className="pt-2 border-t border-red-200 dark:border-red-800/50">
-                        <div className="text-xs text-red-600 dark:text-red-400">
-                          تاریخ رد: {formatDateFa(request.rejectedAt)}
                         </div>
                       </div>
                     )}
 
                     {/* Fallback if no detailed info */}
                     {!request.rejectionReasonDetails && !request.rejectionDescription && request.rejectionReason && (
-                      <div className="text-sm text-red-900 dark:text-red-100 bg-red-50 dark:bg-red-900/20 rounded-lg p-3 border border-red-200 dark:border-red-800/50">
-                        {request.rejectionReason}
+                      <div className="bg-white dark:bg-gray-800/80 rounded-lg p-4 border border-gray-200 dark:border-gray-700 shadow-sm mb-4">
+                        <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                          {request.rejectionReason}
+                        </div>
                       </div>
                     )}
+
+                    {/* Rejection Date & Next Steps */}
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        {request.rejectedAt && (
+                          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                            <PiClock className="h-3.5 w-3.5" />
+                            <span>تاریخ رد: {formatDateFa(request.rejectedAt)}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+                          <PiSparkle className="h-3.5 w-3.5 text-amber-500" />
+                          <span>می‌توانید درخواست جدیدی ثبت کنید</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </Card>
           )}
 
-          {/* Documents Action Card */}
+          {/* Documents Action Card - Enhanced UI/UX */}
           {(request.status === 'PendingDocuments' || 
             (request.requiresApplicantAction && request.statusDetails?.requiresApplicantAction)) && (
-            <Card variant="default" radius="lg" padding="md" className="border-orange-200 dark:border-orange-800/50 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/10 dark:to-amber-900/10">
+            <Card variant="default" radius="lg" padding="md" className="border-amber-200 dark:border-amber-800/50 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-900/10 dark:via-orange-900/10 dark:to-yellow-900/10">
               <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 mt-0.5">
-                    <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                      <PiClipboardText className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center shadow-sm">
+                      <PiClipboardText className="h-6 w-6 text-amber-600 dark:text-amber-400" />
                     </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-md font-semibold text-orange-900 dark:text-orange-100 mb-2">
-                      تکمیل مدارک مورد نیاز
-                    </h3>
-                    <p className="text-sm text-orange-800 dark:text-orange-200 leading-relaxed mb-4">
-                      برای ادامه فرآیند بررسی درخواست، لازم است مدارک مورد نیاز را تکمیل کنید.
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        تکمیل مدارک مورد نیاز
+                      </h3>
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                        اقدام لازم
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+                      برای ادامه فرآیند بررسی درخواست، لازم است مدارک مورد نیاز را تکمیل و ارسال کنید.
                     </p>
                     
-                    {/* Action Instructions */}
-                    <div className="bg-white dark:bg-gray-800/50 rounded-lg p-4 border border-orange-200 dark:border-orange-800/50 space-y-3">
+                    {/* Action Instructions - Modern Card Design */}
+                    <div className="bg-white dark:bg-gray-800/80 rounded-xl p-5 border border-amber-200 dark:border-amber-800/50 shadow-sm space-y-4">
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0 mt-0.5">
-                          <PiBuildings className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center">
+                            <PiBuildings className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                          </div>
                         </div>
                         <div className="flex-1">
-                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
-                            مراجعه به سازمان
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                              مراجعه به سازمان
+                            </div>
+                            <PiArrowRight className="h-4 w-4 text-amber-500 dark:text-amber-400" />
                           </div>
                           <div className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
                             لطفاً به سازمان مربوطه مراجعه کرده و مدارک مورد نیاز را تکمیل و ارسال کنید.
@@ -441,11 +499,15 @@ export default function RequestDetailPage({ params }: RequestDetailPageProps) {
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-2 pt-2 border-t border-orange-100 dark:border-orange-800/30">
-                        <PiInfo className="h-4 w-4 text-orange-500 dark:text-orange-400 flex-shrink-0" />
-                        <p className="text-xs text-orange-700 dark:text-orange-300 leading-relaxed">
-                          پس از تکمیل و ارسال مدارک، درخواست شما مجدداً بررسی خواهد شد.
-                        </p>
+                      <div className="pt-3 border-t border-amber-100 dark:border-amber-800/30">
+                        <div className="flex items-start gap-2.5">
+                          <PiInfo className="h-4 w-4 text-amber-500 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                              <span className="font-medium text-gray-700 dark:text-gray-300">نکته:</span> پس از تکمیل و ارسال مدارک، درخواست شما مجدداً بررسی خواهد شد و نتیجه به شما اطلاع‌رسانی می‌شود.
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
