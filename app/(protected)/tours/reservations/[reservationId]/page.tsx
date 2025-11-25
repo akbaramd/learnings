@@ -504,14 +504,15 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
     setIsDownloadingTicket(true);
     
     try {
-      // Dynamically import html2canvas
+      // Dynamically import html2canvas and qrcode
       const html2canvas = (await import('html2canvas')).default;
+      const QRCode = (await import('qrcode')).default;
       
       // Create a container for tickets
       const ticketContainer = document.createElement('div');
       ticketContainer.style.position = 'absolute';
       ticketContainer.style.left = '-9999px';
-      ticketContainer.style.width = '800px';
+      ticketContainer.style.width = '1000px';
       ticketContainer.style.padding = '40px';
       ticketContainer.style.backgroundColor = '#ffffff';
       ticketContainer.style.color = '#111827';
@@ -529,94 +530,166 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
         return div.innerHTML;
       };
 
+      // Helper function to generate QR code data URL
+      const generateQRCode = async (data: string): Promise<string> => {
+        try {
+          return await QRCode.toDataURL(data, {
+            width: 200,
+            margin: 1,
+            color: {
+              dark: '#059669',
+              light: '#FFFFFF',
+            },
+          });
+        } catch (error) {
+          console.error('Error generating QR code:', error);
+          return '';
+        }
+      };
+
       // Create ticket HTML for each participant
-      const ticketsHTML = details.participants.map((participant, index) => {
-        const participantPrice = pricing?.participants?.find(p => p.participantId === participant.id)?.requiredAmount ?? participant.requiredAmountRials ?? 0;
-        const isParticipantFree = isFree(false, participantPrice);
-        
-        return `
-          <div style="margin-bottom: ${index < details.participants!.length - 1 ? '60px' : '0'}; border: 2px solid rgb(5, 150, 105); border-radius: 12px; padding: 30px; background-color: rgb(255, 255, 255);">
-            <div style="text-align: center; margin-bottom: 25px;">
-              <h2 style="margin: 0; font-size: 28px; font-weight: bold; color: rgb(5, 150, 105);">بلیط تور و رویداد</h2>
-              <div style="margin-top: 10px; font-size: 18px; color: rgb(4, 120, 87); font-weight: 600;">${escapeHtml(details.tour?.title || 'تور')}</div>
+      const ticketsHTML = await Promise.all(
+        details.participants.map(async (participant, index) => {
+          const participantPrice = pricing?.participants?.find(p => p.participantId === participant.id)?.requiredAmount ?? participant.requiredAmountRials ?? 0;
+          const isParticipantFree = isFree(false, participantPrice);
+          
+          // Create QR code data: combination of reservationId, nationalNumber, trackingCode, and acceptanceCode
+          const qrDataParts = [
+            reservationId || '',
+            participant.nationalNumber || '',
+            details.trackingCode || '',
+            participant.acceptanceCode || '',
+          ].filter(Boolean);
+          const qrData = qrDataParts.join('|');
+          const qrCodeDataUrl = await generateQRCode(qrData);
+          
+          return `
+            <div style="box-sizing: border-box; margin-bottom: ${index < details.participants!.length - 1 ? '60px' : '0'}; border: 2px solid rgb(5, 150, 105); border-radius: 12px; padding: 0; background-color: rgb(255, 255, 255); display: flex; flex-direction: row; align-items: stretch;">
+            <!-- Tear-off Stub (Right side in RTL) -->
+              <div style="width: 220px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: rgb(243, 244, 246); border-left: 2px dashed rgb(5, 150, 105); text-align: center;">
+                <div style="margin-bottom: 15px; width: 100%;">
+                  <div style="font-size: 11px; color: rgb(55, 65, 81); font-weight: 600; margin-bottom: 5px;">نام و نام خانوادگی:</div>
+                  <div style="font-size: 13px; color: rgb(17, 24, 39); font-weight: 500; margin-bottom: 12px;">${escapeHtml(participant.fullName || `${participant.firstName || ''} ${participant.lastName || ''}`.trim())}</div>
+                  
+                  ${participant.nationalNumber ? `
+                  <div style="font-size: 11px; color: rgb(55, 65, 81); font-weight: 600; margin-bottom: 5px;">کد ملی:</div>
+                  <div style="font-size: 13px; color: rgb(17, 24, 39); font-weight: 500; margin-bottom: 12px;">${escapeHtml(participant.nationalNumber)}</div>
+                  ` : ''}
+                </div>
+                
+                ${details.trackingCode ? `
+                  <div style="text-align: center; margin-bottom: 15px; width: 100%;">
+                    <div style="font-size: 10px; color: rgb(55, 65, 81); font-weight: 600; margin-bottom: 4px;">کد پیگیری رزرو</div>
+                    <div style="font-size: 11px; color: rgb(5, 150, 105); font-family: 'Courier New', monospace;">${escapeHtml(details.trackingCode)}</div>
+                  </div>
+                ` : ''}
+                ${participant.acceptanceCode ? `
+                  <div style="text-align: center; margin-bottom: 10px; width: 100%;">
+                    <div style="font-size: 10px; color: rgb(55, 65, 81); font-weight: 600; margin-bottom: 4px;">کد پذیرش</div>
+                    <div style="font-size: 11px; color: rgb(5, 150, 105); font-family: 'Courier New', monospace;">${escapeHtml(participant.acceptanceCode)}</div>
+                  </div>
+                ` : ''}
+              </div>
+              <!-- Content Section (Left side in RTL) -->
+              <div style="flex: 1; padding: 30px; ">
+                <div style="margin-bottom: 20px;">
+                  <div style="font-size: 16px; color: rgb(55, 65, 81); font-weight: 700; margin-bottom: 8px; text-align: center;">سازمان نظام مهندسی ساختمان آذربایجان غربی</div>
+                  <div style="font-size: 14px; color: rgb(107, 114, 128); font-weight: 600; margin-bottom: 10px; text-align: center;">بلیط رزرو تور و رویداد</div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                    <span style="font-weight: 600; color: rgb(55, 65, 81);">عنوان:</span>
+                    <span style="font-size: 18px; font-weight: bold; color: rgb(4, 120, 87);">${escapeHtml(details.tour?.title || 'تور')}</span>
+                  </div>
+                  
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                    <span style="font-weight: 600; color: rgb(55, 65, 81);">نام و نام خانوادگی:</span>
+                    <span style="font-size: 18px; font-weight: bold; color: rgb(17, 24, 39);">${escapeHtml(participant.fullName || `${participant.firstName || ''} ${participant.lastName || ''}`.trim())}</span>
+                  </div>
+                  
+                  ${participant.nationalNumber ? `
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                    <span style="font-weight: 600; color: rgb(55, 65, 81);">کد ملی:</span>
+                    <span style="font-size: 16px; color: rgb(17, 24, 39);">${escapeHtml(participant.nationalNumber)}</span>
+                  </div>
+                  ` : ''}
+                  
+                  ${details.tour?.tourStart ? `
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                    <span style="font-weight: 600; color: rgb(55, 65, 81);">تاریخ شروع:</span>
+                    <span style="font-size: 16px; color: rgb(17, 24, 39);">${escapeHtml(formatDateFa(details.tour.tourStart))}</span>
+                  </div>
+                  ` : ''}
+                  
+                  ${details.tour?.tourEnd ? `
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                    <span style="font-weight: 600; color: rgb(55, 65, 81);">تاریخ پایان:</span>
+                    <span style="font-size: 16px; color: rgb(17, 24, 39);">${escapeHtml(formatDateFa(details.tour.tourEnd))}</span>
+                  </div>
+                  ` : ''}
+                  
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                    <span style="font-weight: 600; color: rgb(55, 65, 81);">مبلغ:</span>
+                    <span style="font-size: 18px; font-weight: bold; color: rgb(5, 150, 105);">
+                      ${isParticipantFree ? 'رایگان' : `${formatCurrencyFa(participantPrice)} ریال`}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- QR Code Section (Middle) -->
+              <div style="width: 250px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid rgb(5, 150, 105);">
+                ${qrCodeDataUrl ? `
+                  <img src="${qrCodeDataUrl}" alt="QR Code" style="width: 150px; height: 150px; border: 2px solid rgb(5, 150, 105); border-radius: 6px; padding: 8px; background-color: white; margin-bottom: 12px;" />
+                ` : ''}
+                ${details.trackingCode ? `
+                  <div style="margin-bottom: 15px; width: 100%; text-align: center;">
+                    <div style="font-size: 11px; font-weight: 600; color: rgb(55, 65, 81); margin-bottom: 4px;">کد پیگیری رزرو:</div>
+                    <div style="font-size: 14px; font-weight: bold; color: rgb(17, 24, 39);">${escapeHtml(details.trackingCode)}</div>
+                  </div>
+                ` : ''}
+                ${participant.acceptanceCode ? `
+                  <div style="margin-bottom: 15px; width: 100%; text-align: center;">
+                    <div style="font-size: 12px; font-weight: 600; color: rgb(5, 150, 105); margin-bottom: 4px;">کد پذیرش:</div>
+                    <div style="font-size: 16px;color: rgb(5, 150, 105); font-weight: bold;">${escapeHtml(participant.acceptanceCode)}</div>
+                  </div>
+                ` : ''}
+              </div>
+              
+              
             </div>
-            
-            <div style="border-top: 2px dashed rgb(5, 150, 105); padding-top: 20px; margin-bottom: 20px;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                <span style="font-weight: 600; color: rgb(55, 65, 81);">نام و نام خانوادگی:</span>
-                <span style="font-size: 18px; font-weight: bold; color: rgb(17, 24, 39);">${escapeHtml(participant.fullName || `${participant.firstName || ''} ${participant.lastName || ''}`.trim())}</span>
-              </div>
-              
-              ${participant.nationalNumber ? `
-              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                <span style="font-weight: 600; color: rgb(55, 65, 81);">کد ملی:</span>
-                <span style="font-size: 16px; color: rgb(17, 24, 39);">${escapeHtml(participant.nationalNumber)}</span>
-              </div>
-              ` : ''}
-              
-              ${participant.acceptanceCode ? `
-              <div style="display: flex; justify-content: space-between; margin-bottom: 15px; background-color: rgb(236, 253, 245); padding: 12px; border-radius: 8px; border: 1px solid rgb(16, 185, 129);">
-                <span style="font-weight: 700; color: rgb(4, 120, 87); font-size: 16px;">کد پذیرش:</span>
-                <span style="font-size: 22px; font-weight: bold; color: rgb(5, 150, 105); font-family: 'Courier New', monospace; letter-spacing: 2px;">${escapeHtml(participant.acceptanceCode)}</span>
-              </div>
-              ` : ''}
-              
-              ${details.trackingCode ? `
-              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                <span style="font-weight: 600; color: rgb(55, 65, 81);">کد پیگیری رزرو:</span>
-                <span style="font-size: 14px; color: rgb(107, 114, 128); font-family: 'Courier New', monospace;">${escapeHtml(details.trackingCode)}</span>
-              </div>
-              ` : ''}
-              
-              ${details.tour?.tourStart ? `
-              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                <span style="font-weight: 600; color: rgb(55, 65, 81);">تاریخ شروع:</span>
-                <span style="font-size: 16px; color: rgb(17, 24, 39);">${escapeHtml(formatDateFa(details.tour.tourStart))}</span>
-              </div>
-              ` : ''}
-              
-              ${details.tour?.tourEnd ? `
-              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                <span style="font-weight: 600; color: rgb(55, 65, 81);">تاریخ پایان:</span>
-                <span style="font-size: 16px; color: rgb(17, 24, 39);">${escapeHtml(formatDateFa(details.tour.tourEnd))}</span>
-              </div>
-              ` : ''}
-              
-              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                <span style="font-weight: 600; color: rgb(55, 65, 81);">نوع شرکت‌کننده:</span>
-                <span style="font-size: 16px; color: rgb(17, 24, 39);">
-                  ${participant.isMainParticipant ? 'شرکت‌کننده اصلی' : participant.isGuest ? 'مهمان' : 'شرکت‌کننده'}
-                </span>
-              </div>
-              
-              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                <span style="font-weight: 600; color: rgb(55, 65, 81);">مبلغ:</span>
-                <span style="font-size: 18px; font-weight: bold; color: rgb(5, 150, 105);">
-                  ${isParticipantFree ? 'رایگان' : `${formatCurrencyFa(participantPrice)} ریال`}
-                </span>
-              </div>
-            </div>
-            
-            <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid rgb(209, 213, 219);">
-              <div style="font-size: 12px; color: rgb(107, 114, 128);">
-                این بلیط معتبر است و باید در روز تور همراه داشته باشید
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
+          `;
+        })
+      );
 
-      ticketContainer.innerHTML = ticketsHTML;
+      ticketContainer.innerHTML = ticketsHTML.join('');
 
-      // Wait for fonts to load
+      // Wait for fonts and images to load
       await document.fonts.ready;
+      
+      // Wait for QR code images to load
+      const images = ticketContainer.querySelectorAll('img');
+      await Promise.all(
+        Array.from(images).map(
+          (img) =>
+            new Promise((resolve, reject) => {
+              if (img.complete) {
+                resolve(null);
+              } else {
+                img.onload = () => resolve(null);
+                img.onerror = reject;
+              }
+            })
+        )
+      );
 
       // Generate canvas with simplified options to avoid color parsing issues
       const canvas = await html2canvas(ticketContainer, {
         logging: false,
         useCORS: true,
         allowTaint: false,
-      } as Html2Canvas.Html2CanvasOptions);
+      });
 
       // Convert to blob and download
       canvas.toBlob((blob: Blob | null) => {
