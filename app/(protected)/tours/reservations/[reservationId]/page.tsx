@@ -22,6 +22,7 @@ import {
   PiArrowClockwise,
   PiWarningCircle,
   PiArrowCounterClockwise,
+  PiDownload,
 } from 'react-icons/pi';
 import { useToast } from '@/src/hooks/useToast';
 
@@ -311,6 +312,7 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
   const [reactivateReservation, { isLoading: isReactivating }] = useReactivateReservationMutation();
   const [showFinalizeDialog, setShowFinalizeDialog] = useState(false);
   const [isTermsAccepted, setIsTermsAccepted] = useState(false);
+  const [isDownloadingTicket, setIsDownloadingTicket] = useState(false);
 
   const reservation = useSelector(selectSelectedReservation);
   const details = reservation || data?.data;
@@ -493,6 +495,160 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
         description: errorMessage,
         variant: 'error',
       });
+    }
+  };
+
+  const handleDownloadTickets = async () => {
+    if (!details || !details.participants || details.participants.length === 0) return;
+    
+    setIsDownloadingTicket(true);
+    
+    try {
+      // Dynamically import html2canvas
+      const html2canvas = (await import('html2canvas')).default;
+      
+      // Create a container for tickets
+      const ticketContainer = document.createElement('div');
+      ticketContainer.style.position = 'absolute';
+      ticketContainer.style.left = '-9999px';
+      ticketContainer.style.width = '800px';
+      ticketContainer.style.padding = '40px';
+      ticketContainer.style.backgroundColor = '#ffffff';
+      ticketContainer.style.color = '#111827';
+      ticketContainer.style.fontFamily = 'Vazirmatn, Arial, sans-serif';
+      ticketContainer.style.fontSize = '16px';
+      ticketContainer.style.lineHeight = '1.5';
+      ticketContainer.dir = 'rtl';
+      document.body.appendChild(ticketContainer);
+
+      // Helper function to escape HTML
+      const escapeHtml = (text: string | null | undefined) => {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      };
+
+      // Create ticket HTML for each participant
+      const ticketsHTML = details.participants.map((participant, index) => {
+        const participantPrice = pricing?.participants?.find(p => p.participantId === participant.id)?.requiredAmount ?? participant.requiredAmountRials ?? 0;
+        const isParticipantFree = isFree(false, participantPrice);
+        
+        return `
+          <div style="margin-bottom: ${index < details.participants!.length - 1 ? '60px' : '0'}; border: 2px solid rgb(5, 150, 105); border-radius: 12px; padding: 30px; background-color: rgb(255, 255, 255);">
+            <div style="text-align: center; margin-bottom: 25px;">
+              <h2 style="margin: 0; font-size: 28px; font-weight: bold; color: rgb(5, 150, 105);">بلیط تور و رویداد</h2>
+              <div style="margin-top: 10px; font-size: 18px; color: rgb(4, 120, 87); font-weight: 600;">${escapeHtml(details.tour?.title || 'تور')}</div>
+            </div>
+            
+            <div style="border-top: 2px dashed rgb(5, 150, 105); padding-top: 20px; margin-bottom: 20px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <span style="font-weight: 600; color: rgb(55, 65, 81);">نام و نام خانوادگی:</span>
+                <span style="font-size: 18px; font-weight: bold; color: rgb(17, 24, 39);">${escapeHtml(participant.fullName || `${participant.firstName || ''} ${participant.lastName || ''}`.trim())}</span>
+              </div>
+              
+              ${participant.nationalNumber ? `
+              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <span style="font-weight: 600; color: rgb(55, 65, 81);">کد ملی:</span>
+                <span style="font-size: 16px; color: rgb(17, 24, 39);">${escapeHtml(participant.nationalNumber)}</span>
+              </div>
+              ` : ''}
+              
+              ${participant.acceptanceCode ? `
+              <div style="display: flex; justify-content: space-between; margin-bottom: 15px; background-color: rgb(236, 253, 245); padding: 12px; border-radius: 8px; border: 1px solid rgb(16, 185, 129);">
+                <span style="font-weight: 700; color: rgb(4, 120, 87); font-size: 16px;">کد پذیرش:</span>
+                <span style="font-size: 22px; font-weight: bold; color: rgb(5, 150, 105); font-family: 'Courier New', monospace; letter-spacing: 2px;">${escapeHtml(participant.acceptanceCode)}</span>
+              </div>
+              ` : ''}
+              
+              ${details.trackingCode ? `
+              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <span style="font-weight: 600; color: rgb(55, 65, 81);">کد پیگیری رزرو:</span>
+                <span style="font-size: 14px; color: rgb(107, 114, 128); font-family: 'Courier New', monospace;">${escapeHtml(details.trackingCode)}</span>
+              </div>
+              ` : ''}
+              
+              ${details.tour?.tourStart ? `
+              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <span style="font-weight: 600; color: rgb(55, 65, 81);">تاریخ شروع:</span>
+                <span style="font-size: 16px; color: rgb(17, 24, 39);">${escapeHtml(formatDateFa(details.tour.tourStart))}</span>
+              </div>
+              ` : ''}
+              
+              ${details.tour?.tourEnd ? `
+              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <span style="font-weight: 600; color: rgb(55, 65, 81);">تاریخ پایان:</span>
+                <span style="font-size: 16px; color: rgb(17, 24, 39);">${escapeHtml(formatDateFa(details.tour.tourEnd))}</span>
+              </div>
+              ` : ''}
+              
+              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <span style="font-weight: 600; color: rgb(55, 65, 81);">نوع شرکت‌کننده:</span>
+                <span style="font-size: 16px; color: rgb(17, 24, 39);">
+                  ${participant.isMainParticipant ? 'شرکت‌کننده اصلی' : participant.isGuest ? 'مهمان' : 'شرکت‌کننده'}
+                </span>
+              </div>
+              
+              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <span style="font-weight: 600; color: rgb(55, 65, 81);">مبلغ:</span>
+                <span style="font-size: 18px; font-weight: bold; color: rgb(5, 150, 105);">
+                  ${isParticipantFree ? 'رایگان' : `${formatCurrencyFa(participantPrice)} ریال`}
+                </span>
+              </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid rgb(209, 213, 219);">
+              <div style="font-size: 12px; color: rgb(107, 114, 128);">
+                این بلیط معتبر است و باید در روز تور همراه داشته باشید
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      ticketContainer.innerHTML = ticketsHTML;
+
+      // Wait for fonts to load
+      await document.fonts.ready;
+
+      // Generate canvas with simplified options to avoid color parsing issues
+      const canvas = await html2canvas(ticketContainer, {
+        logging: false,
+        useCORS: true,
+        allowTaint: false,
+      } as Html2Canvas.Html2CanvasOptions);
+
+      // Convert to blob and download
+      canvas.toBlob((blob: Blob | null) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `بلیط-${details.trackingCode || reservationId}-${new Date().getTime()}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          
+          toast({
+            title: 'موفق',
+            description: 'بلیط‌ها با موفقیت دانلود شد',
+            variant: 'success',
+          });
+        }
+        
+        // Cleanup
+        document.body.removeChild(ticketContainer);
+        setIsDownloadingTicket(false);
+      }, 'image/png');
+    } catch (error) {
+      console.error('Error generating ticket image:', error);
+      toast({
+        title: 'خطا',
+        description: 'خطا در ایجاد تصویر بلیط',
+        variant: 'error',
+      });
+      setIsDownloadingTicket(false);
     }
   };
 
@@ -812,6 +968,22 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
                             ✓ پرداخت شده
                           </div>
                         )}
+                        {status === 'Confirmed' && participant.acceptanceCode && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <span className="text-caption font-medium text-gray-700 dark:text-gray-300">کد پذیرش:</span>
+                            <span className="text-caption font-mono font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded border border-emerald-200 dark:border-emerald-800">
+                              {participant.acceptanceCode}
+                            </span>
+                            <button
+                              onClick={() => copyToClipboard(participant.acceptanceCode || '', toast)}
+                              className="p-1 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition"
+                              aria-label="کپی کد پذیرش"
+                              title="کپی کد پذیرش"
+                            >
+                              <PiCopy className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -901,6 +1073,22 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
                     <div className="text-xs">{details.cancellationReason}</div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Download Tickets Button - Only for Confirmed reservations */}
+            {status === 'Confirmed' && details.participants && details.participants.length > 0 && (
+              <div className="bg-surface rounded-lg p-4">
+                <Button
+                  onClick={handleDownloadTickets}
+                  variant="solid"
+                  className="w-full"
+                  leftIcon={<PiDownload className="h-5 w-5" />}
+                  disabled={isDownloadingTicket}
+                  loading={isDownloadingTicket}
+                >
+                  {isDownloadingTicket ? 'در حال ایجاد بلیط‌ها...' : 'دانلود بلیط‌ها'}
+                </Button>
               </div>
             )}
           </div>

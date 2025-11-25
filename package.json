@@ -18,6 +18,7 @@
     "canvas": "^3.2.0",
     "critters": "^0.0.23",
     "embla-carousel-react": "^8.6.0",
+    "html2canvas": "^1.4.1",
     "idb": "^8.0.3",
     "jalaali-js": "^1.2.8",
     "next": "16.0.0",
@@ -33,6 +34,7 @@
   "devDependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
     "@tailwindcss/postcss": "^4",
+    "@types/html2canvas": "^0.5.35",
     "@types/jalaali-js": "^1.2.0",
     "@types/node": "^20",
     "@types/react": "^19.2.2",
