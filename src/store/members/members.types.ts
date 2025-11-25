@@ -12,6 +12,9 @@ export interface MemberDetailDto extends ApiMemberDetailDto {
   fullName?: string | null;
   membershipNumber?: string | null;
   email?: string | null;
+  gender?: string | null;         // Gender: "Both", "Men", "Women"
+  genderText?: string | null;      // Localized gender text
+  isSpecial?: boolean;             // Special member status
   capabilityList?: Array<{ id?: string; title?: string | null }> | null;
   featureList?: Array<{ id?: string; title?: string | null }> | null;
   agencyList?: Array<{ id?: string; title?: string | null }> | null;

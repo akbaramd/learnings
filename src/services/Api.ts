@@ -4111,6 +4111,8 @@ export interface TourDetailWithUserReservationDto {
   isActive?: boolean;
   status?: string | null;
   capacityState?: string | null;
+  gender?: string | null;
+  genderText?: string | null;
   /** @format date-time */
   registrationStart?: string | null;
   /** @format date-time */
@@ -4325,6 +4327,8 @@ export interface TourWithUserReservationDto {
   isActive?: boolean;
   status?: string | null;
   capacityState?: string | null;
+  gender?: string | null;
+  genderText?: string | null;
   /** @format date-time */
   registrationStart?: string | null;
   /** @format date-time */

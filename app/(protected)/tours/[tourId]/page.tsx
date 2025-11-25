@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/src/components/ui/PageHeader';
 import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
@@ -8,7 +8,9 @@ import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
 import { useToast } from '@/src/hooks/useToast';
 import { useGetTourDetailQuery, useStartReservationMutation } from '@/src/store/tours/tours.queries';
-import { CapacityDetailDto } from '@/src/services/Api';
+import { CapacityDetailDto, AgencyDetailDto } from '@/src/services/Api';
+import { selectMemberGender, selectMemberAgencies, selectMemberIsSpecial } from '@/src/store/members';
+import { useAppSelector } from '@/src/hooks/store';
 import {
   PiMapPinDuotone,
   PiCalendar,
@@ -20,6 +22,7 @@ import {
   PiArrowRight,
   PiStar,
   PiShieldCheck,
+  PiWarning,
 } from 'react-icons/pi';
 
 function formatCurrencyFa(amount: number) {
@@ -50,6 +53,80 @@ interface TourDetailsPageProps {
   params: Promise<{ tourId: string }>;
 }
 
+// Gender badge helper
+function getGenderBadge(gender: string | null | undefined) {
+  if (!gender) return null;
+  
+  const normalizedGender = gender.toLowerCase().trim();
+  
+  switch (normalizedGender) {
+    case 'men':
+      return {
+        text: 'آقایان',
+        className: 'bg-blue-600 text-white',
+      };
+    case 'women':
+      return {
+        text: 'بانوان',
+        className: 'bg-pink-600 text-white',
+      };
+    case 'both':
+    default:
+      return null; // Don't show badge for "Both"
+  }
+}
+
+// Check if member gender matches tour gender
+function isGenderMismatch(memberGender: string | null | undefined, tourGender: string | null | undefined): boolean {
+  if (!tourGender || tourGender.toLowerCase() === 'both') return false;
+  if (!memberGender) return false;
+  
+  const normalizedMember = memberGender.toLowerCase().trim();
+  const normalizedTour = tourGender.toLowerCase().trim();
+  
+  return normalizedMember !== normalizedTour;
+}
+
+// Check if member has required agencies for the tour
+function checkAgencyMismatch(
+  memberAgencies: Array<{ id?: string; title?: string | null }> | null | undefined,
+  tourAgencies: AgencyDetailDto[] | null | undefined
+): { hasMismatch: boolean; missingAgencies: string[] } {
+  // If tour has no required agencies, member can book
+  if (!tourAgencies || tourAgencies.length === 0) {
+    return { hasMismatch: false, missingAgencies: [] };
+  }
+
+  // If member has no agencies, they can't book
+  if (!memberAgencies || memberAgencies.length === 0) {
+    return {
+      hasMismatch: true,
+      missingAgencies: tourAgencies.map(a => a.agencyName || a.agencyId || 'دفتر نمایندگی').filter(Boolean) as string[],
+    };
+  }
+
+  // Get member agency IDs
+  const memberAgencyIds = new Set(
+    memberAgencies
+      .map(a => a.id)
+      .filter((id): id is string => !!id)
+  );
+
+  // Check which tour agencies are missing
+  const missingAgencies: string[] = [];
+  tourAgencies.forEach(tourAgency => {
+    const tourAgencyId = tourAgency.agencyId;
+    if (tourAgencyId && !memberAgencyIds.has(tourAgencyId)) {
+      missingAgencies.push(tourAgency.agencyName || tourAgencyId);
+    }
+  });
+
+  return {
+    hasMismatch: missingAgencies.length > 0,
+    missingAgencies,
+  };
+}
+
 export default function TourDetailsPage({ params }: TourDetailsPageProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -59,9 +136,40 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
   });
   const [startReservation, { isLoading: isStarting }] = useStartReservationMutation();
   const [selectedCapacityId, setSelectedCapacityId] = useState<string>('');
+  const memberGender = useAppSelector(selectMemberGender);
+  const memberAgencies = useAppSelector(selectMemberAgencies);
+  const memberIsSpecial = useAppSelector(selectMemberIsSpecial);
 
   const tour = tourDetailData?.data;
-  const capacities: CapacityDetailDto[] = tour?.capacities || [];
+  
+  // Filter capacities based on member's special status
+  // Special members see both special and regular capacities, regular members see only regular capacities
+  const capacities: CapacityDetailDto[] = useMemo(() => {
+    const allCapacities: CapacityDetailDto[] = tour?.capacities || [];
+    
+    if (memberIsSpecial) {
+      // Special members: see all capacities (both special and regular)
+      return allCapacities;
+    } else {
+      // Regular members: show only regular capacities (not special)
+      return allCapacities.filter(cap => cap.isSpecial !== true);
+    }
+  }, [tour?.capacities, memberIsSpecial]);
+  
+  // Check gender mismatch
+  const hasGenderMismatch = isGenderMismatch(memberGender, tour?.gender);
+  const genderMismatchMessage = tour?.gender?.toLowerCase() === 'men' 
+    ? 'این تور فقط برای آقایان است'
+    : tour?.gender?.toLowerCase() === 'women'
+    ? 'این تور فقط برای بانوان است'
+    : '';
+
+  // Check agency mismatch
+  const agencyCheck = checkAgencyMismatch(memberAgencies, tour?.agencies || null);
+  const hasAgencyMismatch = agencyCheck.hasMismatch;
+  const missingAgenciesText = agencyCheck.missingAgencies.length > 0
+    ? `دفترهای نمایندگی مورد نیاز: ${agencyCheck.missingAgencies.join('، ')}`
+    : '';
 
   const handleBack = () => {
     router.push('/tours');
@@ -71,7 +179,7 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
     if (!tour) {
       toast({
         title: 'خطا',
-        description: 'اطلاعات تور یافت نشد',
+        description: 'اطلاعات تور و رویداد یافت نشد',
         variant: 'error',
       });
       return;
@@ -80,7 +188,7 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
     if (!tour.id) {
       toast({
         title: 'خطا',
-        description: 'شناسه تور معتبر نیست',
+        description: 'شناسه تور و رویداد معتبر نیست',
         variant: 'error',
       });
       return;
@@ -136,7 +244,7 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
     return (
       <div className="h-full flex flex-col" dir="rtl">
         <PageHeader
-          title="جزئیات تور"
+          title="جزئیات تور و رویداد"
           showBackButton
           onBack={handleBack}
         />
@@ -154,7 +262,7 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
     return (
       <div className="h-full flex flex-col" dir="rtl">
         <PageHeader
-          title="تور یافت نشد"
+          title="تور و رویداد یافت نشد"
           showBackButton
           onBack={handleBack}
         />
@@ -162,10 +270,10 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
           <div className="flex justify-center items-center py-12">
             <div className="text-center">
               <p className="text-xs text-red-600 dark:text-red-400 mb-4">
-                {tourError ? 'خطا در بارگذاری جزئیات تور' : 'تور مورد نظر یافت نشد'}
+                {tourError ? 'خطا در بارگذاری جزئیات تور و رویداد' : 'تور و رویداد مورد نظر یافت نشد'}
               </p>
               <Button onClick={handleBack} size="sm">
-                بازگشت به لیست تورها
+                بازگشت به لیست تور و رویدادها
               </Button>
             </div>
           </div>
@@ -177,7 +285,7 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
   return (
     <div className="h-full flex flex-col" dir="rtl">
       <PageHeader
-        title={tour.title || 'جزئیات تور'}
+        title={tour.title || 'جزئیات تور و رویداد'}
         titleIcon={<PiMapPinDuotone className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
         showBackButton
         onBack={handleBack}
@@ -185,14 +293,63 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
 
       <ScrollableArea className="flex-1" hideScrollbar={true}>
         <div className="p-2 space-y-3 pb-20">
+          {/* Gender Mismatch Alert - Always show at top if mismatch */}
+          {hasGenderMismatch && genderMismatchMessage && (
+            <Card variant="default" radius="lg" padding="md" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 mt-0.5">
+                  <PiWarning className="h-5 w-5 text-red-600 dark:text-red-400" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-red-800 dark:text-red-200 mb-1">
+                    عدم تطابق جنسیت
+                  </p>
+                  <p className="text-[11px] text-red-700 dark:text-red-300">
+                    شما نمی‌توانید برای این تور رزرو انجام دهید. {genderMismatchMessage}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Agency Mismatch Alert - Always show at top if mismatch */}
+          {hasAgencyMismatch && missingAgenciesText && (
+            <Card variant="default" radius="lg" padding="md" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 mt-0.5">
+                  <PiWarning className="h-5 w-5 text-red-600 dark:text-red-400" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-red-800 dark:text-red-200 mb-1">
+                    عدم تطابق دفتر نمایندگی
+                  </p>
+                  <p className="text-[11px] text-red-700 dark:text-red-300">
+                    شما نمی‌توانید برای این تور رزرو انجام دهید. {missingAgenciesText}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
+
           {/* Tour Information - All in one card at top */}
           <Card variant="default" radius="lg" padding="md">
             <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-100 mb-3">
-              اطلاعات تور
+              اطلاعات تور و رویداد
             </h3>
 
             {/* Status Badges */}
             <div className="flex items-center gap-2 flex-wrap mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+              {/* Gender Badge - Only show for Men and Women, not Both - Display first */}
+              {(() => {
+                const genderBadge = getGenderBadge(tour.gender);
+                return genderBadge ? (
+                  <span
+                    className={`px-2 py-1 rounded-full text-[11px] font-medium ${genderBadge.className}`}
+                  >
+                    {genderBadge.text}
+                  </span>
+                ) : null;
+              })()}
               <span
                 className={`px-2 py-1 rounded-full text-[11px] font-medium ${
                   tour.isRegistrationOpen
@@ -274,6 +431,25 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
                         : tour.lowestPriceRials
                         ? `${formatCurrencyFa(tour.lowestPriceRials)} ریال`
                         : 'تماس بگیرید'}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Age Group */}
+              {(tour.minAge || tour.maxAge) && (
+                <div>
+                  <div className="text-[11px] text-gray-500 dark:text-gray-400 mb-1">گروه سنی</div>
+                  <div className="flex items-center gap-1.5 text-xs text-gray-900 dark:text-gray-100">
+                    <PiUsers className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                    <span>
+                      {tour.minAge && tour.maxAge
+                        ? `${formatCurrencyFa(tour.minAge)} تا ${formatCurrencyFa(tour.maxAge)} سال`
+                        : tour.minAge
+                        ? `از ${formatCurrencyFa(tour.minAge)} سال به بالا`
+                        : tour.maxAge
+                        ? `تا ${formatCurrencyFa(tour.maxAge)} سال`
+                        : 'نامشخص'}
                     </span>
                   </div>
                 </div>
@@ -408,6 +584,12 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
                               {capacity.description || 'ظرفیت'}
                             </h4>
                             <div className="flex items-center gap-1.5 flex-wrap">
+                              {/* Special Capacity Badge - Golden/VIP */}
+                              {capacity.isSpecial === true && (
+                                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-gradient-to-r from-yellow-400 to-yellow-600 text-yellow-900 dark:from-yellow-500 dark:to-yellow-700 dark:text-yellow-100 shadow-sm border border-yellow-300 dark:border-yellow-600">
+                                  ⭐ ویژه
+                                </span>
+                              )}
                               {capacity.isRegistrationOpen && capacity.isActive && !capacity.isFullyBooked ? (
                                 <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
                                   <PiCheckCircle className="h-3 w-3" />
@@ -533,7 +715,7 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
       </ScrollableArea>
 
       {/* Sticky Action Button at Bottom */}
-      {tour.isRegistrationOpen && !tour.isFullyBooked && capacities.length > 0 && (
+      {tour.isRegistrationOpen && !tour.isFullyBooked && capacities.length > 0 && !hasGenderMismatch && !hasAgencyMismatch && (
         <div className="sticky bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-white via-white to-transparent dark:from-gray-900 dark:via-gray-900 border-t border-gray-200 dark:border-gray-700 z-10">
           <Button
             onClick={handleStartReservation}

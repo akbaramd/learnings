@@ -180,7 +180,7 @@ function WalletCard() {
 ========================= */
 
 const services = [
-  { id: 'tour', title: 'تور', icon: <PiMapPinDuotone className="h-5 w-5" />, accent: 'blue', disabled: false },
+  { id: 'tour', title: 'تور و رویداد', icon: <PiMapPinDuotone className="h-5 w-5" />, accent: 'blue', disabled: false },
   { id: 'facility', title: 'تسهیلات', icon: <PiMoney className="h-5 w-5" />, accent: 'emerald', disabled: false },
   { id: 'survey', title: 'نظرسنجی', icon: <PiFileText className="h-5 w-5" />, accent: 'amber', disabled: false },
 ];
@@ -214,6 +214,8 @@ function useToursList(): { tours: Tour[]; isLoading: boolean; isError: boolean }
       remainingCapacity: t.remainingCapacity ?? 0,
       reservationId: t.reservation?.id ?? null,
       reservationStatus: t.reservation?.status ?? null,
+      gender: t.gender ?? null,
+      genderText: t.genderText ?? null,
     } as Tour));
   }, [data]);
 
@@ -362,7 +364,7 @@ export default function HomeDashboard() {
 
             {/* Tours Section */}
             <section className="px-4 my-6">
-              {toursError && <div className="text-center text-red-600 py-6">خطا در دریافت اطلاعات تورها</div>}
+              {toursError && <div className="text-center text-red-600 py-6">خطا در دریافت اطلاعات تور و رویدادها</div>}
               {toursLoading ? (
                 <div className="space-y-3">
                   <div className="mb-3 flex items-center justify-between px-1">
@@ -378,7 +380,7 @@ export default function HomeDashboard() {
                   </div>
                 </div>
               ) : (
-                !toursError && <TourSection seeAllHref="/tours" title="تورها" dir="rtl" tours={tours} />
+                !toursError && <TourSection seeAllHref="/tours" title="تور و رویدادها" dir="rtl" tours={tours} />
               )}
             </section>
 

@@ -8,6 +8,7 @@ import { useTheme } from '@/src/hooks/useTheme';
 import { NotificationDot } from '@/src/components/ui/NotificationBadge';
 import { GetUnreadCountResponse, useGetUnreadCountQuery } from '@/src/store/notifications';
 import { BottomNavigation } from '@/src/components/navigation/BottomNavigation';
+import { useGetCurrentMemberQuery } from '@/src/store/members';
 import {
   PiBell,
   PiSun,
@@ -133,6 +134,14 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
       refetchOnReconnect: shouldPollNotifications,
     }
   );
+
+  // Auto-fetch member details when authenticated
+  useGetCurrentMemberQuery(undefined, {
+    skip: !isAuthenticated,
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: false,
+    refetchOnReconnect: true,
+  });
 
   // Handle authentication guard and redirects
   useEffect(() => {

@@ -17,6 +17,8 @@ import {
   PiBuildings,
   PiKey,
   PiIdentificationCard,
+  PiGenderMale,
+  PiGenderFemale,
 } from 'react-icons/pi';
 
 // Types for capability, feature, and agency list items
@@ -51,6 +53,36 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
       </div>
     </div>
   );
+}
+
+// Gender badge helper
+function getGenderBadge(gender: string | null | undefined) {
+  if (!gender) return null;
+  
+  const normalizedGender = gender.toLowerCase().trim();
+  
+  switch (normalizedGender) {
+    case 'men':
+      return {
+        text: 'آقایان',
+        className: 'bg-blue-600 text-white',
+        icon: <PiGenderMale className="h-4 w-4" />,
+      };
+    case 'women':
+      return {
+        text: 'بانوان',
+        className: 'bg-pink-600 text-white',
+        icon: <PiGenderFemale className="h-4 w-4" />,
+      };
+    case 'both':
+      return {
+        text: 'هر دو',
+        className: 'bg-purple-600 text-white',
+        icon: <PiUser className="h-4 w-4" />,
+      };
+    default:
+      return null;
+  }
 }
 
 function ListSection<T>({ 
@@ -175,15 +207,27 @@ export default function MemberDetailsPage() {
                       )}
                     </div>
                   </div>
-                  {member.isActive !== undefined && (
-                    <div className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
-                      member.isActive 
-                        ? 'bg-emerald-700/30 text-white border border-white/20' 
-                        : 'bg-white/20 text-white/80'
-                    }`}>
-                      {member.isActive ? 'فعال' : 'غیرفعال'}
-                    </div>
-                  )}
+                  <div className="flex flex-col items-end gap-2">
+                    {member.isActive !== undefined && (
+                      <div className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
+                        member.isActive 
+                          ? 'bg-emerald-700/30 text-white border border-white/20' 
+                          : 'bg-white/20 text-white/80'
+                      }`}>
+                        {member.isActive ? 'فعال' : 'غیرفعال'}
+                      </div>
+                    )}
+                    {/* Gender Badge */}
+                    {(() => {
+                      const genderBadge = getGenderBadge(member.gender);
+                      return genderBadge ? (
+                        <div className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 ${genderBadge.className}`}>
+                          {genderBadge.icon}
+                          <span>{genderBadge.text}</span>
+                        </div>
+                      ) : null;
+                    })()}
+                  </div>
                 </div>
               </div>
 
@@ -206,6 +250,22 @@ export default function MemberDetailsPage() {
                       icon={<PiEnvelope className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
                       label="ایمیل"
                       value={member.email as string}
+                    />
+                  )}
+
+                  {(member.gender || member.genderText) && (
+                    <InfoRow
+                      icon={
+                        member.gender?.toLowerCase() === 'men' ? (
+                          <PiGenderMale className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        ) : member.gender?.toLowerCase() === 'women' ? (
+                          <PiGenderFemale className="h-5 w-5 text-pink-600 dark:text-pink-400" />
+                        ) : (
+                          <PiUser className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                        )
+                      }
+                      label="جنسیت"
+                      value={member.genderText || (member.gender ? getGenderBadge(member.gender)?.text || member.gender : null)}
                     />
                   )}
                 </div>
@@ -236,9 +296,9 @@ export default function MemberDetailsPage() {
               {/* Agencies */}
               {member?.agencyList && Array.isArray(member.agencyList) && member.agencyList.length > 0 && (
                 <ListSection<AgencyListItem>
-                  title="آژانس‌ها"
+                  title="دفترهای نمایندگی"
                   items={member.agencyList}
-                  getLabel={(item) => item.id || 'آژانس'}
+                  getLabel={(item) => item.id || 'دفتر نمایندگی'}
                   getValue={(item) => item.title || 'بدون نام'}
                   icon={<PiBuildings className="h-5 w-5" />}
                 />

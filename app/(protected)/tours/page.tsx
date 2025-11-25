@@ -64,6 +64,8 @@ export default function ToursPage() {
       remainingCapacity: t.remainingCapacity ?? 0,
       reservationId: t.reservation?.id ?? null,
       reservationStatus: t.reservation?.status ?? null,
+      gender: t.gender ?? null,
+      genderText: t.genderText ?? null,
     }));
   }, [tours]);
 
@@ -125,9 +127,9 @@ export default function ToursPage() {
       `}</style>
       <div className="h-full flex flex-col" dir="rtl">
         <PageHeader
-          title="تورها"
+          title="تور و رویدادها"
           titleIcon={<PiMapPinDuotone className="h-5 w-5" />}
-          subtitle={`${pagination?.totalCount || 0} تور`}
+          subtitle={`${pagination?.totalCount || 0} تور و رویداد`}
           showBackButton
           onBack={handleBack}
           rightActions={[

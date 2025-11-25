@@ -24,6 +24,8 @@ export type Tour = {
   remainingCapacity?: number;
   reservationId?: string | null;  // Reservation ID if user has reservation
   reservationStatus?: string | null; // Reservation status if user has reservation
+  gender?: string | null;         // Gender: "Both", "Men", "Women"
+  genderText?: string | null;     // Localized gender text
 };
 
 type TourCardProps = {
@@ -40,8 +42,11 @@ type TourCardProps = {
 const faDigits = (input: string | number) =>
   String(input).replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)]);
 
-const priceFa = (price?: number) =>
-  price != null ? `${faDigits(price.toLocaleString('fa-IR'))} ریال` : '—';
+const priceFa = (price?: number) => {
+  if (price == null) return '—';
+  if (price === 0) return 'رایگان';
+  return `${faDigits(price.toLocaleString('fa-IR'))} ریال`;
+};
 
 const formatDateRangeFa = (start?: string, end?: string) => {
   if (!start || !end) return 'نامشخص';
@@ -175,6 +180,30 @@ const getReservationStatusBadge = (status: string | null | undefined) => {
   }
 };
 
+/* ===================== Gender Badge Helpers ===================== */
+
+const getGenderBadge = (gender: string | null | undefined) => {
+  if (!gender) return null;
+  
+  const normalizedGender = gender.toLowerCase().trim();
+  
+  switch (normalizedGender) {
+    case 'men':
+      return {
+        text: 'آقایان',
+        className: 'bg-blue-600',
+      };
+    case 'women':
+      return {
+        text: 'بانوان',
+        className: 'bg-pink-600',
+      };
+    case 'both':
+    default:
+      return null; // Don't show badge for "Both"
+  }
+};
+
 /* ===================== TourCard ===================== */
 
 export function TourCard({
@@ -194,6 +223,45 @@ export function TourCard({
   const reservationBadge = hasReservation && tour.reservationStatus 
     ? getReservationStatusBadge(tour.reservationStatus)
     : null;
+
+  // Check registration status based on dates
+  const getRegistrationStatus = () => {
+    const now = new Date().getTime();
+    const registrationStart = tour.registrationStart ? new Date(tour.registrationStart).getTime() : null;
+    const registrationEnd = tour.registrationEnd ? new Date(tour.registrationEnd).getTime() : null;
+
+    // If registration hasn't started yet
+    if (registrationStart && now < registrationStart) {
+      return {
+        text: 'شروع نشده',
+        className: 'bg-gray-500',
+      };
+    }
+
+    // If registration has ended
+    if (registrationEnd && now > registrationEnd) {
+      return {
+        text: 'ثبت‌نام بسته',
+        className: 'bg-rose-500',
+      };
+    }
+
+    // If registration is open (between start and end, or isRegistrationOpen is true)
+    if (tour.isRegistrationOpen) {
+      return {
+        text: 'ثبت‌نام باز',
+        className: 'bg-emerald-600',
+      };
+    }
+
+    // Default: closed
+    return {
+      text: 'ثبت‌نام بسته',
+      className: 'bg-rose-500',
+    };
+  };
+
+  const registrationStatus = getRegistrationStatus();
 
   const handleButtonClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -230,14 +298,14 @@ export function TourCard({
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
 
         {/* Registration Status Badges */}
-        <div className="absolute top-2 right-2 flex flex-col gap-1.5">
+        <div className="absolute top-2 right-2 flex flex-row gap-1.5 flex-wrap">
           <span
             className={[
               'px-2 py-1 text-xs font-medium rounded-full text-white shadow',
-              tour.isRegistrationOpen ? 'bg-emerald-600' : 'bg-rose-500',
+              registrationStatus.className,
             ].join(' ')}
           >
-            {tour.isRegistrationOpen ? 'ثبت‌نام باز' : 'ثبت‌نام بسته'}
+            {registrationStatus.text}
           </span>
           {tour.isFullyBooked && (
             <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-700 text-white shadow">
@@ -249,6 +317,20 @@ export function TourCard({
               ⚠️ کم‌ظرفیت
             </span>
           )}
+          {/* Gender Badge - Only show for Men and Women, not Both */}
+          {(() => {
+            const genderBadge = getGenderBadge(tour.gender);
+            return genderBadge ? (
+              <span
+                className={[
+                  'px-2 py-1 text-xs font-medium rounded-full text-white shadow',
+                  genderBadge.className,
+                ].join(' ')}
+              >
+                {genderBadge.text}
+              </span>
+            ) : null;
+          })()}
         </div>
 
         {/* Reservation Status at bottom of image */}

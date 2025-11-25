@@ -41,3 +41,15 @@ export {
   useLazyGetCurrentMemberQuery,
 } from './members.queries';
 
+// Selectors
+export {
+  selectCurrentMember,
+  selectMembersLoading,
+  selectMembersError,
+  selectMemberGender,
+  selectMemberGenderText,
+  selectMemberAgencies,
+  selectMemberIsSpecial,
+  selectMembersLastFetched,
+} from './members.selectors';
+
