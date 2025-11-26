@@ -113,6 +113,78 @@ function getStatusBadge(status: string | null | undefined) {
         bg: 'bg-red-100 dark:bg-red-900/30',
         border: 'border-red-200 dark:border-red-800',
       };
+    case 'SystemCancelled':
+      return {
+        icon: PiXCircle,
+        text: 'لغو شده توسط سیستم',
+        color: 'text-red-600 dark:text-red-400',
+        bg: 'bg-red-100 dark:bg-red-900/30',
+        border: 'border-red-200 dark:border-red-800',
+      };
+    case 'ProcessingFailed':
+      return {
+        icon: PiWarningCircle,
+        text: 'خطا در پردازش',
+        color: 'text-red-600 dark:text-red-400',
+        bg: 'bg-red-100 dark:bg-red-900/30',
+        border: 'border-red-200 dark:border-red-800',
+      };
+    case 'CancellationProcessing':
+      return {
+        icon: PiClock,
+        text: 'در حال پردازش لغو',
+        color: 'text-orange-600 dark:text-orange-400',
+        bg: 'bg-orange-100 dark:bg-orange-900/30',
+        border: 'border-orange-200 dark:border-orange-800',
+      };
+    case 'CancellationProcessed':
+      return {
+        icon: PiCheckCircle,
+        text: 'لغو پردازش شده',
+        color: 'text-gray-600 dark:text-gray-400',
+        bg: 'bg-gray-100 dark:bg-gray-800',
+        border: 'border-gray-200 dark:border-gray-700',
+      };
+    case 'Waitlisted':
+      return {
+        icon: PiClock,
+        text: 'در لیست انتظار',
+        color: 'text-yellow-600 dark:text-yellow-400',
+        bg: 'bg-yellow-100 dark:bg-yellow-900/30',
+        border: 'border-yellow-200 dark:border-yellow-800',
+      };
+    case 'CancellationRequested':
+      return {
+        icon: PiClock,
+        text: 'درخواست لغو',
+        color: 'text-orange-600 dark:text-orange-400',
+        bg: 'bg-orange-100 dark:bg-orange-900/30',
+        border: 'border-orange-200 dark:border-orange-800',
+      };
+    case 'AmendmentRequested':
+      return {
+        icon: PiClock,
+        text: 'درخواست تغییر',
+        color: 'text-blue-600 dark:text-blue-400',
+        bg: 'bg-blue-100 dark:bg-blue-900/30',
+        border: 'border-blue-200 dark:border-blue-800',
+      };
+    case 'NoShow':
+      return {
+        icon: PiXCircle,
+        text: 'عدم حضور',
+        color: 'text-red-600 dark:text-red-400',
+        bg: 'bg-red-100 dark:bg-red-900/30',
+        border: 'border-red-200 dark:border-red-800',
+      };
+    case 'Rejected':
+      return {
+        icon: PiXCircle,
+        text: 'رد شده',
+        color: 'text-red-600 dark:text-red-400',
+        bg: 'bg-red-100 dark:bg-red-900/30',
+        border: 'border-red-200 dark:border-red-800',
+      };
     default:
       return {
         icon: PiClock,
@@ -959,6 +1031,38 @@ export default function ReservationDetailsPage({ params }: ReservationDetailsPag
                       مهلت پرداخت این رزرو به پایان رسیده است. جهت ادامه، لازم است ظرفیت را مجدداً رزرو و فرآیند پرداخت را آغاز کنید.
                       
                     </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Rejected Status Badge with Alert */}
+              {status === 'Rejected' && (
+                <div className="border-t border-subtle pt-3 mt-3">
+                  <div className="flex flex-col gap-2">
+                    <div className={`px-3 py-1.5 rounded-lg ${badge.bg} ${badge.border} border inline-flex items-center gap-2 w-fit`}>
+                      <StatusIcon className={`h-4 w-4 ${badge.color}`} />
+                      <span className={`text-caption font-semibold ${badge.color}`}>{badge.text}</span>
+                    </div>
+                    <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+                      <div className="flex items-start gap-3">
+                        <PiWarningCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <div className="text-sm font-semibold text-red-800 dark:text-red-200 mb-2">
+                            دلیل رد رزرو
+                          </div>
+                          <div className="text-sm text-red-700 dark:text-red-300 leading-relaxed">
+                            رزرو شما به دلیل عدم تطابق با شرایط تور رد شده است. ممکن است دلیل رد یکی از موارد زیر باشد:
+                          </div>
+                          <ul className="mt-2 space-y-1 text-sm text-red-700 dark:text-red-300 list-disc list-inside">
+                            <li>محدودیت جنسیتی تور</li>
+                            <li>محدودیت منطقه‌ای (شهرستان محل سکونت)</li>
+                          </ul>
+                          <div className="mt-3 text-xs text-red-600 dark:text-red-400 italic">
+                            لطفاً شرایط تور را بررسی کرده و در صورت نیاز با پشتیبانی تماس بگیرید.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
