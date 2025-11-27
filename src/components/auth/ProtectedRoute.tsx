@@ -41,10 +41,24 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const refreshTokenChecked = useSelector(selectRefreshTokenChecked);
   const [checking, setChecking] = useState(true);
   const hasAttemptedRef = useRef(false);
+  const lastSessionKeyRef = useRef<string | null>(null);
   const { data: session, status: sessionStatus } = useSession();
 
   useEffect(() => {
-    // Prevent multiple checks
+    // 🔥 CRITICAL: Reset hasAttemptedRef if session status changed
+    // This prevents stale state when session changes (e.g., logout/login)
+    // We track the last session status to detect changes
+    const currentSessionKey = `${sessionStatus}-${session?.accessToken ? 'has-token' : 'no-token'}-${accessToken ? 'redux-token' : 'no-redux-token'}`;
+    
+    // If session key changed, reset hasAttemptedRef to allow re-check
+    if (lastSessionKeyRef.current !== null && lastSessionKeyRef.current !== currentSessionKey) {
+      hasAttemptedRef.current = false;
+      // Use setTimeout to avoid synchronous setState in effect
+      setTimeout(() => setChecking(true), 0);
+    }
+    lastSessionKeyRef.current = currentSessionKey;
+
+    // Prevent multiple checks for the same session state
     if (hasAttemptedRef.current) {
       return;
     }
@@ -67,9 +81,17 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       return;
     }
 
-    // If NextAuth session is loading, wait
+    // If NextAuth session is loading, wait (with timeout to prevent infinite wait)
     if (sessionStatus === 'loading') {
-      return;
+      // Set timeout to prevent infinite wait if session never resolves
+      const timeoutId = setTimeout(() => {
+        if (sessionStatus === 'loading') {
+          console.warn('[ProtectedRoute] Session loading timeout - proceeding with check');
+          hasAttemptedRef.current = false; // Allow check to proceed
+        }
+      }, 5000); // 5 second timeout
+      
+      return () => clearTimeout(timeoutId);
     }
 
     // If NextAuth session exists but no accessToken, user is not authenticated

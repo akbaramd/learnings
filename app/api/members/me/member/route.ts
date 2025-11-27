@@ -17,7 +17,6 @@ export async function GET(req: NextRequest) {
     const upstream = await api.api.getCurrentMember({});
     const status = upstream.status ?? 200;
 
-    console.log('upstream', upstream.data);
     // Transform to ApplicationResult<T> format
     const response: GetCurrentMemberResponse = {
       isSuccess: !!upstream.data?.isSuccess && !!upstream.data.data,

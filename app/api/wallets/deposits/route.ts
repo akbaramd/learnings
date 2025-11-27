@@ -38,7 +38,6 @@ export async function GET(req: NextRequest) {
       fromDate: queryParams.fromDate || undefined,
       toDate: queryParams.toDate || undefined,
     });
-    console.log('upstream', upstream);
     const status = upstream.status ?? 200;
 
     // Map backend response to frontend GetDepositsResponse type

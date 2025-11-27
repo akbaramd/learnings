@@ -4,13 +4,30 @@ import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { createApiInstance } from '@/app/api/generatedClient';
 import { getRequestInfo } from '@/src/lib/requestInfo';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
 // CRITICAL: Set runtime to nodejs for NextAuth
 // This ensures NextAuth can use Node.js APIs (crypto, etc.)
 // and prevents issues with session endpoint
 export const runtime = 'nodejs';
+
+// 🔥 CRITICAL: Temporary storage for refresh tokens during token rotation
+// In NextAuth v5, cookies().set() in authorize callback may not work
+// We use this Map to temporarily store refresh tokens and set them in response headers
+// Key: request identifier (URL + timestamp), Value: refresh token
+// This Map is cleared after response is sent
+const pendingRefreshTokens = new Map<string, { token: string; expiresAt: number }>();
+
+// Clean up expired entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of pendingRefreshTokens.entries()) {
+    if (value.expiresAt < now) {
+      pendingRefreshTokens.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
 
 /**
  * Normalize URL to remove IIS pipe paths
@@ -264,12 +281,50 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             const userId = upstreamData.userId;
 
             if (accessToken && refreshToken) {
-              return {
-                id: userId || 'unknown',
-                accessToken,
-                refreshToken,
-                userId: userId || 'unknown',
-              };
+              // 🔥 CRITICAL: Set refreshToken in HttpOnly Cookie
+              // This is required for the refresh provider to work
+              // The refresh provider reads refreshToken from cookies, not from JWT
+              // ⚠️ CRITICAL: If cookie set fails, we MUST NOT return tokens
+              // Otherwise, refresh provider won't be able to read refresh token from cookie
+              let cookieSetSuccess = false;
+              try {
+                const { cookies } = await import('next/headers');
+                const cookieStore = await cookies();
+                
+                cookieStore.set('refreshToken', refreshToken, {
+                  httpOnly: true, // 🔥 CRITICAL: JS cannot access
+                  secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+                  sameSite: 'strict', // CSRF protection
+                  path: '/', // Available for all paths
+                  maxAge: 7 * 24 * 60 * 60, // 7 days
+                });
+                
+                cookieSetSuccess = true;
+                
+                if (process.env.NODE_ENV === 'development') {
+                  console.log('[NextAuth][OTP] ✅ Refresh token set in HttpOnly Cookie');
+                }
+              } catch (cookieError) {
+                // 🔥 CRITICAL: If setting cookie fails, we MUST fail the authentication
+                // Otherwise, refresh provider won't be able to read refresh token from cookie
+                console.error('[NextAuth][OTP] ❌ CRITICAL: Failed to set refreshToken cookie:', cookieError);
+                console.error('[NextAuth][OTP] ❌ Cannot proceed - refresh provider needs cookie');
+                // Return null to fail the authentication
+                return null;
+              }
+              
+              // Only return tokens if cookie was set successfully
+              if (cookieSetSuccess) {
+                return {
+                  id: userId || 'unknown',
+                  accessToken,
+                  refreshToken,
+                  userId: userId || 'unknown',
+                };
+              }
+              
+              // Should not reach here, but just in case
+              return null;
             }
           }
 
@@ -308,19 +363,52 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const cookieStore = await cookies();
           const refreshToken = cookieStore.get('refreshToken')?.value || null;
 
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[NextAuth][Refresh] 🔍 Reading refresh token from cookie:', {
+              hasRefreshToken: !!refreshToken,
+              refreshTokenLength: refreshToken?.length || 0,
+              refreshTokenPreview: refreshToken ? `${refreshToken.substring(0, 20)}...` : 'null',
+            });
+          }
+
           if (!refreshToken) {
-            console.error('[NextAuth][Refresh] No refresh token found in cookies');
+            console.error('[NextAuth][Refresh] ❌ No refresh token found in cookies');
+            // 🔥 DEBUG: List all cookies to see what's available
+            if (process.env.NODE_ENV === 'development') {
+              const allCookies = cookieStore.getAll();
+              console.log('[NextAuth][Refresh] 🔍 All available cookies:', allCookies.map(c => c.name));
+            }
             return null;
           }
 
           // Call refresh token endpoint directly to upstream
           // This is server-side only, tokens never exposed to client
+          // 🔥 DEBUG: Log refresh token being sent
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[NextAuth][Refresh] 🔄 Calling upstream refresh API with token:', {
+              tokenLength: refreshToken.length,
+              tokenPreview: `${refreshToken.substring(0, 20)}...`,
+              deviceId: requestInfo.deviceId || 'null',
+            });
+          }
+          
           const response = await api.api.refreshToken({
             refreshToken,
             deviceId: requestInfo.deviceId || null,
             userAgent: requestInfo.userAgent || null,
             ipAddress: requestInfo.ipAddress || null,
           });
+          
+          // 🔥 DEBUG: Log upstream response
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[NextAuth][Refresh] 📥 Upstream refresh response:', {
+              status: response.status,
+              isSuccess: response.data?.isSuccess,
+              message: response.data?.message,
+              hasNewRefreshToken: !!response.data?.data?.refreshToken,
+              newTokenLength: response.data?.data?.refreshToken?.length || 0,
+            });
+          }
 
           // Extract tokens from upstream response
           // upstream.data.data contains: { accessToken, refreshToken, userId }
@@ -336,7 +424,88 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             const userId = upstreamData.userId;
 
             if (accessToken && newRefreshToken) {
+              // 🔥 CRITICAL: Store new refresh token in temporary Map for response header manipulation
+              // In NextAuth v5, cookies().set() in authorize callback may not work reliably
+              // We store the token here and set it in response headers in POST handler
+              const requestKey = `refresh-${Date.now()}-${Math.random()}`;
+              pendingRefreshTokens.set(requestKey, {
+                token: newRefreshToken,
+                expiresAt: Date.now() + 60000, // Expire after 1 minute
+              });
+              
+              // Also try to set cookie directly (may work in some cases)
+              let cookieSetSuccess = false;
+              try {
+                const { cookies } = await import('next/headers');
+                const cookieStore = await cookies();
+                
+                // 🔥 DEBUG: Log before setting cookie
+                if (process.env.NODE_ENV === 'development') {
+                  const oldRefreshToken = cookieStore.get('refreshToken')?.value || null;
+                  console.log('[NextAuth][Refresh] 🔄 Setting new refresh token in cookie:', {
+                    oldTokenLength: oldRefreshToken?.length || 0,
+                    newTokenLength: newRefreshToken.length,
+                    oldTokenPreview: oldRefreshToken ? `${oldRefreshToken.substring(0, 20)}...` : 'null',
+                    newTokenPreview: `${newRefreshToken.substring(0, 20)}...`,
+                    requestKey,
+                  });
+                }
+                
+                cookieStore.set('refreshToken', newRefreshToken, {
+                  httpOnly: true, // 🔥 CRITICAL: JS cannot access
+                  secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+                  sameSite: 'strict', // CSRF protection
+                  path: '/', // Available for all paths
+                  maxAge: 7 * 24 * 60 * 60, // 7 days
+                });
+                
+                // 🔥 DEBUG: Verify cookie was set
+                // ⚠️ CRITICAL: In NextAuth v5, cookies().set() in authorize callback may not work
+                // We need to verify that cookie was actually set
+                if (process.env.NODE_ENV === 'development') {
+                  // Wait a bit for cookie to be set
+                  await new Promise(resolve => setTimeout(resolve, 50));
+                  const verifyCookieStore = await cookies();
+                  const verifyRefreshToken = verifyCookieStore.get('refreshToken')?.value || null;
+                  console.log('[NextAuth][Refresh] ✅ Cookie set verification:', {
+                    cookieSet: !!verifyRefreshToken,
+                    tokenMatches: verifyRefreshToken === newRefreshToken,
+                    oldTokenLength: refreshToken?.length || 0,
+                    newTokenLength: newRefreshToken.length,
+                    verifyTokenLength: verifyRefreshToken?.length || 0,
+                    tokensAreDifferent: refreshToken !== newRefreshToken,
+                  });
+                  
+                  // 🔥 CRITICAL: If cookie was not set or token doesn't match, we'll use response header fallback
+                  if (!verifyRefreshToken || verifyRefreshToken !== newRefreshToken) {
+                    console.warn('[NextAuth][Refresh] ⚠️ Cookie set failed, will use response header fallback:', {
+                      cookieSet: !!verifyRefreshToken,
+                      tokenMatches: verifyRefreshToken === newRefreshToken,
+                      requestKey,
+                    });
+                    cookieSetSuccess = false;
+                  } else {
+                    cookieSetSuccess = true;
+                  }
+                } else {
+                  cookieSetSuccess = true;
+                }
+                
+                if (process.env.NODE_ENV === 'development' && cookieSetSuccess) {
+                  console.log('[NextAuth][Refresh] ✅ New refresh token set in HttpOnly Cookie (token rotation)');
+                }
+              } catch (cookieError) {
+                // 🔥 CRITICAL: If setting cookie fails, we'll use response header fallback
+                // Don't fail the refresh - we'll set cookie in response header
+                console.warn('[NextAuth][Refresh] ⚠️ Failed to set new refreshToken cookie, will use response header fallback:', {
+                  error: cookieError instanceof Error ? cookieError.message : String(cookieError),
+                  requestKey,
+                });
+                cookieSetSuccess = false;
+              }
+              
               // Return user object with new tokens (token rotation)
+              // Refresh token is stored in Map and will be set in response header in POST handler
               return {
                 id: userId || 'unknown',
                 accessToken,
@@ -434,10 +603,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return token; // Return as-is, session will be invalid
       }
 
-      // CRITICAL: If no tokens exist at all, return immediately (user not logged in)
+      // CRITICAL: If no access token exists, check if refresh token exists in cookie
       // This prevents unnecessary refresh attempts and speeds up session checks
-      if (!customToken.accessToken && !customToken.refreshToken) {
-        return token; // No tokens = no session, return quickly
+      // 🔥 CRITICAL: Check refreshToken from cookie, NOT from JWT token
+      // JWT token may have stale refresh token after token rotation
+      if (!customToken.accessToken) {
+        let refreshTokenFromCookie: string | null = null;
+        try {
+          const cookieStore = await cookies();
+          refreshTokenFromCookie = cookieStore.get('refreshToken')?.value || null;
+        } catch {
+          // Ignore cookie error - will be handled in refresh logic below
+        }
+        
+        // If no refresh token in cookie either, user is not logged in
+        if (!refreshTokenFromCookie) {
+          return token; // No tokens = no session, return quickly
+        }
       }
 
       // Check if access token is expired
@@ -447,26 +629,77 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
 
       // Token expired, try to refresh it
-      // CRITICAL: Only attempt refresh if we have a refresh token
-      if (!customToken.refreshToken) {
-        // No refresh token available, mark as error
+      // 🔥 CRITICAL: Get refresh token from HttpOnly Cookie (NOT from JWT token)
+      // Refresh token is stored in HttpOnly Cookie for security
+      // JWT token may have stale refresh token after token rotation
+      let refreshTokenFromCookie: string | null = null;
+      try {
+        const cookieStore = await cookies();
+        refreshTokenFromCookie = cookieStore.get('refreshToken')?.value || null;
+      } catch (cookieError) {
+        console.error('[NextAuth][JWT] Error reading refreshToken from cookie:', cookieError);
+      }
+
+      // CRITICAL: Only attempt refresh if we have a refresh token in cookie
+      if (!refreshTokenFromCookie) {
+        // No refresh token available in cookie, mark as error
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[NextAuth][JWT] No refresh token found in cookie, cannot refresh');
+        }
         return { ...token, error: 'RefreshAccessTokenError' };
       }
 
       try {
-        const refreshed = await refreshAccessToken(customToken.refreshToken);
+        // 🔥 CRITICAL: Use refresh token from cookie, not from JWT token
+        const refreshed = await refreshAccessToken(refreshTokenFromCookie);
         
         if (refreshed) {
-          return {
-            ...token,
-            accessToken: refreshed.accessToken,
-            refreshToken: refreshed.refreshToken, // Token rotation
-            accessTokenExpires: Date.now() + refreshed.expiresIn * 1000,
-            error: undefined, // Clear any previous error
-          };
+          // 🔥 CRITICAL: Set new refreshToken in HttpOnly Cookie (token rotation)
+          // After token rotation, the old refresh token is invalidated
+          // We must update the cookie with the new refresh token
+          // ⚠️ CRITICAL: If cookie set fails, we MUST NOT update token
+          // Otherwise, old refresh token remains in cookie and next refresh will fail
+          let cookieSetSuccess = false;
+          try {
+            const cookieStore = await cookies();
+            cookieStore.set('refreshToken', refreshed.refreshToken, {
+              httpOnly: true, // 🔥 CRITICAL: JS cannot access
+              secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+              sameSite: 'strict', // CSRF protection
+              path: '/', // Available for all paths
+              maxAge: 7 * 24 * 60 * 60, // 7 days
+            });
+            
+            cookieSetSuccess = true;
+            
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[NextAuth][JWT] ✅ Token refreshed and new refreshToken set in cookie (token rotation)');
+            }
+          } catch (cookieError) {
+            // 🔥 CRITICAL: If setting cookie fails, we MUST fail the refresh
+            // Otherwise, old refresh token remains in cookie and next refresh will fail with "Invalid refresh token"
+            console.error('[NextAuth][JWT] ❌ CRITICAL: Failed to set new refreshToken cookie:', cookieError);
+            console.error('[NextAuth][JWT] ❌ Cannot proceed - old refresh token would remain in cookie');
+            // Return error to fail the refresh - this prevents "Invalid refresh token" error on next refresh
+            return { ...token, error: 'RefreshAccessTokenError' };
+          }
+          
+          // Only update token if cookie was set successfully
+          if (cookieSetSuccess) {
+            return {
+              ...token,
+              accessToken: refreshed.accessToken,
+              refreshToken: refreshed.refreshToken, // Token rotation - new refresh token
+              accessTokenExpires: Date.now() + refreshed.expiresIn * 1000,
+              error: undefined, // Clear any previous error
+            };
+          }
+          
+          // Should not reach here, but just in case
+          return { ...token, error: 'RefreshAccessTokenError' };
         }
       } catch (error) {
-        console.error('[NextAuth] Error refreshing token in JWT callback:', error);
+        console.error('[NextAuth][JWT] Error refreshing token in JWT callback:', error);
         // Return expired token - session will be invalidated
         return { ...token, error: 'RefreshAccessTokenError' };
       }
@@ -533,6 +766,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 
+  events: {
+    async signIn({ user, account }) {
+      // 🔥 CRITICAL: In NextAuth v5, cookies().set() in authorize callback may not work
+      // We need to set refresh token cookie in response headers using events
+      // This is called after authorize() succeeds and before jwt() callback
+      if (user?.refreshToken && account?.provider === 'otp') {
+        // Refresh token will be set in JWT callback
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[NextAuth][Events][SignIn] OTP signIn successful, refreshToken will be set in JWT');
+        }
+      }
+      
+      if (user?.refreshToken && account?.provider === 'refresh') {
+        // Refresh token rotation - new refresh token will be set in JWT callback
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[NextAuth][Events][SignIn] Refresh signIn successful, new refreshToken will be set in JWT');
+        }
+      }
+    },
+  },
+
   pages: {
     signIn: '/login',
     signOut: '/login?logout=true', // Custom sign-out page (optional, handled client-side)
@@ -568,12 +822,117 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 export async function GET(req: NextRequest) {
   // Normalize URL to remove IIS pipe paths
   const normalizedReq = normalizeIisUrl(req);
-  return handlers.GET(normalizedReq);
+  const response = await handlers.GET(normalizedReq);
+  
+  // 🔥 CRITICAL: Forward refresh token cookie from NextAuth response
+  // NextAuth may set cookies in response headers, we need to forward them
+  const setCookie = response.headers.get('set-cookie');
+  if (setCookie && process.env.NODE_ENV === 'development') {
+    console.log('[NextAuth][GET] Set-Cookie header:', setCookie);
+  }
+  
+  return response;
 }
 
 export async function POST(req: NextRequest) {
   // Normalize URL to remove IIS pipe paths
   const normalizedReq = normalizeIisUrl(req);
-  return handlers.POST(normalizedReq);
+  const response = await handlers.POST(normalizedReq);
+  
+  // 🔥 CRITICAL: Set refresh token cookie in response header if needed
+  // In NextAuth v5, cookies().set() in authorize callback may not work reliably
+  // We check if refresh token needs to be set from temporary Map
+  // This is a fallback mechanism to ensure refresh token is always set in cookie after token rotation
+  
+  // Check if this is a refresh callback
+  const isRefreshCallback = normalizedReq.url.includes('/callback/refresh') || 
+                            normalizedReq.url.includes('callback/refresh');
+  
+  if (isRefreshCallback && response.status === 200) {
+    // Try to get refresh token from cookie store first
+    try {
+      const cookieStore = await cookies();
+      const refreshTokenFromCookie = cookieStore.get('refreshToken')?.value || null;
+      
+      // Check if there's a pending refresh token in Map (from authorize callback)
+      let pendingRefreshToken: string | null = null;
+      let pendingKey: string | null = null;
+      
+      // Find the most recent pending refresh token
+      for (const [key, value] of pendingRefreshTokens.entries()) {
+        if (value.expiresAt > Date.now()) {
+          pendingRefreshToken = value.token;
+          pendingKey = key;
+          break;
+        }
+      }
+      
+      // If we have a pending refresh token, set it in response header
+      if (pendingRefreshToken) {
+        // Check if refresh token in cookie matches pending token
+        if (!refreshTokenFromCookie || refreshTokenFromCookie !== pendingRefreshToken) {
+          // Set refresh token in response header
+          const cookieString = `refreshToken=${pendingRefreshToken}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
+          
+          // Clone response to modify headers without consuming body
+          const clonedResponse = response.clone();
+          const responseBody = await clonedResponse.text();
+          
+          // Create new response with modified headers
+          const newResponse = new NextResponse(responseBody, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: new Headers(response.headers),
+          });
+          
+          // Append refresh token cookie to existing set-cookie headers
+          const existingSetCookie = response.headers.get('set-cookie');
+          if (existingSetCookie) {
+            // If there are existing cookies, append our cookie
+            newResponse.headers.set('set-cookie', `${existingSetCookie}, ${cookieString}`);
+          } else {
+            // If no existing cookies, just set our cookie
+            newResponse.headers.set('set-cookie', cookieString);
+          }
+          
+          // Remove from Map after use
+          if (pendingKey) {
+            pendingRefreshTokens.delete(pendingKey);
+          }
+          
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[NextAuth][POST] ✅ Set refresh token in response header (fallback):', {
+              tokenLength: pendingRefreshToken.length,
+              tokenPreview: `${pendingRefreshToken.substring(0, 20)}...`,
+              cookieWasSet: !!refreshTokenFromCookie,
+              tokensMatch: refreshTokenFromCookie === pendingRefreshToken,
+              note: 'This ensures refresh token is set even if cookies().set() in authorize callback failed',
+            });
+          }
+          
+          return newResponse;
+        } else {
+          // Refresh token already set correctly, remove from Map
+          if (pendingKey) {
+            pendingRefreshTokens.delete(pendingKey);
+          }
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[NextAuth][POST] ✅ Refresh token already set in cookie correctly');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[NextAuth][POST] ⚠️ Error setting refresh token in response header:', error);
+    }
+  }
+  
+  // 🔥 CRITICAL: Forward refresh token cookie from NextAuth response
+  // NextAuth may set cookies in response headers, we need to forward them
+  const setCookie = response.headers.get('set-cookie');
+  if (setCookie && process.env.NODE_ENV === 'development') {
+    console.log('[NextAuth][POST] Set-Cookie header:', setCookie);
+  }
+  
+  return response;
 }
 

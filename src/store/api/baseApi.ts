@@ -27,6 +27,10 @@ let refreshQueue: Array<{
   reject: (error: unknown) => void;
 }> = [];
 
+// 🔥 CRITICAL: Prevent infinite loop - track if we're retrying after refresh
+// If retry after refresh also returns 401, we should logout, not refresh again
+let isRetryingAfterRefresh = false;
+
 /**
  * 🔥 PRODUCTION-LEVEL: Base Query with Access Token Management
  * 
@@ -49,38 +53,44 @@ const rawBaseQuery = fetchBaseQuery({
   prepareHeaders: async (headers, { getState }) => {
     headers.set('content-type', 'application/json');
     
-    // 🔥 CRITICAL: Read accessToken from NextAuth session
-    // Access Token is stored in NextAuth JWT session (server-side)
-    // This is the PRIMARY point where accessToken is consumed
+    // 🔥 CRITICAL: Read accessToken - Performance optimization
+    // Strategy: Try Redux first (fast, synchronous), then NextAuth session (slower, async)
+    // This reduces delay in prepareHeaders which is called for every request
     let accessToken: string | null = null;
     
     if (typeof window !== 'undefined') {
-      try {
-        // Get session from NextAuth (client-side)
-        const session = await getSession();
-        accessToken = session?.accessToken || null;
+      // 🔥 PERFORMANCE: Check Redux first (synchronous, fast)
+      // Redux is synced from NextAuth session after refresh/login
+      const state = getState() as RootState;
+      accessToken = state.auth?.accessToken || null;
+      
+      if (accessToken) {
+        // Redux has accessToken - use it (fast path)
+        headers.set('Authorization', `Bearer ${accessToken}`);
         
-        if (accessToken) {
-          // 🔥 STANDARD: Send accessToken in Authorization header
-          // Format: "Bearer <token>" (OAuth2 standard)
-          headers.set('Authorization', `Bearer ${accessToken}`);
-          
-          if (process.env.NODE_ENV === 'development') {
-            console.log('[baseApi] ✅ Access token from NextAuth session added to Authorization header');
-          }
-        } else {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('[baseApi] ⚠️ No access token in NextAuth session');
-          }
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[baseApi] ✅ Access token from Redux added to Authorization header');
         }
-      } catch (error) {
-        console.error('[baseApi] Error getting NextAuth session:', error);
-        // Fallback to Redux state if session fetch fails
-        const state = getState() as RootState;
-        accessToken = state.auth?.accessToken || null;
-        
-        if (accessToken) {
-          headers.set('Authorization', `Bearer ${accessToken}`);
+      } else {
+        // Redux doesn't have accessToken - try NextAuth session (slower, async)
+        // This happens when Redux hasn't been synced yet
+        try {
+          const session = await getSession();
+          accessToken = session?.accessToken || null;
+          
+          if (accessToken) {
+            headers.set('Authorization', `Bearer ${accessToken}`);
+            
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[baseApi] ✅ Access token from NextAuth session added to Authorization header');
+            }
+          } else {
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[baseApi] ⚠️ No access token in Redux or NextAuth session');
+            }
+          }
+        } catch (error) {
+          console.error('[baseApi] Error getting NextAuth session:', error);
         }
       }
     } else {
@@ -178,6 +188,33 @@ export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, unkno
     (result.meta?.response?.status === 401) ||
     (result.data && typeof result.data === 'object' && 'status' in result.data && result.data.status === 401);
 
+  // 🔥 CRITICAL: Prevent infinite loop
+  // If we're retrying after refresh and still get 401, logout immediately
+  if (got401 && isRetryingAfterRefresh && typeof window !== 'undefined') {
+    const currentPath = window.location.pathname;
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[baseQueryWithReauth] ❌ Retry after refresh returned 401 - logging out to prevent infinite loop');
+    }
+    
+    // Clear state and logout
+    api.dispatch(clearUser());
+    api.dispatch(setAccessToken(null));
+    api.dispatch(setAnonymous());
+    api.dispatch(setInitialized(true));
+    
+    signOut({ redirect: false }).then(() => {
+      const encodedReturnUrl = encodeURIComponent(currentPath);
+      window.location.href = `/login?r=${encodedReturnUrl}&logout=true`;
+    }).catch(() => {
+      const encodedReturnUrl = encodeURIComponent(currentPath);
+      window.location.href = `/login?r=${encodedReturnUrl}&logout=true`;
+    });
+    
+    isRetryingAfterRefresh = false;
+    return result;
+  }
+
   // Handle 401: Attempt client-side refresh with Queue Pattern
   if (got401 && typeof window !== 'undefined') {
     const currentPath = window.location.pathname;
@@ -252,21 +289,62 @@ export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, unkno
         const session = await getSession();
         const newAccessToken = session?.accessToken || null;
         
-        if (newAccessToken) {
-          // 🔥 REFRESH SUCCESS: Update accessToken in Redux and resolve all queued requests
-          api.dispatch(setAccessToken(newAccessToken));
-          
-          if (process.env.NODE_ENV === 'development') {
-            console.log('[baseQueryWithReauth] ✅ Token refreshed via NextAuth, retrying original request and', refreshQueue.length, 'queued requests');
-          }
+          if (newAccessToken) {
+            // 🔥 REFRESH SUCCESS: Update accessToken in Redux and resolve all queued requests
+            api.dispatch(setAccessToken(newAccessToken));
+            
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[baseQueryWithReauth] ✅ Token refreshed via NextAuth, retrying original request and', refreshQueue.length, 'queued requests');
+            }
 
-          // Retry original request
-          result = await rawBaseQuery(args, api, extraOptions);
+            // 🔥 CRITICAL: Mark that we're retrying after refresh to prevent infinite loop
+            isRetryingAfterRefresh = true;
 
-          // Resolve all queued requests (they will retry with new token)
-          refreshQueue.forEach(({ resolve }) => resolve(newAccessToken));
-          refreshQueue = [];
-          isRefreshing = false;
+            // Retry original request
+            result = await rawBaseQuery(args, api, extraOptions);
+
+            // 🔥 CRITICAL: Check if retry also returned 401
+            const retryGot401 = 
+              (result?.error && 'status' in result.error && result.error.status === 401) || 
+              (result.meta?.response?.status === 401) ||
+              (result.data && typeof result.data === 'object' && 'status' in result.data && result.data.status === 401);
+
+            if (retryGot401) {
+              // Retry after refresh also returned 401 - logout to prevent infinite loop
+              if (process.env.NODE_ENV === 'development') {
+                console.error('[baseQueryWithReauth] ❌ Retry after refresh returned 401 - accessToken may be invalid');
+              }
+              
+              // Reject all queued requests
+              refreshQueue.forEach(({ reject }) => reject(new Error('Retry after refresh returned 401')));
+              refreshQueue = [];
+              isRefreshing = false;
+              isRetryingAfterRefresh = false;
+              
+              // Clear state and logout
+              api.dispatch(clearUser());
+              api.dispatch(setAccessToken(null));
+              api.dispatch(setAnonymous());
+              api.dispatch(setInitialized(true));
+              
+              signOut({ redirect: false }).then(() => {
+                const encodedReturnUrl = encodeURIComponent(currentPath);
+                window.location.href = `/login?r=${encodedReturnUrl}&logout=true`;
+              }).catch(() => {
+                const encodedReturnUrl = encodeURIComponent(currentPath);
+                window.location.href = `/login?r=${encodedReturnUrl}&logout=true`;
+              });
+              
+              return result;
+            }
+
+            // Retry succeeded - clear flag and resolve queued requests
+            isRetryingAfterRefresh = false;
+
+            // Resolve all queued requests (they will retry with new token)
+            refreshQueue.forEach(({ resolve }) => resolve(newAccessToken));
+            refreshQueue = [];
+            isRefreshing = false;
         } else {
           // No accessToken in session after refresh
           throw new Error('Token refresh failed: No accessToken in session');
@@ -286,6 +364,7 @@ export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, unkno
       refreshQueue.forEach(({ reject }) => reject(error));
       refreshQueue = [];
       isRefreshing = false;
+      isRetryingAfterRefresh = false; // Reset flag on error
 
       // Clear Redux state
       api.dispatch(clearUser());

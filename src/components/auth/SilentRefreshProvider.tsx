@@ -8,6 +8,14 @@ import { getDeviceId, getUserAgent, fetchClientInfo, getCachedIpAddress } from '
 import { signIn, getSession } from 'next-auth/react';
 
 /**
+ * 🔥 CRITICAL: Global flag to prevent multiple SilentRefreshProvider instances
+ * from attempting refresh simultaneously (race condition prevention)
+ * This is module-level, so it's shared across all component instances
+ */
+let globalSilentRefreshAttempted = false;
+let globalSilentRefreshPromise: Promise<void> | null = null;
+
+/**
  * SilentRefreshProvider
  * 
  * Responsibilities:
@@ -17,11 +25,15 @@ import { signIn, getSession } from 'next-auth/react';
  * 
  * Flow:
  * - On mount: accessToken is usually null (after refresh page)
- * - Attempt silent refresh via /api/auth/refresh
+ * - Attempt silent refresh via NextAuth signIn('refresh')
  * - If successful: set accessToken in Redux
  * - If failed (401): accessToken remains null, user is logged out
  * 
  * This runs once per app load, not on every route change
+ * 
+ * 🔥 RACE CONDITION PREVENTION:
+ * - Uses global flag to prevent multiple instances from refreshing simultaneously
+ * - If refresh is already in progress, waits for existing promise
  */
 export function SilentRefreshProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useDispatch();
@@ -31,8 +43,25 @@ export function SilentRefreshProvider({ children }: { children: React.ReactNode 
   const hasAttemptedRef = useRef(false);
 
   useEffect(() => {
-    // Only attempt once per app load
+    // Only attempt once per app load (component-level check)
     if (hasAttemptedRef.current) {
+      return;
+    }
+
+    // 🔥 CRITICAL: Global check to prevent race condition
+    // If another SilentRefreshProvider instance is already refreshing, wait for it
+    if (globalSilentRefreshAttempted && globalSilentRefreshPromise) {
+      globalSilentRefreshPromise.then(() => {
+        hasAttemptedRef.current = true;
+        if (!isInitialized) {
+          dispatch(setInitialized(true));
+        }
+      }).catch(() => {
+        hasAttemptedRef.current = true;
+        if (!isInitialized) {
+          dispatch(setInitialized(true));
+        }
+      });
       return;
     }
 
@@ -43,6 +72,7 @@ export function SilentRefreshProvider({ children }: { children: React.ReactNode 
       }
       dispatch(setRefreshTokenChecked(true));
       hasAttemptedRef.current = true;
+      globalSilentRefreshAttempted = true; // Mark globally as attempted
       return;
     }
 
@@ -52,13 +82,16 @@ export function SilentRefreshProvider({ children }: { children: React.ReactNode 
         dispatch(setInitialized(true));
       }
       hasAttemptedRef.current = true;
+      globalSilentRefreshAttempted = true; // Mark globally as attempted
       return;
     }
 
-    // Mark as attempted to prevent multiple calls
+    // Mark as attempted (both component and global level)
     hasAttemptedRef.current = true;
+    globalSilentRefreshAttempted = true;
 
     // Perform silent refresh using NextAuth
+    // 🔥 CRITICAL: Create promise and store globally to share with other instances
     const performSilentRefresh = async () => {
       try {
         // Get device info
@@ -140,7 +173,13 @@ export function SilentRefreshProvider({ children }: { children: React.ReactNode 
       }
     };
 
-    performSilentRefresh();
+    // Create and store promise globally
+    globalSilentRefreshPromise = performSilentRefresh();
+    
+    // Cleanup: reset global promise when done
+    globalSilentRefreshPromise.finally(() => {
+      globalSilentRefreshPromise = null;
+    });
   }, [accessToken, isInitialized, refreshTokenChecked, dispatch]);
 
   return <>{children}</>;
