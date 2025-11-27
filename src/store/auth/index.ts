@@ -54,7 +54,6 @@ export {
   useSendOtpMutation,
   // useVerifyOtpMutation removed - use NextAuth signIn('otp', ...) instead
   useLogoutMutation,
-  useRefreshTokenMutation,
   useGetMeQuery,
   useValidateNationalCodeQuery,
   useLazyGetMeQuery,
