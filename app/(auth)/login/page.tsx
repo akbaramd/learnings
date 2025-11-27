@@ -9,7 +9,7 @@ import { useDispatch } from 'react-redux';
 import { useLazyValidateNationalCodeQuery, selectChallengeId, selectAuthStatus, selectIsUserNotFoundError, selectAuthErrorInfo, setAuthStatus } from '@/src/store/auth';
 import { useSendOtpMutation } from '@/src/store/auth/auth.queries';
 import { useAppSelector } from '@/src/hooks/store';
-import { useSession } from 'next-auth/react';
+import { selectAccessToken, selectIsInitialized } from '@/src/store/auth/auth.selectors';
 import { getDeviceId, getUserAgent } from '@/src/lib/deviceInfo';
 import { PiShieldCheck, PiWarningCircle } from 'react-icons/pi';
 import Drawer, { DrawerHeader, DrawerBody, DrawerFooter } from '@/src/components/overlays/Drawer';
@@ -52,10 +52,11 @@ export default function LoginPage() {
   
   // Check authentication and redirect if already logged in
   
-  // Use NextAuth session for authentication state
-  const { data: session, status: sessionStatus } = useSession();
-  const isAuthenticated = sessionStatus === 'authenticated' && !!session;
-  const isReady = sessionStatus !== 'loading';
+  // Use Redux state for authentication (consistent with app/page.tsx)
+  const accessToken = useAppSelector(selectAccessToken);
+  const isInitialized = useAppSelector(selectIsInitialized);
+  const isAuthenticated = !!accessToken;
+  const isReady = isInitialized;
   
   // دریافت challengeId و auth status از Redux store
   const challengeId = useAppSelector(selectChallengeId);

@@ -1,10 +1,12 @@
 'use client';
 
 import React from 'react';
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useEffect, useState, useRef, useMemo, Suspense } from "react";
 import { PiSpinner } from "react-icons/pi";
-import { useSession } from 'next-auth/react';
+import { useSelector } from 'react-redux';
+import { selectAccessToken, selectIsInitialized, selectRefreshTokenChecked } from '@/src/store/auth/auth.selectors';
+import { isAuthPage } from '@/src/lib/auth-utils';
 
 /**
  * Safe redirect URL resolver
@@ -29,16 +31,26 @@ function safeResolveReturnUrl(returnUrl: string | null): string | null {
 // Memoize HomeContent to prevent unnecessary re-renders
 const HomeContent = React.memo(function HomeContent() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { data: session, status } = useSession();
+  const accessToken = useSelector(selectAccessToken);
+  const isInitialized = useSelector(selectIsInitialized);
+  const refreshTokenChecked = useSelector(selectRefreshTokenChecked);
   
-  // NextAuth session status can be: 'loading' | 'authenticated' | 'unauthenticated'
-  // - 'loading': Session check is in progress
-  // - 'authenticated': User has valid session
-  // - 'unauthenticated': User has no session (logged out or never logged in)
+  // Use Redux state instead of NextAuth session
+  // - accessToken: null means not authenticated
+  // - isInitialized: true means auth check is complete
+  // - refreshTokenChecked: true means refresh was attempted and failed
   
-  const isAuthenticated = status === 'authenticated' && !!session;
-  const isReady = status !== 'loading'; // Session check is complete
+  const isAuthenticated = !!accessToken;
+  const isReady = isInitialized; // Auth check is complete when initialized
+  
+  // Don't redirect if we're already on an auth page (prevent infinite loop)
+  const isOnAuthPage = isAuthPage(pathname);
+  
+  // Only handle redirects if we're on the root route (/)
+  // This page should only be active on root route
+  const isRootRoute = pathname === '/';
   
   // Scenario: isReady = true && isAuthenticated = false
   // This means: NextAuth finished checking session, but user is NOT authenticated
@@ -47,8 +59,6 @@ const HomeContent = React.memo(function HomeContent() {
   
   const [messageIndex, setMessageIndex] = useState(0);
   const redirectInitiatedRef = useRef(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const statusRef = useRef(status); // Track status in ref for timeout check
   const lastLoggedStateRef = useRef<{ isReady: boolean; isAuthenticated: boolean } | null>(null);
 
   // Different messages based on auth status
@@ -119,68 +129,69 @@ const HomeContent = React.memo(function HomeContent() {
     };
   }, [isReady, loadingMessages]);
 
-  // Update status ref whenever status changes
-  const lastStatusRef = useRef<string | null>(null);
+  // Update status ref whenever auth state changes
+  const lastAuthStateRef = useRef<{ isReady: boolean; isAuthenticated: boolean } | null>(null);
   useEffect(() => {
-    statusRef.current = status;
+    const currentState = { isReady, isAuthenticated };
     
-    // Only log when status actually changes (prevents duplicate logs from Strict Mode)
-    if (process.env.NODE_ENV === 'development' && lastStatusRef.current !== status) {
-      console.log('[Home] Session status changed:', { 
-        status, 
-        isReady, 
-        isAuthenticated,
-        hasSession: !!session 
-      });
-      lastStatusRef.current = status;
+    // Only log when state actually changes (prevents duplicate logs from Strict Mode)
+    if (process.env.NODE_ENV === 'development') {
+      const lastState = lastAuthStateRef.current;
+      if (!lastState || lastState.isReady !== isReady || lastState.isAuthenticated !== isAuthenticated) {
+        console.log('[Home] Auth state changed:', { 
+          isReady, 
+          isAuthenticated,
+          hasAccessToken: !!accessToken,
+          refreshTokenChecked
+        });
+        lastAuthStateRef.current = currentState;
+      }
     }
-  }, [status, isReady, isAuthenticated, session]);
+  }, [isReady, isAuthenticated, accessToken, refreshTokenChecked]);
 
   // Handle redirect based on auth status
   useEffect(() => {
-    // CRITICAL: Add timeout fallback if NextAuth gets stuck in loading state
-    // If session check takes more than 5 seconds, force redirect to login
-    if (status === 'loading' && !timeoutRef.current && !redirectInitiatedRef.current) {
-      timeoutRef.current = setTimeout(() => {
-        // Check current status using ref (avoids stale closure)
-        if (statusRef.current === 'loading' && !redirectInitiatedRef.current) {
-          console.warn('[Home] ⚠️ NextAuth session check timeout (5s), forcing redirect to login');
-          redirectInitiatedRef.current = true;
-          const returnUrl = searchParams.get('r');
-          const loginUrl = returnUrl 
-            ? `/login?r=${encodeURIComponent(returnUrl)}`
-            : '/login';
-          router.push(loginUrl);
-        }
-      }, 5000); // 5 second timeout
-    }
-
-    // Wait for auth to be ready (session check complete)
-    if (!isReady || redirectInitiatedRef.current) {
-      // Removed console.log to prevent duplicate logs in development
+    // Only handle redirects if we're on the root route (/)
+    // This prevents redirects when navigating to other pages
+    if (!isRootRoute) {
       return;
     }
 
-    // Clear timeout if session check completed successfully
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
+    // Don't redirect if we're on an auth page (prevent infinite loop)
+    if (isOnAuthPage) {
+      return;
     }
 
-    // At this point: isReady = true (session check is complete)
+    // Wait for auth to be ready (initialization complete)
+    if (!isReady || redirectInitiatedRef.current) {
+      return;
+    }
+
+    // At this point: isReady = true (auth check is complete)
     // Two possible scenarios:
     // 1. isAuthenticated = true → User is logged in → Redirect to dashboard
     // 2. isAuthenticated = false → User is NOT logged in → Redirect to login
     // Both scenarios are VALID and handled correctly below
 
-    console.log('[Home] Auth is ready, preparing redirect...', { 
-      status, 
-      isAuthenticated, 
-      hasSession: !!session 
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Home] Auth is ready, preparing redirect...', { 
+        isReady, 
+        isAuthenticated,
+        hasAccessToken: !!accessToken,
+        refreshTokenChecked,
+        pathname,
+        isOnAuthPage,
+        isRootRoute
+      });
+    }
 
     // Small delay to show loading message before redirect
     const redirectTimeout = setTimeout(() => {
+      // Double-check: only redirect if we're still on root route
+      if (!isRootRoute || isOnAuthPage) {
+        return;
+      }
+
       // Get return URL from query params
       const returnUrl = searchParams.get('r');
       const safeReturnUrl = safeResolveReturnUrl(returnUrl);
@@ -190,8 +201,10 @@ const HomeContent = React.memo(function HomeContent() {
         // Action: Redirect to returnUrl or dashboard
         redirectInitiatedRef.current = true;
         const redirectTo = safeReturnUrl || '/dashboard';
-        console.log('[Home] ✅ User authenticated, redirecting to:', redirectTo);
-        router.push(redirectTo);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[Home] ✅ User authenticated, redirecting to:', redirectTo);
+        }
+        router.replace(redirectTo); // Use replace instead of push to prevent back button issues
       } else {
         // Scenario 2: User is NOT authenticated (isReady = true, isAuthenticated = false)
         // This is a VALID state - user is logged out or never logged in
@@ -200,19 +213,23 @@ const HomeContent = React.memo(function HomeContent() {
         const loginUrl = returnUrl 
           ? `/login?r=${encodeURIComponent(returnUrl)}`
           : '/login';
-        console.log('[Home] ⚠️ User not authenticated (logged out or never logged in), redirecting to:', loginUrl);
-        router.push(loginUrl);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[Home] ⚠️ User not authenticated (logged out or never logged in), redirecting to:', loginUrl);
+        }
+        router.replace(loginUrl); // Use replace instead of push to prevent back button issues
       }
     }, 500); // Small delay to show message
 
     return () => {
       clearTimeout(redirectTimeout);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
     };
-  }, [isAuthenticated, isReady, searchParams, router, status, session]);
+  }, [isAuthenticated, isReady, searchParams, router, accessToken, refreshTokenChecked, pathname, isOnAuthPage, isRootRoute]);
+
+  // Don't render anything if we're not on root route
+  // This prevents the component from rendering on other routes
+  if (!isRootRoute) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800" dir="rtl">

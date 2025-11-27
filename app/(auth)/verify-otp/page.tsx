@@ -6,10 +6,10 @@ import Card from '@/src/components/ui/Card';
 import OtpField from '@/src/components/forms/OtpField';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/src/hooks/useToast';
-import { selectChallengeId, selectMaskedPhone, selectNationalCode, selectAuthStatus, setChallengeId, setMaskedPhoneNumber, setNationalCode, setAuthStatus, clearError } from '@/src/store/auth';
+import { selectChallengeId, selectMaskedPhone, selectNationalCode, selectAuthStatus, setChallengeId, setMaskedPhoneNumber, setNationalCode, setAuthStatus, clearError, setAccessToken } from '@/src/store/auth';
 import { useAppSelector } from '@/src/hooks/store';
 import { useDispatch } from 'react-redux';
-import { signIn, useSession } from 'next-auth/react';
+import { signIn, useSession, getSession } from 'next-auth/react';
 import { getDeviceId, getUserAgent } from '@/src/lib/deviceInfo';
 
 type UiStatus = 'idle' | 'typing' | 'valid' | 'invalid';
@@ -46,8 +46,8 @@ function safeResolveReturnUrl(searchParams: URLSearchParams): string {
     return decodedReturnUrl;
   }
   
-  // Default to root (/) if no returnUrl - will handle redirect there
-  return '/';
+  // Default to dashboard if no returnUrl - don't redirect to root (/) to avoid redirect loop
+  return '/dashboard';
 }
 
 export default function VerifyOtpPage() {
@@ -348,10 +348,62 @@ export default function VerifyOtpPage() {
                 
                 success('ورود موفق', 'در حال انتقال...');
                 
+                // 🔥 CRITICAL: Get accessToken from NextAuth session and sync to Redux
+                // This ensures ProtectedRoute and other components can access accessToken
+                // We need to wait for NextAuth session to be fully updated
+                try {
+                  // Wait for NextAuth session to be updated (may take a moment)
+                  // Try multiple times with increasing delays
+                  let session = await getSession();
+                  let accessToken = session?.accessToken || null;
+                  
+                  // If no accessToken yet, wait and retry
+                  if (!accessToken) {
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    session = await getSession();
+                    accessToken = session?.accessToken || null;
+                  }
+                  
+                  // If still no accessToken, wait once more
+                  if (!accessToken) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    session = await getSession();
+                    accessToken = session?.accessToken || null;
+                  }
+                  
+                  if (accessToken) {
+                    // Sync accessToken to Redux for backward compatibility
+                    dispatch(setAccessToken(accessToken));
+                    dispatch(setAuthStatus('authenticated'));
+                    
+                    if (process.env.NODE_ENV === 'development') {
+                      console.log('[VerifyOtp] ✅ accessToken synced to Redux from NextAuth session');
+                    }
+                  } else {
+                    if (process.env.NODE_ENV === 'development') {
+                      console.warn('[VerifyOtp] ⚠️ No accessToken in NextAuth session after verify - SilentRefreshProvider will handle it');
+                    }
+                    // Don't block redirect - SilentRefreshProvider will try to refresh on next page load
+                  }
+                } catch (error) {
+                  console.error('[VerifyOtp] ❌ Failed to sync accessToken to Redux:', error);
+                  // Don't block redirect - SilentRefreshProvider will handle it on next page load
+                }
+                
                 // Redirect to target page
-                // NextAuth session is now available
+                // NextAuth session is now available with accessToken
+                // Redux also has accessToken for backward compatibility
                 navigatedRef.current = true;
-                window.location.href = redirectTo;
+                
+                // Use router.replace instead of window.location.href for better Next.js navigation
+                // But ensure we're redirecting to a valid route (not root /)
+                const finalRedirectTo = redirectTo === '/' ? '/dashboard' : redirectTo;
+                
+                if (process.env.NODE_ENV === 'development') {
+                  console.log('[VerifyOtp] 🔄 Redirecting to:', finalRedirectTo);
+                }
+                
+                router.replace(finalRedirectTo);
               }
             } catch (error: unknown) {
               // Handle network errors or exceptions

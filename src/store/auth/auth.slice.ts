@@ -23,12 +23,14 @@ const isValidUser = (user: unknown): user is User => {
 const initialState: AuthState = {
   status: 'idle',
   user: null,
+  accessToken: null,
   challengeId: null,
   maskedPhoneNumber: null,
   nationalCode: null,
   error: null,
   errorType: null,
   isInitialized: false,
+  refreshTokenChecked: false,
 };
 
 const authSlice = createSlice({
@@ -59,6 +61,20 @@ const authSlice = createSlice({
       state.nationalCode = null;
     },
     
+    // Set access token
+    setAccessToken: (state, action: PayloadAction<string | null>) => {
+      state.accessToken = action.payload;
+      if (action.payload) {
+        state.status = 'authenticated';
+        state.refreshTokenChecked = true; // Token exists, so refresh was checked
+      }
+    },
+    
+    // Mark refresh token as checked (when refresh fails due to missing token)
+    setRefreshTokenChecked: (state, action: PayloadAction<boolean>) => {
+      state.refreshTokenChecked = action.payload;
+    },
+    
     // Set user data with validation
     setUser: (state, action: PayloadAction<AuthState['user']>) => {
       if (action.payload === null || isValidUser(action.payload)) {
@@ -77,12 +93,14 @@ const authSlice = createSlice({
     // Clear user data (logout)
     clearUser: (state) => {
       state.user = null;
+      state.accessToken = null;
       state.status = 'anonymous';
       state.challengeId = null;
       state.maskedPhoneNumber = null;
       state.nationalCode = null;
       state.error = null;
       state.errorType = null;
+      state.refreshTokenChecked = false; // Reset on logout
     },
     
     // Set authentication status with validation
@@ -91,11 +109,13 @@ const authSlice = createSlice({
         state.status = action.payload;
         if (action.payload === 'anonymous') {
           state.user = null;
+          state.accessToken = null;
           state.challengeId = null;
           state.maskedPhoneNumber = null;
           state.nationalCode = null;
           state.error = null;
           state.errorType = null;
+          state.refreshTokenChecked = false;
         }
       } else {
         console.warn('Invalid auth status:', action.payload);
@@ -146,6 +166,8 @@ const authSlice = createSlice({
     reset: (): AuthState => ({
       ...initialState,
       status: 'anonymous', // After reset, user is anonymous, not idle
+      accessToken: null,
+      refreshTokenChecked: false,
     }),
     
     // Set loading state (redundant with setAuthStatus, but kept for convenience)
@@ -173,11 +195,13 @@ const authSlice = createSlice({
     setAnonymous: (state) => {
       state.status = 'anonymous';
       state.user = null;
+      state.accessToken = null;
       state.challengeId = null;
       state.maskedPhoneNumber = null;
       state.nationalCode = null;
       state.error = null;
       state.errorType = null;
+      state.refreshTokenChecked = false;
     },
   },
 });
@@ -187,6 +211,8 @@ export const {
   setMaskedPhoneNumber,
   setNationalCode,
   clearChallengeId,
+  setAccessToken,
+  setRefreshTokenChecked,
   setUser,
   clearUser,
   setAuthStatus,

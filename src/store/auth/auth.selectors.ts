@@ -18,6 +18,8 @@ const selectAuthState = (state: RootState) => {
       error: null,
       errorType: null,
       isInitialized: false,
+      accessToken: null,
+      refreshTokenChecked: false,
     };
   }
   return auth;
@@ -32,6 +34,20 @@ export const selectAuthStatus = createSelector(
 export const selectIsAuthenticated = createSelector(
   [selectAuthState],
   (auth) => auth.status === 'authenticated'
+);
+export const selectAccessToken = createSelector(
+  [selectAuthState],
+  (auth) => auth.accessToken
+);
+
+export const selectRefreshTokenChecked = createSelector(
+  [selectAuthState],
+  (auth) => auth.refreshTokenChecked
+);
+
+export const selectIsAuthenticatedWithAccessToken = createSelector(
+  [selectAuthState],
+  (auth) => auth.status === 'authenticated' && !!auth.accessToken
 );
 
 export const selectIsLoading = createSelector(

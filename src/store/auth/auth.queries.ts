@@ -6,7 +6,6 @@ import {
   LogoutAllSessionsRequest,
   LogoutAllOtherSessionsRequest,
   LogoutResponse,
-  RefreshResponse,
   GetMeResponse,
   ValidateNationalCodeRequest,
   ValidateNationalCodeResponse,
@@ -21,6 +20,8 @@ import {
   setChallengeId,
   setMaskedPhoneNumber,
   setNationalCode,
+  setAccessToken,
+  setRefreshTokenChecked,
   setUser,
   clearUser,
   setAuthStatus,
@@ -31,8 +32,6 @@ import {
 } from './auth.slice';
 import type { AuthErrorType } from './auth.types';
 import { baseQueryWithReauth } from '@/src/store/api/baseApi';
-import { getDeviceId, getUserAgent, fetchClientInfo, getCachedIpAddress } from '@/src/lib/deviceInfo';
-import type { RefreshTokenRequest } from './auth.types';
 
 // Error handling utility - categorize errors
 export const categorizeAuthError = (error: unknown): { message: string; type: AuthErrorType } => {
@@ -424,81 +423,6 @@ export const authApi = createApi({
       },
     }),
 
-    // Refresh token mutation
-    refreshToken: builder.mutation<RefreshResponse, RefreshTokenRequest | void>({
-      queryFn: async (request, _api, _extraOptions, baseQuery) => {
-        // Handle void case
-        const req = request || {};
-        
-        // Get device info directly (not from request body)
-        let deviceId: string | null = null;
-        let userAgent: string | null = null;
-        let ipAddress: string | null = null;
-
-        if (typeof window !== 'undefined') {
-          // Get device ID and user agent synchronously
-          deviceId = getDeviceId();
-          userAgent = getUserAgent();
-          
-          // Get IP address - try cache first, then fetch if needed
-          ipAddress = getCachedIpAddress();
-          if (!ipAddress) {
-            try {
-              const clientInfo = await fetchClientInfo();
-              ipAddress = clientInfo.ipAddress;
-            } catch (error) {
-              console.warn('[Auth Queries] Failed to fetch IP address:', error);
-              ipAddress = null;
-            }
-          }
-        }
-
-        // Remove deviceId, userAgent, ipAddress from request to avoid duplication
-        const cleanRequest: Omit<RefreshTokenRequest, 'deviceId' | 'userAgent' | 'ipAddress'> = {
-          refreshToken: req.refreshToken,
-        };
-
-        // Use baseQuery for the actual API call
-        const result = await baseQuery({
-          url: '/auth/refresh',
-          method: 'POST',
-          body: {
-            refreshToken: cleanRequest.refreshToken || null,
-            deviceId,
-            userAgent,
-            ipAddress,
-          },
-        });
-
-        return result as typeof result & { data?: RefreshResponse };
-      },
-      invalidatesTags: ['Auth'],
-      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled;
-
-          // Check isSuccess flag
-          if (data?.isSuccess === true && data?.data?.isSuccess) {
-            dispatch(setAuthStatus('authenticated'));
-          } else {
-            dispatch(setAuthStatus('anonymous'));
-            dispatch(clearUser());
-            const errorMessage = data?.message || data?.errors?.[0] || 'Token refresh failed.';
-            const { message, type } = categorizeAuthError({ data });
-            dispatch(setErrorWithType({ message: errorMessage || message, type }));
-          }
-        } catch (error: unknown) {
-          dispatch(setAuthStatus('anonymous'));
-          dispatch(clearUser());
-          const { message, type } = categorizeAuthError(error);
-          dispatch(setErrorWithType({ 
-            message: message || 'Session expired. Please login again.', 
-            type: type === 'unknown' ? 'invalid_credentials' : type 
-          }));
-        }
-      },
-    }),
-
     // Get sessions paginated query
     getSessionsPaginated: builder.query<GetSessionsPaginatedResponse, GetSessionsPaginatedRequest>({
       query: (params) => {
@@ -546,7 +470,6 @@ export const {
   useLogoutBySessionIdMutation,
   useLogoutAllSessionsMutation,
   useLogoutAllOtherSessionsMutation,
-  useRefreshTokenMutation,
   useGetSessionsPaginatedQuery,
   useValidateNationalCodeQuery,
   // Lazy query hooks

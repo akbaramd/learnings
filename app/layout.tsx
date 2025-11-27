@@ -7,6 +7,7 @@ import { PWARegister } from "@/src/components/PWARegister";
 import { ClientInfoInitializer } from "@/src/components/ClientInfoInitializer";
 import { DeviceIdInitializer } from "@/src/components/DeviceIdInitializer";
 import { NextAuthProvider } from "@/src/components/auth/NextAuthProvider";
+import { SilentRefreshProvider } from "@/src/components/auth/SilentRefreshProvider";
 import { auth } from "@/app/api/auth/[...nextauth]/route";
 
 export const metadata: Metadata = {
@@ -64,11 +65,13 @@ export default async function RootLayout({
           <PWARegister />
           <NextAuthProvider session={session}>
               <Providers>
-                <ClientProviders>
-                  <DeviceIdInitializer />
-                  <ClientInfoInitializer />
-                  {children}
-                </ClientProviders>
+                <SilentRefreshProvider>
+                  <ClientProviders>
+                    <DeviceIdInitializer />
+                    <ClientInfoInitializer />
+                    {children}
+                  </ClientProviders>
+                </SilentRefreshProvider>
               </Providers>
           </NextAuthProvider>
       </body>

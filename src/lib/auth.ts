@@ -44,14 +44,5 @@ export async function getAccessToken(req?: NextRequest): Promise<string | null> 
   return session?.accessToken || null;
 }
 
-/**
- * Get refresh token from session
- * 
- * @param req - Optional NextRequest for request context
- * @returns Refresh token string or null
- */
-export async function getRefreshToken(req?: NextRequest): Promise<string | null> {
-  const session = await auth(req);
-  return session?.refreshToken || null;
-}
+
 

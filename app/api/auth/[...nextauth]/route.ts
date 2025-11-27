@@ -5,6 +5,7 @@ import Credentials from 'next-auth/providers/credentials';
 import { createApiInstance } from '@/app/api/generatedClient';
 import { getRequestInfo } from '@/src/lib/requestInfo';
 import { NextRequest } from 'next/server';
+import { cookies } from 'next/headers';
 
 // CRITICAL: Set runtime to nodejs for NextAuth
 // This ensures NextAuth can use Node.js APIs (crypto, etc.)
@@ -50,7 +51,7 @@ function normalizeIisUrl(req: NextRequest): NextRequest {
 declare module 'next-auth' {
   interface Session {
     accessToken?: string;
-    refreshToken?: string;
+    // refreshToken is NOT in session - it's stored in HttpOnly Cookie only
     challengeId?: string;
     maskedPhoneNumber?: string;
     nationalCode?: string;
@@ -279,6 +280,86 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       },
     }),
+    // Provider for refreshing tokens (updates existing session with new tokens)
+    Credentials({
+      id: 'refresh',
+      name: 'Refresh Token',
+      credentials: {
+        deviceId: { label: 'Device ID', type: 'text', required: false },
+        userAgent: { label: 'User Agent', type: 'text', required: false },
+        ipAddress: { label: 'IP Address', type: 'text', required: false },
+      },
+      async authorize(credentials, req) {
+        try {
+          // Extract deviceId, userAgent, ipAddress from credentials
+          const bodyParams: Record<string, unknown> = {
+            deviceId: (credentials.deviceId as string | null | undefined) || null,
+            userAgent: (credentials.userAgent as string | null | undefined) || null,
+            ipAddress: (credentials.ipAddress as string | null | undefined) || null,
+          };
+
+          // Create API instance from request
+          const api = createApiInstance(req as NextRequest);
+          const requestInfo = getRequestInfo(req as NextRequest, bodyParams);
+
+          // 🔥 CRITICAL: Get refresh token ONLY from cookies (NOT from credentials or session)
+          // Refresh token is stored in HttpOnly Cookie for security
+          // It should NEVER be passed from client or stored in session
+          const cookieStore = await cookies();
+          const refreshToken = cookieStore.get('refreshToken')?.value || null;
+
+          if (!refreshToken) {
+            console.error('[NextAuth][Refresh] No refresh token found in cookies');
+            return null;
+          }
+
+          // Call refresh token endpoint directly to upstream
+          // This is server-side only, tokens never exposed to client
+          const response = await api.api.refreshToken({
+            refreshToken,
+            deviceId: requestInfo.deviceId || null,
+            userAgent: requestInfo.userAgent || null,
+            ipAddress: requestInfo.ipAddress || null,
+          });
+
+          // Extract tokens from upstream response
+          // upstream.data.data contains: { accessToken, refreshToken, userId }
+          if (response.status === 200 && response.data?.isSuccess && response.data?.data) {
+            const upstreamData = response.data.data as {
+              accessToken?: string;
+              refreshToken?: string;
+              userId?: string;
+            };
+            
+            const accessToken = upstreamData.accessToken;
+            const newRefreshToken = upstreamData.refreshToken;
+            const userId = upstreamData.userId;
+
+            if (accessToken && newRefreshToken) {
+              // Return user object with new tokens (token rotation)
+              return {
+                id: userId || 'unknown',
+                accessToken,
+                refreshToken: newRefreshToken, // New refresh token (token rotation)
+                userId: userId || 'unknown',
+              };
+            }
+          }
+
+          console.error('[NextAuth][Refresh] Refresh token failed:', {
+            status: response.status,
+            isSuccess: response.data?.isSuccess,
+            message: response.data?.message,
+            errors: response.data?.errors,
+          });
+
+          return null;
+        } catch (error) {
+          console.error('[NextAuth][Refresh] Error refreshing token:', error);
+          return null;
+        }
+      },
+    }),
   ],
 
   callbacks: {
@@ -296,18 +377,43 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           };
         }
         
-        // For otp provider: store tokens (authenticated)
-        return {
-          ...token,
-          accessToken: user.accessToken,
-          refreshToken: user.refreshToken,
-          userId: user.userId,
-          accessTokenExpires: Date.now() + 15 * 60 * 1000, // 15 minutes
-          // Clear OTP data after successful authentication
-          challengeId: undefined,
-          maskedPhoneNumber: undefined,
-          nationalCode: undefined,
+        // Type assertion for token with our custom fields
+        const customToken = token as typeof token & {
+          accessToken?: string;
+          refreshToken?: string;
+          userId?: string;
         };
+        
+        // For refresh provider: update tokens (token rotation)
+        // Detect refresh provider: user has tokens AND token already has userId (was authenticated before)
+        // This means we're refreshing an existing authenticated session
+        if (user.accessToken && user.refreshToken && customToken.userId && customToken.userId !== 'otp-sent') {
+          return {
+            ...token,
+            accessToken: user.accessToken,
+            refreshToken: user.refreshToken, // New refresh token (token rotation)
+            userId: user.userId || customToken.userId, // Preserve existing userId
+            accessTokenExpires: Date.now() + 15 * 60 * 1000, // 15 minutes
+            error: undefined, // Clear any previous error
+            // Preserve other token fields
+          };
+        }
+        
+        // For otp provider: store tokens (authenticated for first time)
+        // This happens when user verifies OTP and gets tokens for the first time
+        if (user.accessToken && user.refreshToken) {
+          return {
+            ...token,
+            accessToken: user.accessToken,
+            refreshToken: user.refreshToken,
+            userId: user.userId,
+            accessTokenExpires: Date.now() + 15 * 60 * 1000, // 15 minutes
+            // Clear OTP data after successful authentication
+            challengeId: undefined,
+            maskedPhoneNumber: undefined,
+            nationalCode: undefined,
+          };
+        }
       }
 
       // Type assertion for token with our custom fields
@@ -408,10 +514,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         };
       }
 
-      // Attach tokens to session (for authenticated users)
+      // Attach accessToken to session (for authenticated users)
+      // 🔥 CRITICAL: refreshToken is NOT in session - it's stored in HttpOnly Cookie only
+      // This ensures refreshToken is never exposed to client-side JavaScript
       if (customToken) {
         session.accessToken = customToken.accessToken;
-        session.refreshToken = customToken.refreshToken;
+        // refreshToken is NOT added to session - it's only in HttpOnly Cookie
         if (customToken.userId) {
           session.user.id = customToken.userId;
         }

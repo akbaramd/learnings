@@ -49,12 +49,14 @@ export interface UserProfile {
 export interface AuthState {
   status: AuthStatus;
   user: User | null;
+  accessToken: string | null; // Access token stored in Redux (client-side)
   challengeId: string | null;
   maskedPhoneNumber: string | null;
   nationalCode: string | null; // Store national code for resending OTP
   error: string | null;
   errorType: AuthErrorType | null; // Error category for better error handling
   isInitialized: boolean;
+  refreshTokenChecked: boolean; // Flag to prevent infinite refresh attempts when refreshToken doesn't exist
 }
 
 // Request types - matching Api.ts exactly
