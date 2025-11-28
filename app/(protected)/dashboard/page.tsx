@@ -296,25 +296,25 @@ function useSurveysList(): { surveys: Survey[]; isLoading: boolean; isError: boo
    Tutorials Data
 ========================= */
 
-// فقط آموزش‌های ویدیویی موجود
+// Tutorials data for dashboard preview
 const tutorials: Tutorial[] = [
   {
     id: 'facility-tutorial',
     title: 'آموزش درخواست تسهیلات',
     description: 'راهنمای کامل نحوه ثبت درخواست تسهیلات و پیگیری وضعیت آن',
     videoSrc: '/video/facilities.mp4',
-    category: 'facility',
+    category: 'facility' as const,
     icon: <PiMoney className="h-6 w-6" />,
-    accentColor: 'emerald',
+    accentColor: 'emerald' as const,
   },
   {
     id: 'survey-tutorial',
     title: 'آموزش شرکت در نظرسنجی',
     description: 'راهنمای کامل نحوه شرکت در نظرسنجی‌ها و پاسخ به سوالات',
     videoSrc: '/video/survey.mp4',
-    category: 'survey',
+    category: 'survey' as const,
     icon: <PiFileText className="h-6 w-6" />,
-    accentColor: 'amber',
+    accentColor: 'amber' as const,
   },
 ];
 
@@ -349,6 +349,9 @@ export default function HomeDashboard() {
 
             {/* Services */}
             <section className="px-4">
+              <div className="mb-3 px-1">
+                <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">خدمات</h2>
+              </div>
               <ServicesGrid items={services} onSelect={handleServiceSelect} />
             </section>
 
@@ -356,6 +359,7 @@ export default function HomeDashboard() {
             <section className="px-4">
               <TutorialSection 
                 title="آموزش‌ها" 
+                seeAllHref="/tutorials"
                 dir="rtl" 
                 tutorials={tutorials}
                 isLoading={false}

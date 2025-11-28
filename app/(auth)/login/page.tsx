@@ -4,13 +4,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Button from '@/src/components/ui/Button';
 import Card from '@/src/components/ui/Card';
 import InputField from '@/src/components/forms/InputField';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useDispatch } from 'react-redux';
-import { useLazyValidateNationalCodeQuery, selectChallengeId, selectAuthStatus, selectIsUserNotFoundError, selectAuthErrorInfo, setAuthStatus } from '@/src/store/auth';
-import { useSendOtpMutation } from '@/src/store/auth/auth.queries';
+import { useLazyValidateNationalCodeQuery, selectChallengeId, selectAuthStatus, selectIsUserNotFoundError, selectAuthErrorInfo, clearUser, setAccessToken, setAuthStatus, setChallengeId, setMaskedPhoneNumber, setNationalCode } from '@/src/store/auth';
 import { useAppSelector } from '@/src/hooks/store';
 import { selectAccessToken, selectIsInitialized } from '@/src/store/auth/auth.selectors';
 import { getDeviceId, getUserAgent } from '@/src/lib/deviceInfo';
+import { signIn, getSession } from 'next-auth/react';
 import { PiShieldCheck, PiWarningCircle } from 'react-icons/pi';
 import Drawer, { DrawerHeader, DrawerBody, DrawerFooter } from '@/src/components/overlays/Drawer';
 /* ---- Iranian National ID (Melli) utilities ---- */
@@ -44,10 +44,8 @@ export default function LoginPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   
-  // Send OTP mutation
-  const [sendOtp, { isLoading: isSendingOtp }] = useSendOtpMutation();
-  
   // محاسبه وضعیت
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
   const isLoading = isSendingOtp;
   
   // Check authentication and redirect if already logged in
@@ -86,12 +84,12 @@ export default function LoginPage() {
   // Lazy query for validating national code
   const [validateNationalCode, { isLoading: isValidatingQuery }] = useLazyValidateNationalCodeQuery();
   
-  // Get return URL and logout flag from query params
-  const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-  const [returnUrl] = useState<string | null>(() => {
-    const r = params?.get('r');
+  // Get return URL and logout flag from query params (reactive with useSearchParams)
+  const searchParams = useSearchParams();
+  const returnUrl = useMemo(() => {
+    const r = searchParams.get('r');
     if (!r) return null;
-    
+
     // CRITICAL: Decode returnUrl to handle query strings properly
     let decodedReturnUrl = '';
     try {
@@ -100,61 +98,44 @@ export default function LoginPage() {
       console.warn('[Login] Failed to decode returnUrl:', r, error);
       decodedReturnUrl = r; // Fallback to original if decode fails
     }
-    
+
     // Only internal paths are allowed (prevent open redirect)
     if (decodedReturnUrl && decodedReturnUrl.startsWith('/') && !decodedReturnUrl.startsWith('//') && !decodedReturnUrl.startsWith('/http')) {
       return decodedReturnUrl;
     }
-    
+
     return null;
-  });
-  const isLogoutFlow = params?.get('logout') === 'true';
+  }, [searchParams]);
+  const isLogoutFlow = searchParams.get('logout') === 'true';
   
   // Check if user is authenticated and redirect to dashboard
-  // Also ensure state is 'anonymous' if we're in logout flow and state is 'idle'
+  // Handle logout flow by resetting state
   useEffect(() => {
     // Wait for auth to be ready
     if (!isReady) {
       return;
     }
-    
-    // If we're in logout flow and status is 'idle' (initial state after page reload),
-    // set it to 'anonymous' to ensure correct state
-    if (isLogoutFlow && authStatus === 'idle') {
-      dispatch(setAuthStatus('anonymous'));
-      return;
-    }
-    
-    // Don't redirect if we're in logout flow (let user login first)
+
+    // Handle logout flow - reset state completely
     if (isLogoutFlow) {
+      dispatch(clearUser());
+      dispatch(setAccessToken(null));
+      dispatch(setAuthStatus('anonymous'));
+      // Don't redirect - let user login
       return;
     }
-    
-    // If user is authenticated, redirect to root (/) with returnUrl
+
+    // If user is authenticated, redirect to dashboard
     if (isAuthenticated) {
-      const redirectTo = returnUrl ? `/?r=${encodeURIComponent(returnUrl)}` : '/';
+      const redirectTo = returnUrl || '/dashboard';
       router.replace(redirectTo);
     }
-  }, [isAuthenticated, isReady, isLogoutFlow, returnUrl, router, authStatus, dispatch]);
+  }, [isAuthenticated, isReady, isLogoutFlow, returnUrl, router, dispatch]);
   
   // No need to handle session update for OTP - mutation handles it in onQueryStarted
 
-  // Redirect to verify-otp when challengeId is set (OTP sent successfully)
-  // Pass logout flag and returnUrl to verify-otp page
-  useEffect(() => {
-    if (challengeId && authStatus === 'otp-sent') {
-      const searchParams = new URLSearchParams();
-      if (isLogoutFlow) {
-        searchParams.set('logout', 'true');
-      }
-      if (returnUrl) {
-        searchParams.set('r', returnUrl);
-      }
-      const queryString = searchParams.toString();
-      const redirectTo = queryString ? `/verify-otp?${queryString}` : '/verify-otp';
-      router.push(redirectTo);
-    }
-  }, [challengeId, authStatus, router, returnUrl, isLogoutFlow]);
+  // Note: Navigation to verify-otp is now handled manually in the OTP sending success case
+  // This ensures navigation happens immediately after successful OTP send
 
   // Show error from NextAuth - handle user not found with drawer
   useEffect(() => {
@@ -353,8 +334,10 @@ export default function LoginPage() {
               return;
             }
 
-            // Use sendOtp mutation
+            // Use NextAuth signIn for sending OTP (consistent with resend)
             try {
+              setIsSendingOtp(true);
+
               // Get device ID and user agent to send with request
               // CRITICAL: Use getDeviceId() to ensure SAME device ID as other requests
               // Device ID comes from localStorage (same source as baseApi.ts)
@@ -362,30 +345,87 @@ export default function LoginPage() {
               // Device ID is NEVER regenerated - always returns existing ID from localStorage
               const deviceId = getDeviceId();
               const userAgent = getUserAgent();
-              
-              await sendOtp({
+
+              const result = await signIn('send-otp', {
                 nationalCode: nationalId,
-                purpose: 'login',
-                scope: 'app',
                 deviceId: deviceId || null,
                 userAgent: userAgent || null,
-                ipAddress: null, // Will be extracted server-side from request
-              }).unwrap();
-              
-              // Success - mutation's onQueryStarted handles storing challengeId and updating status
-              // The useEffect will handle redirecting to verify-otp page
-              
+                redirect: false,
+              });
+
+              if (result?.error) {
+                // Handle error from NextAuth
+                const errorMessage = result.error === 'CredentialsSignin'
+                  ? 'شماره ملی نامعتبر است. لطفاً دوباره تلاش کنید.'
+                  : result.error;
+
+                setStatus('invalid');
+                setErrorText(errorMessage);
+                setTouched(true);
+              } else {
+                // Success case - wait for session update and redirect manually
+                if (process.env.NODE_ENV === 'development') {
+                  console.log('[Login] ✅ OTP sent successfully, waiting for session update...');
+                }
+
+                // Wait a bit for session to update, then check it
+                await new Promise(resolve => setTimeout(resolve, 200));
+
+                // Manually check session to ensure it has OTP data
+                const updatedSession = await getSession();
+
+                if (updatedSession?.challengeId && updatedSession?.nationalCode) {
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log('[Login] 📱 Session updated with OTP data, updating Redux and redirecting...');
+                  }
+
+                  // 🔐 SECURITY: Update Redux with sensitive data (from session, not URL)
+                  dispatch(setChallengeId(updatedSession.challengeId));
+                  if (updatedSession.maskedPhoneNumber) {
+                    dispatch(setMaskedPhoneNumber(updatedSession.maskedPhoneNumber));
+                  }
+                  if (updatedSession.nationalCode) {
+                    dispatch(setNationalCode(updatedSession.nationalCode));
+                  } else {
+                    // Fallback: use the nationalId that user entered
+                    dispatch(setNationalCode(nationalId));
+                  }
+                  dispatch(setAuthStatus('otp-sent'));
+
+                  // 🔐 SECURITY: Only pass non-sensitive navigation data in URL
+                  const searchParams = new URLSearchParams();
+                  if (isLogoutFlow) {
+                    searchParams.set('logout', 'true');
+                  }
+                  if (returnUrl) {
+                    searchParams.set('r', returnUrl);
+                  }
+
+                  const queryString = searchParams.toString();
+                  const redirectTo = queryString ? `/verify-otp?${queryString}` : '/verify-otp';
+                  router.push(redirectTo);
+                } else {
+                  // Session not updated yet, show error
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log('[Login] ❌ Session not updated with OTP data');
+                  }
+                  setStatus('invalid');
+                  setErrorText('ارسال کد ناموفق. لطفاً دوباره تلاش کنید.');
+                  setTouched(true);
+                }
+              }
+
             } catch (error: unknown) {
-              // Error handling is done in mutation's onQueryStarted
-              // But we still need to update UI state
-              const errorMessage = error && typeof error === 'object' && 'data' in error
-                ? (error as { data?: { message?: string; errors?: string[] } }).data?.errors?.[0] 
-                  || (error as { data?: { message?: string } }).data?.message
+              // Handle network errors or exceptions
+              const errorMessage = error instanceof Error
+                ? error.message
                 : 'ارسال کد ناموفق. لطفاً شماره ملی خود را بررسی کنید.';
-              
+
               setStatus('invalid');
-              setErrorText(errorMessage || 'ارسال کد ناموفق. لطفاً شماره ملی خود را بررسی کنید.');
+              setErrorText(errorMessage);
               setTouched(true);
+            } finally {
+              setIsSendingOtp(false);
             }
           }}
         >

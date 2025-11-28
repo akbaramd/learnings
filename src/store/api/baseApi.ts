@@ -50,59 +50,26 @@ const rawBaseQuery = fetchBaseQuery({
   baseUrl: '/api',
   credentials: 'include',
   fetchFn: fetch,
-  prepareHeaders: async (headers, { getState }) => {
+  prepareHeaders: (headers, { getState }) => {
     headers.set('content-type', 'application/json');
-    
-    // 🔥 CRITICAL: Read accessToken - Performance optimization
-    // Strategy: Try Redux first (fast, synchronous), then NextAuth session (slower, async)
-    // This reduces delay in prepareHeaders which is called for every request
-    let accessToken: string | null = null;
-    
-    if (typeof window !== 'undefined') {
-      // 🔥 PERFORMANCE: Check Redux first (synchronous, fast)
-      // Redux is synced from NextAuth session after refresh/login
-      const state = getState() as RootState;
-      accessToken = state.auth?.accessToken || null;
-      
-      if (accessToken) {
-        // Redux has accessToken - use it (fast path)
-        headers.set('Authorization', `Bearer ${accessToken}`);
-        
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[baseApi] ✅ Access token from Redux added to Authorization header');
-        }
-      } else {
-        // Redux doesn't have accessToken - try NextAuth session (slower, async)
-        // This happens when Redux hasn't been synced yet
-        try {
-          const session = await getSession();
-          accessToken = session?.accessToken || null;
-          
-          if (accessToken) {
-            headers.set('Authorization', `Bearer ${accessToken}`);
-            
-            if (process.env.NODE_ENV === 'development') {
-              console.log('[baseApi] ✅ Access token from NextAuth session added to Authorization header');
-            }
-          } else {
-            if (process.env.NODE_ENV === 'development') {
-              console.log('[baseApi] ⚠️ No access token in Redux or NextAuth session');
-            }
-          }
-        } catch (error) {
-          console.error('[baseApi] Error getting NextAuth session:', error);
-        }
+
+    // 🔥 CRITICAL: Read accessToken from Redux state only (synchronous)
+    // NextAuth session is synced to Redux via AuthSessionSync component
+    const state = getState() as RootState;
+    const accessToken = state.auth?.accessToken || null;
+
+    if (accessToken) {
+      headers.set('Authorization', `Bearer ${accessToken}`);
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[baseApi] ✅ Access token from Redux added to Authorization header');
       }
     } else {
-      // Server-side: fallback to Redux state (shouldn't happen in client-side RTK Query)
-      const state = getState() as RootState;
-      accessToken = state.auth?.accessToken || null;
-      
-      if (accessToken) {
-        headers.set('Authorization', `Bearer ${accessToken}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[baseApi] ⚠️ No access token in Redux state');
       }
     }
-    
+
     // Add device and client information headers (required for session management and tracking)
     // CRITICAL: Device ID must be synchronized across all requests
     // - Client-side: Uses getDeviceId() from localStorage (same device ID everywhere)
@@ -120,7 +87,7 @@ const rawBaseQuery = fetchBaseQuery({
         // This ensures we never send invalid or placeholder device IDs
         headers.set('X-Device-Id', deviceId);
       }
-      
+
       // User Agent header (required for device identification and security)
       // CRITICAL: Always use getUserAgent() - consistent across all requests
       const userAgent = getUserAgent();
@@ -128,13 +95,13 @@ const rawBaseQuery = fetchBaseQuery({
         headers.set('User-Agent', userAgent);
       }
     }
-    
+
     // Add CSRF token to headers (required for POST/PUT/DELETE requests)
     const csrfHeaders = getCsrfHeader();
     if (csrfHeaders['x-csrf-token']) {
       headers.set('x-csrf-token', csrfHeaders['x-csrf-token']);
     }
-    
+
     return headers;
   },
 });

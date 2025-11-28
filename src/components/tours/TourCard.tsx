@@ -50,20 +50,47 @@ const priceFa = (price?: number) => {
 
 const formatDateRangeFa = (start?: string, end?: string) => {
   if (!start || !end) return 'نامشخص';
-  const s = new Date(start);
-  const e = new Date(end);
+
+  // Handle UTC date strings properly
+  const parseDate = (dateStr: string) => {
+    if (dateStr.includes('Z') || dateStr.includes('+') || dateStr.includes('-')) {
+      return new Date(dateStr);
+    } else {
+      return new Date(dateStr + (dateStr.includes('T') ? '' : 'T00:00:00'));
+    }
+  };
+
+  const s = parseDate(start);
+  const e = parseDate(end);
+
   if (isNaN(s.getTime()) || isNaN(e.getTime())) return 'نامشخص';
+
+  // Convert to local time for display
+  const localStart = new Date(s.getTime() - (s.getTimezoneOffset() * 60000));
+  const localEnd = new Date(e.getTime() - (e.getTimezoneOffset() * 60000));
+
   const fmt = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
     month: 'short',
     day: 'numeric',
   });
-  return `${fmt.format(s)} تا ${fmt.format(e)}`;
+  return `${fmt.format(localStart)} تا ${fmt.format(localEnd)}`;
 };
 
 const durationFa = (start?: string, end?: string) => {
   if (!start || !end) return '—';
-  const s = new Date(start).getTime();
-  const e = new Date(end).getTime();
+
+  // Handle UTC date strings properly
+  const parseDate = (dateStr: string) => {
+    if (dateStr.includes('Z') || dateStr.includes('+') || dateStr.includes('-')) {
+      return new Date(dateStr);
+    } else {
+      return new Date(dateStr + (dateStr.includes('T') ? '' : 'T00:00:00'));
+    }
+  };
+
+  const s = parseDate(start).getTime();
+  const e = parseDate(end).getTime();
+
   if (isNaN(s) || isNaN(e)) return '—';
   const days = Math.max(1, Math.ceil((e - s) / (1000 * 60 * 60 * 24)));
   return `${faDigits(days)} روزه`;

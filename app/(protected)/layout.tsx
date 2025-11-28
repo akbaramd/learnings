@@ -11,6 +11,7 @@ import { NotificationDot } from '@/src/components/ui/NotificationBadge';
 import { GetUnreadCountResponse, useGetUnreadCountQuery } from '@/src/store/notifications';
 import { BottomNavigation } from '@/src/components/navigation/BottomNavigation';
 import { useGetCurrentMemberQuery } from '@/src/store/members';
+import { companyInfo } from '@/src/components/AppBranding';
 import {
   PiBell,
   PiSun,
@@ -105,7 +106,7 @@ function BrandTitle() {
   return (
     <div className="flex flex-col items-center leading-none">
       <h1 className="text-base font-semibold tracking-tight text-emerald-700 dark:text-emerald-400">
-        سامانه خدمات رفاهی
+        {companyInfo.name}
       </h1>
     </div>
   );
@@ -114,7 +115,8 @@ function BrandTitle() {
 export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const router = useRouter();
   const isAuthenticated = useSelector(selectIsAuthenticated);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const desktopContainerRef = useRef<HTMLDivElement>(null);
+  const mobileContainerRef = useRef<HTMLDivElement>(null);
 
   // Auto-fetch notifications when authenticated
   const shouldPollNotifications = useMemo(() => isAuthenticated, [isAuthenticated]);
@@ -146,12 +148,18 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   // This ensures correct height calculation on page refresh
   useEffect(() => {
     const setViewportHeight = () => {
-      if (containerRef.current) {
-        // Use window.innerHeight for accurate mobile viewport height
-        // This accounts for browser UI (address bar, etc.)
+      // Handle desktop container
+      if (desktopContainerRef.current) {
         const vh = window.innerHeight;
-        containerRef.current.style.height = `${vh}px`;
-        containerRef.current.style.maxHeight = `${vh}px`;
+        desktopContainerRef.current.style.height = `${vh}px`;
+        desktopContainerRef.current.style.maxHeight = `${vh}px`;
+      }
+
+      // Handle mobile container
+      if (mobileContainerRef.current) {
+        const vh = window.innerHeight;
+        mobileContainerRef.current.style.height = `${vh}px`;
+        mobileContainerRef.current.style.maxHeight = `${vh}px`;
       }
     };
 
@@ -176,60 +184,51 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   // It shows loading state during check and redirects if needed
   return (
     <ProtectedRoute>
-    <div 
-      ref={containerRef}
-      className="mx-auto max-w-full sm:max-w-full md:max-w-[30rem] lg:max-w-[30rem] xl:max-w-[30rem] bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex flex-col overflow-hidden" 
-      dir="rtl"
-      style={{
-        // Fallback to dvh, but JavaScript will override with exact pixel value
-        height: '100dvh',
-        maxHeight: '100dvh',
-      }}
-    >
-      {/* Top App Bar - Fixed at top */}
-      <header className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 z-10">
-        <div className="flex h-14 items-center justify-between px-4">
-          <IconButton 
-            aria-label="Go to home"
-            onClick={handleHomeClick}
-            variant="subtle"
-            color="secondary"
-            className="hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <PiHouse className="h-4 w-4 text-gray-700 dark:text-gray-200" />
-          </IconButton>
-          <BrandTitle />
-          <div className="flex items-center gap-2">
-            <ThemeIconButton />
-            <NotificationButton 
-              unreadCountData={unreadCountData || { result: { totalCount: 0 }, errors: null }} 
-              notificationsLoading={notificationsLoading} 
-            />
-          </div>
-        </div>
-      </header>
+      <div
+        ref={mobileContainerRef}
+        className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex flex-col overflow-hidden"
+              dir="rtl"
+              style={{
+                height: '100dvh',
+                maxHeight: '100dvh',
+              }}
+            >
+              {/* Top App Bar - Fixed at top */}
+              <header className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 z-10">
+                <div className="flex h-14 items-center justify-between px-4">
+                  <IconButton
+                    aria-label="Go to home"
+                    onClick={handleHomeClick}
+                    variant="subtle"
+                    color="secondary"
+                    className="hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <PiHouse className="h-4 w-4 text-gray-700 dark:text-gray-200" />
+                  </IconButton>
+                  <BrandTitle />
+                  <div className="flex items-center gap-2">
+                    <ThemeIconButton />
+                    <NotificationButton
+                      unreadCountData={unreadCountData || { result: { totalCount: 0 }, errors: null }}
+                      notificationsLoading={notificationsLoading}
+                    />
+                  </div>
+                </div>
+              </header>
 
-      {/* Content - Scrollable area between header and bottom nav */}
-      {/* CRITICAL: 
-          - flex-1: Takes remaining space between header and bottom nav
-          - min-h-0: Prevents flex item from overflowing (critical for scrolling)
-          - overflow-hidden: Prevents main from scrolling (children will scroll)
-          - flex flex-col: Makes main a flex container for children
-      */}
-      <main className="flex-1 min-h-0 overflow-hidden flex flex-col">
-        {/* Content wrapper - This is the actual scrollable area */}
-        {/* Uses protected-content-scroll class for hidden scrollbar with scrolling */}
-        <div className="protected-content-scroll">
-          {children}
-        </div>
-      </main>
+              {/* Content - Scrollable area between header and bottom nav */}
+              <main className="flex-1 min-h-0 overflow-hidden flex flex-col">
+                <div className="protected-content-scroll">
+                  {children}
+                </div>
+              </main>
 
-      {/* Bottom Navigation - Fixed at bottom */}
-      <div className="flex-shrink-0 z-10">
-        <BottomNavigation 
-          unreadCountData={unreadCountData || { result: { totalCount: 0 }, errors: null }} 
-          notificationsLoading={notificationsLoading} 
-        />
+              {/* Bottom Navigation - Fixed at bottom */}
+              <div className="flex-shrink-0 z-10">
+                <BottomNavigation
+                  unreadCountData={unreadCountData || { result: { totalCount: 0 }, errors: null }}
+                  notificationsLoading={notificationsLoading}
+                />
       </div>
     </div>
     </ProtectedRoute>

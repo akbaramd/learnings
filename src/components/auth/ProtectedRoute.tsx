@@ -1,13 +1,9 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSelector } from 'react-redux';
-import { selectAccessToken, selectIsInitialized, selectRefreshTokenChecked } from '@/src/store/auth/auth.selectors';
-import { setRefreshTokenChecked, setAccessToken, setAuthStatus } from '@/src/store/auth/auth.slice';
-import { useDispatch } from 'react-redux';
-import { getDeviceId, getUserAgent, fetchClientInfo, getCachedIpAddress } from '@/src/lib/deviceInfo';
-import { signIn, getSession, useSession } from 'next-auth/react';
+import { selectAccessToken, selectIsInitialized } from '@/src/store/auth/auth.selectors';
 import { PiSpinner } from 'react-icons/pi';
 
 interface ProtectedRouteProps {
@@ -16,173 +12,43 @@ interface ProtectedRouteProps {
 
 /**
  * ProtectedRoute Component
- * 
+ *
  * Responsibilities:
- * 1. Protects routes by checking authentication
- * 2. Performs silent refresh if accessToken is null
- * 3. Redirects to login if refresh fails
- * 4. Prevents flicker by showing loading state during check
- * 
+ * 1. Protects routes by checking authentication state
+ * 2. Redirects to login if user is not authenticated
+ * 3. Prevents flicker by showing loading state during initialization
+ *
  * Flow:
- * 1. On mount: Check if accessToken exists
+ * 1. Wait for initialization to complete
  * 2. If accessToken exists → render children
- * 3. If accessToken is null → attempt silent refresh
- * 4. If refresh succeeds → render children
- * 5. If refresh fails (401) → redirect to /login
- * 
- * This component should wrap protected pages
+ * 3. If no accessToken → redirect to /login
+ *
+ * Note: Refresh logic is handled by baseQueryWithReauth, not here
  */
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const dispatch = useDispatch();
   const accessToken = useSelector(selectAccessToken);
   const isInitialized = useSelector(selectIsInitialized);
-  const refreshTokenChecked = useSelector(selectRefreshTokenChecked);
   const [checking, setChecking] = useState(true);
-  const hasAttemptedRef = useRef(false);
-  const lastSessionKeyRef = useRef<string | null>(null);
-  const { data: session, status: sessionStatus } = useSession();
 
   useEffect(() => {
-    // 🔥 CRITICAL: Reset hasAttemptedRef if session status changed
-    // This prevents stale state when session changes (e.g., logout/login)
-    // We track the last session status to detect changes
-    const currentSessionKey = `${sessionStatus}-${session?.accessToken ? 'has-token' : 'no-token'}-${accessToken ? 'redux-token' : 'no-redux-token'}`;
-    
-    // If session key changed, reset hasAttemptedRef to allow re-check
-    if (lastSessionKeyRef.current !== null && lastSessionKeyRef.current !== currentSessionKey) {
-      hasAttemptedRef.current = false;
-      // Use setTimeout to avoid synchronous setState in effect
-      setTimeout(() => setChecking(true), 0);
-    }
-    lastSessionKeyRef.current = currentSessionKey;
-
-    // Prevent multiple checks for the same session state
-    if (hasAttemptedRef.current) {
-      return;
-    }
-
-    // 🔥 CRITICAL: Check NextAuth session first (source of truth)
-    // If session has accessToken, sync it to Redux
-    if (session?.accessToken && !accessToken) {
-      dispatch(setAccessToken(session.accessToken));
-      dispatch(setAuthStatus('authenticated'));
-      setTimeout(() => setChecking(false), 0);
-      hasAttemptedRef.current = true;
-      return;
-    }
-
-    // If we have accessToken in Redux, user is authenticated
-    if (accessToken) {
-      // Use setTimeout to avoid synchronous setState in effect
-      setTimeout(() => setChecking(false), 0);
-      hasAttemptedRef.current = true;
-      return;
-    }
-
-    // If NextAuth session is loading, wait (with timeout to prevent infinite wait)
-    if (sessionStatus === 'loading') {
-      // Set timeout to prevent infinite wait if session never resolves
-      const timeoutId = setTimeout(() => {
-        if (sessionStatus === 'loading') {
-          console.warn('[ProtectedRoute] Session loading timeout - proceeding with check');
-          hasAttemptedRef.current = false; // Allow check to proceed
-        }
-      }, 5000); // 5 second timeout
-      
-      return () => clearTimeout(timeoutId);
-    }
-
-    // If NextAuth session exists but no accessToken, user is not authenticated
-    if (sessionStatus === 'authenticated' && !session?.accessToken) {
-      dispatch(setRefreshTokenChecked(true));
-      const returnUrl = encodeURIComponent(pathname);
-      router.replace(`/login?r=${returnUrl}`);
-      hasAttemptedRef.current = true;
-      return;
-    }
-
-    // If not initialized yet, wait for SilentRefreshProvider
+    // Wait for initialization to complete
     if (!isInitialized) {
       return;
     }
 
-    // If refreshToken was already checked and failed, redirect immediately
-    if (refreshTokenChecked) {
-      const returnUrl = encodeURIComponent(pathname);
-      router.replace(`/login?r=${returnUrl}`);
-      hasAttemptedRef.current = true;
+    // If we have accessToken, user is authenticated
+    if (accessToken) {
+      setChecking(false);
       return;
     }
 
-    // Mark as attempted
-    hasAttemptedRef.current = true;
-
-    // Perform silent refresh using NextAuth
-    const performCheck = async () => {
-      try {
-        // Get device info
-        let deviceId: string | null = null;
-        let userAgent: string | null = null;
-        let ipAddress: string | null = null;
-
-        if (typeof window !== 'undefined') {
-          deviceId = getDeviceId();
-          userAgent = getUserAgent();
-          ipAddress = getCachedIpAddress();
-          
-          if (!ipAddress) {
-            try {
-              const clientInfo = await fetchClientInfo();
-              ipAddress = clientInfo.ipAddress;
-            } catch (error) {
-              console.warn('[ProtectedRoute] Failed to fetch IP:', error);
-            }
-          }
-        }
-
-        // 🔥 Use NextAuth signIn('refresh') to refresh tokens
-        // This calls the refresh provider which reads refreshToken from cookies
-        const refreshResult = await signIn('refresh', {
-          deviceId: deviceId || null,
-          userAgent: userAgent || null,
-          ipAddress: ipAddress || null,
-          redirect: false,
-        });
-
-        // Check if refresh was successful
-        if (refreshResult?.ok) {
-          // Get updated session with new accessToken
-          const session = await getSession();
-          const newAccessToken = session?.accessToken || null;
-          
-          if (newAccessToken) {
-            // Update Redux with new access token
-            dispatch(setAccessToken(newAccessToken));
-            setChecking(false);
-          } else {
-            // No accessToken in session after refresh
-            dispatch(setRefreshTokenChecked(true));
-            const returnUrl = encodeURIComponent(pathname);
-            router.replace(`/login?r=${returnUrl}`);
-          }
-        } else {
-          // Refresh failed - mark as checked and redirect to login
-          dispatch(setRefreshTokenChecked(true));
-          const returnUrl = encodeURIComponent(pathname);
-          router.replace(`/login?r=${returnUrl}`);
-        }
-      } catch {
-        // Refresh failed (401, network error, etc.) - mark as checked and redirect to login
-        dispatch(setRefreshTokenChecked(true));
-        const returnUrl = encodeURIComponent(pathname);
-        router.replace(`/login?r=${returnUrl}`);
-      }
-    };
-
-    performCheck();
-  }, [accessToken, isInitialized, refreshTokenChecked, router, pathname, dispatch, session, sessionStatus]);
+    // No accessToken - user is not authenticated, redirect to login
+    const returnUrl = encodeURIComponent(pathname);
+    router.replace(`/login?r=${returnUrl}`);
+    setChecking(false);
+  }, [accessToken, isInitialized, router, pathname]);
 
   // Show loading state while checking
   if (checking) {
