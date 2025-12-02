@@ -171,6 +171,13 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
     ? `دفترهای نمایندگی مورد نیاز: ${agencyCheck.missingAgencies.join('، ')}`
     : '';
 
+  // Check if there are any available capacities (for button visibility)
+  const hasAvailableCapacities = useMemo(() => {
+    return capacities.some(cap => 
+      cap.isRegistrationOpen && cap.isActive && !cap.isFullyBooked
+    );
+  }, [capacities]);
+
   const handleBack = () => {
     router.push('/tours');
   };
@@ -527,7 +534,7 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
           )}
 
           {/* Capacities Selection - At bottom */}
-          {tour.isRegistrationOpen && !tour.isFullyBooked && capacities.length > 0 && (
+          {tour.isRegistrationOpen && capacities.length > 0 && (
             <Card variant="default" radius="lg" padding="md">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
@@ -662,30 +669,11 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
           )}
 
           {/* No Capacity Available */}
-          {tour.isRegistrationOpen && !tour.isFullyBooked && capacities.length === 0 && (
+          {tour.isRegistrationOpen && capacities.length === 0 && (
             <Card variant="default" radius="lg" padding="md" className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
               <p className="text-xs text-amber-800 dark:text-amber-200">
                 در حال حاضر ظرفیتی برای این تور تعریف نشده است. لطفاً با پشتیبانی تماس بگیرید.
               </p>
-            </Card>
-          )}
-
-          {/* Fully Booked */}
-          {tour.isFullyBooked && (
-            <Card variant="default" radius="lg" padding="md" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-              <div className="flex items-start gap-2">
-                <div className="flex-shrink-0 mt-0.5">
-                  <span className="text-sm">🚫</span>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-red-800 dark:text-red-200 mb-1">
-                    ظرفیت تکمیل شده
-                  </p>
-                  <p className="text-[11px] text-red-700 dark:text-red-300">
-                    متأسفانه ظرفیت این تور به طور کامل تکمیل شده و امکان ثبت‌نام جدید وجود ندارد.
-                  </p>
-                </div>
-              </div>
             </Card>
           )}
 
@@ -715,7 +703,7 @@ export default function TourDetailsPage({ params }: TourDetailsPageProps) {
       </ScrollableArea>
 
       {/* Sticky Action Button at Bottom */}
-      {tour.isRegistrationOpen && !tour.isFullyBooked && capacities.length > 0 && !hasGenderMismatch && !hasAgencyMismatch && (
+      {tour.isRegistrationOpen && hasAvailableCapacities && !hasGenderMismatch && !hasAgencyMismatch && (
         <div className="sticky bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-white via-white to-transparent dark:from-gray-900 dark:via-gray-900 border-t border-gray-200 dark:border-gray-700 z-10">
           <Button
             onClick={handleStartReservation}

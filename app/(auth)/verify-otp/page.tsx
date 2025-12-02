@@ -4,12 +4,12 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import Button from '@/src/components/ui/Button';
 import Card from '@/src/components/ui/Card';
 import OtpField from '@/src/components/forms/OtpField';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useToast } from '@/src/hooks/useToast';
-import { selectChallengeId, selectMaskedPhone, selectNationalCode, selectAuthStatus, setChallengeId, setMaskedPhoneNumber, setNationalCode, setAuthStatus, clearError } from '@/src/store/auth';
+import { selectChallengeId, selectMaskedPhone, selectNationalCode, selectAuthStatus, setChallengeId, setMaskedPhoneNumber, setNationalCode, setAuthStatus, clearError, setAccessToken } from '@/src/store/auth';
 import { useAppSelector } from '@/src/hooks/store';
 import { useDispatch } from 'react-redux';
-import { signIn, useSession } from 'next-auth/react';
+import { signIn, useSession, getSession } from 'next-auth/react';
 import { getDeviceId, getUserAgent } from '@/src/lib/deviceInfo';
 
 type UiStatus = 'idle' | 'typing' | 'valid' | 'invalid';
@@ -22,14 +22,14 @@ type UiStatus = 'idle' | 'typing' | 'valid' | 'invalid';
  */
 function safeResolveReturnUrl(searchParams: URLSearchParams): string {
   const isLogoutFlow = searchParams.get('logout') === 'true';
-
+  
   // If logout flow, always redirect to dashboard after login
   if (isLogoutFlow) {
     return '/dashboard';
   }
-
+  
   const r = searchParams.get('r') ?? '';
-
+  
   // CRITICAL: Decode returnUrl to handle query strings properly
   // Example: /surveys/123?step=2 gets encoded as %2Fsurveys%2F123%3Fstep%3D2
   // We need to decode it back to /surveys/123?step=2
@@ -40,12 +40,12 @@ function safeResolveReturnUrl(searchParams: URLSearchParams): string {
     console.warn('[VerifyOtp] Failed to decode returnUrl:', r, error);
     decodedReturnUrl = r; // Fallback to original if decode fails
   }
-
+  
   // Only internal paths are allowed (prevent open redirect)
   if (decodedReturnUrl && decodedReturnUrl.startsWith('/') && !decodedReturnUrl.startsWith('//') && !decodedReturnUrl.startsWith('/http')) {
     return decodedReturnUrl;
   }
-
+  
   // Default to dashboard if no returnUrl - don't redirect to root (/) to avoid redirect loop
   return '/dashboard';
 }
@@ -53,15 +53,14 @@ function safeResolveReturnUrl(searchParams: URLSearchParams): string {
 export default function VerifyOtpPage() {
   const router = useRouter();
   const dispatch = useDispatch();
-  const searchParams = useSearchParams();
-
-  // Get return URL from query params and sanitize it (reactive)
+  
+  // Get return URL from query params and sanitize it
   const redirectTo = useMemo(() => {
+    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
     return safeResolveReturnUrl(searchParams);
-  }, [searchParams]);
-
-  // 🔐 SECURITY: Get sensitive OTP data ONLY from Redux (synced from NextAuth session)
-  // No sensitive data should be read from URL parameters
+  }, []);
+  
+  // دریافت challengeId، masked phone و national code از Redux store
   const challengeId = useAppSelector(selectChallengeId);
   const maskedPhone = useAppSelector(selectMaskedPhone);
   const nationalCode = useAppSelector(selectNationalCode);
@@ -77,11 +76,21 @@ export default function VerifyOtpPage() {
   const [timeLeft, setTimeLeft] = useState(120); // 2 minutes for OTP
   const [canResend, setCanResend] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
-  const [dataMissing, setDataMissing] = useState(false);
   const { success, error: showError } = useToast();
   
   // Protect against multiple redirects
   const navigatedRef = useRef(false);
+  const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+        redirectTimeoutRef.current = null;
+      }
+    };
+  }, []);
   
   // State for NextAuth signIn
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
@@ -98,7 +107,7 @@ export default function VerifyOtpPage() {
     if (error) {
       setTimeout(() => {
         setStatus('invalid');
-        const errorMessage = error && typeof error === 'object' && 'data' in error
+        const errorMessage = error && typeof error === 'object' && 'data' in error 
           ? (error as { data?: { errors?: string[] } }).data?.errors?.[0] || 'خطا در عملیات'
           : 'خطا در عملیات';
         setErrorText(errorMessage);
@@ -107,33 +116,23 @@ export default function VerifyOtpPage() {
     }
   }, [error]);
 
-  // Check if required sensitive data is missing from Redux
-  useEffect(() => {
-    if (!challengeId || !nationalCode) {
-      setDataMissing(true);
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[VerifyOtp] ❌ Required sensitive data missing from Redux', {
-          challengeId: !!challengeId,
-          nationalCode: !!nationalCode,
-          note: 'Sensitive data should come from NextAuth session → AuthSessionSync → Redux, not URL'
-        });
-      }
-    } else {
-      setDataMissing(false);
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[VerifyOtp] ✅ Required sensitive data available from Redux', {
-          challengeId: challengeId?.substring(0, 20) + '...',
-          nationalCode: nationalCode?.substring(0, 4) + '***'
-        });
-      }
-    }
-  }, [challengeId, nationalCode]);
-
   // Note: NextAuth session check will be handled by middleware or protected layout
   // We don't need to check authentication here anymore
 
-  // Note: Automatic navigation removed - navigation is now handled manually
-  // User must explicitly click buttons to navigate
+  // Redirect if no challengeId or nationalCode (should come from login)
+  useEffect(() => {
+    // Redirect to login if we don't have the required data for OTP verification
+    // Only redirect if we're absolutely sure there's no challengeId or nationalCode
+    // and we're not in any loading or OTP-related state
+    if ((!challengeId || !nationalCode) && 
+        authStatus !== 'otp-sent' && 
+        authStatus !== 'loading' && 
+        authStatus !== 'idle') {
+      router.push('/login');
+    } else {
+      console.log('Not redirecting - challengeId and nationalCode exist or in valid state');
+    }
+  }, [challengeId, nationalCode, authStatus, router]);
 
   // Timer countdown effect
   useEffect(() => {
@@ -166,7 +165,7 @@ export default function VerifyOtpPage() {
     return 'default';
   }, [status]);
 
-  const canSubmit = otp.length === 6 && !isLoading && !!challengeId;
+  const canSubmit = otp.length === 6 && !isLoading && challengeId;
 
   // Handle session update after resending OTP via NextAuth
   useEffect(() => {
@@ -263,46 +262,11 @@ export default function VerifyOtpPage() {
         radius="md"
         className="w-full"
       >
-          {dataMissing ? (
-            <div className="text-center space-y-6">
-              <div className="mb-6">
-                <h2 className="text-heading-3-alt text-neutral-900 dark:text-neutral-100">اطلاعات ناقص</h2>
-                <p className="mt-1 text-body text-neutral-600 dark:text-neutral-400">
-                  اطلاعات لازم برای تأیید کد یافت نشد. لطفاً دوباره از صفحه ورود شروع کنید.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                <Button
-                  type="button"
-                  variant="solid"
-                  size="md"
-                  radius="xs"
-                  block
-                  onClick={() => {
-                    // Go back to login, preserve all query params except OTP data
-                    const loginParams = new URLSearchParams();
-                    // Preserve return URL and logout flag
-                    const returnUrl = searchParams.get('r');
-                    const isLogoutFlow = searchParams.get('logout') === 'true';
-                    if (returnUrl) loginParams.set('r', returnUrl);
-                    if (isLogoutFlow) loginParams.set('logout', 'true');
-
-                    const queryString = loginParams.toString();
-                    router.push(queryString ? `/login?${queryString}` : '/login');
-                  }}
-                >
-                  بازگشت به صفحه ورود
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="mb-6 text-center">
-                <h2 className="text-heading-3-alt text-neutral-900 dark:text-neutral-100">تأیید کد</h2>
-                <p className="mt-1 text-body text-neutral-600 dark:text-neutral-400">
-                  کد ۶ رقمی ارسال شده به شماره تلفن خود را وارد کنید.
-                </p>
+          <div className="mb-6 text-center">
+            <h2 className="text-heading-3-alt text-neutral-900 dark:text-neutral-100">تأیید کد</h2>
+            <p className="mt-1 text-body text-neutral-600 dark:text-neutral-400">
+              کد ۶ رقمی ارسال شده به شماره تلفن خود را وارد کنید.
+            </p>
             <div className="mt-3 p-3 bg-neutral-50 dark:bg-gray-700 rounded-lg border border-neutral-200 dark:border-gray-600">
               <p className="text-body text-neutral-700 dark:text-neutral-300">
                 <span className="text-label">شماره تلفن:</span>
@@ -383,9 +347,52 @@ export default function VerifyOtpPage() {
                 console.log('========================================');
                 
                 success('ورود موفق', 'در حال انتقال...');
-
-                // AuthSessionSync will handle syncing NextAuth session to Redux
-                // Just redirect to target page
+                
+                // 🔥 CRITICAL: Get accessToken from NextAuth session and sync to Redux
+                // This ensures ProtectedRoute and other components can access accessToken
+                // We need to wait for NextAuth session to be fully updated
+                try {
+                  // Wait for NextAuth session to be updated (may take a moment)
+                  // Try multiple times with increasing delays
+                  let session = await getSession();
+                  let accessToken = session?.accessToken || null;
+                  
+                  // If no accessToken yet, wait and retry
+                  if (!accessToken) {
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    session = await getSession();
+                    accessToken = session?.accessToken || null;
+                  }
+                  
+                  // If still no accessToken, wait once more
+                  if (!accessToken) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    session = await getSession();
+                    accessToken = session?.accessToken || null;
+                  }
+                  
+                  if (accessToken) {
+                    // Sync accessToken to Redux for backward compatibility
+                    dispatch(setAccessToken(accessToken));
+                    dispatch(setAuthStatus('authenticated'));
+                  
+                  if (process.env.NODE_ENV === 'development') {
+                      console.log('[VerifyOtp] ✅ accessToken synced to Redux from NextAuth session');
+                    }
+                  } else {
+                    if (process.env.NODE_ENV === 'development') {
+                      console.warn('[VerifyOtp] ⚠️ No accessToken in NextAuth session after verify - SilentRefreshProvider will handle it');
+                  }
+                    // Don't block redirect - SilentRefreshProvider will try to refresh on next page load
+                  }
+                } catch (error) {
+                  console.error('[VerifyOtp] ❌ Failed to sync accessToken to Redux:', error);
+                  // Don't block redirect - SilentRefreshProvider will handle it on next page load
+                }
+                
+                // Redirect to target page
+                // NextAuth session is now available with accessToken
+                // Redux also has accessToken for backward compatibility
                 navigatedRef.current = true;
                 
                 // Use router.replace instead of window.location.href for better Next.js navigation
@@ -422,15 +429,7 @@ export default function VerifyOtpPage() {
               value={otp}
               onChange={(v) => {
                 setOtp(v);
-                if (v.length === 0) {
-                  setStatus('idle');
-                } else if (v.length < 6) {
-                  setStatus('typing');
-                } else {
-                  // Validate complete OTP
-                  const err = explain(v);
-                  setStatus(err ? 'invalid' : 'valid');
-                }
+                setStatus(v.length === 0 ? 'idle' : v.length < 6 ? 'typing' : 'valid');
                 if (touched) setErrorText(explain(v));
               }}
               onComplete={(v) => {
@@ -504,30 +503,19 @@ export default function VerifyOtpPage() {
               size="md"
               radius="xs"
               block
-              onClick={() => {
-                // Go back to login to change national number, preserve query params
-                const returnUrl = searchParams.get('r');
-                const isLogoutFlow = searchParams.get('logout') === 'true';
-                const loginParams = new URLSearchParams();
-                if (returnUrl) loginParams.set('r', returnUrl);
-                if (isLogoutFlow) loginParams.set('logout', 'true');
-                const queryString = loginParams.toString();
-                router.push(queryString ? `/login?${queryString}` : '/login');
-              }}
+              onClick={() => router.push('/login')}
             >
               تغییر شماره ملی
             </Button>
           </div>
           
-              {/* Info message about organization phone numbers at bottom */}
-              <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800/50">
-                <p className="text-caption text-blue-700 dark:text-blue-300 text-center">
-                  کد تأیید به شماره تلفن ثبت‌شده در سیستم سازمان ارسال شده است.
-                </p>
-              </div>
-            </form>
-          </>
-          )}
+          {/* Info message about organization phone numbers at bottom */}
+          <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800/50">
+            <p className="text-caption text-blue-700 dark:text-blue-300 text-center">
+              کد تأیید به شماره تلفن ثبت‌شده در سیستم سازمان ارسال شده است.
+            </p>
+          </div>
+        </form>
       </Card>
     </div>
   );
