@@ -106,7 +106,7 @@ function BrandTitle() {
   return (
     <div className="flex flex-col items-center leading-none">
       <h1 className="text-base font-semibold tracking-tight text-emerald-700 dark:text-emerald-400">
-        {companyInfo.name}
+        سیستم جامع رفاهی
       </h1>
     </div>
   );
