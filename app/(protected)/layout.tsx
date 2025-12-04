@@ -17,6 +17,7 @@ import {
   PiSun,
   PiMoon,
   PiHouse,
+  PiHeadset,
 } from 'react-icons/pi';
 
 interface ProtectedLayoutProps {
@@ -229,6 +230,30 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
                   unreadCountData={unreadCountData || { result: { totalCount: 0 }, errors: null }}
                   notificationsLoading={notificationsLoading}
                 />
+      </div>
+
+      {/* Support Button - floating button for easy access */}
+      <div className="fixed bottom-20 left-4 z-50 md:bottom-6">
+        <button
+          onClick={() => window.open('https://widget.raychat.io/5d259dc6961e95bd413e1358?version=2', '_blank', 'noopener,noreferrer')}
+          className="group flex items-center gap-2 px-4 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+          aria-label="پشتیبانی آنلاین"
+          title="پشتیبانی آنلاین - کلیک کنید"
+        >
+          <PiHeadset className="h-5 w-5 flex-shrink-0" />
+          <span className="text-sm font-medium whitespace-nowrap hidden lg:inline">
+            پشتیبانی آنلاین
+          </span>
+          <span className="text-sm font-medium whitespace-nowrap lg:hidden md:inline">
+            پشتیبانی
+          </span>
+        </button>
+
+        {/* Tooltip for better UX */}
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+          نیاز به کمک دارید؟ کلیک کنید
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></div>
+        </div>
       </div>
     </div>
     </ProtectedRoute>

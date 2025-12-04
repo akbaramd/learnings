@@ -122,17 +122,13 @@ export default function VerifyOtpPage() {
   // Redirect if no challengeId or nationalCode (should come from login)
   useEffect(() => {
     // Redirect to login if we don't have the required data for OTP verification
-    // Only redirect if we're absolutely sure there's no challengeId or nationalCode
-    // and we're not in any loading or OTP-related state
-    if ((!challengeId || !nationalCode) && 
-        authStatus !== 'otp-sent' && 
-        authStatus !== 'loading' && 
-        authStatus !== 'idle') {
+    // This ensures users can't access verify-otp page without going through login first
+    if (!challengeId || !nationalCode) {
+      console.log('Redirecting to login - missing challengeId or nationalCode');
       router.push('/login');
-    } else {
-      console.log('Not redirecting - challengeId and nationalCode exist or in valid state');
+      return;
     }
-  }, [challengeId, nationalCode, authStatus, router]);
+  }, [challengeId, nationalCode, router]);
 
   // Timer countdown effect
   useEffect(() => {

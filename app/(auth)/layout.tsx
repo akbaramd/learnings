@@ -71,15 +71,29 @@ export default function LoginLayout({ children }: { children: ReactNode }) {
       {/* Theme Switcher - positioned absolutely */}
       <ClientThemeSwitcher position="bottom-right" />
 
-      {/* Support Button - positioned absolutely on the opposite side */}
-      <button
-        onClick={() => window.open('https://widget.raychat.io/5d259dc6961e95bd413e1358?version=2', '_blank', 'noopener,noreferrer')}
-        className="fixed bottom-4 left-4 z-50 flex items-center justify-center w-12 h-12 rounded-full bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white shadow-lg transition-colors"
-        aria-label="پشتیبانی"
-        title="پشتیبانی"
-      >
-        <PiHeadset className="h-6 w-6" />
-      </button>
+      {/* Support Button - enhanced with text for better discoverability */}
+      <div className="fixed bottom-4 left-4 z-50">
+        <button
+          onClick={() => window.open('https://widget.raychat.io/5d259dc6961e95bd413e1358?version=2', '_blank', 'noopener,noreferrer')}
+          className="group flex items-center gap-2 px-4 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+          aria-label="پشتیبانی آنلاین"
+          title="پشتیبانی آنلاین - کلیک کنید"
+        >
+          <PiHeadset className="h-5 w-5 flex-shrink-0" />
+          <span className="text-sm font-medium whitespace-nowrap hidden sm:inline">
+            پشتیبانی آنلاین
+          </span>
+          <span className="text-sm font-medium whitespace-nowrap sm:hidden">
+            پشتیبانی
+          </span>
+        </button>
+
+        {/* Tooltip for mobile users */}
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+          کلیک کنید تا با پشتیبانی تماس بگیرید
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></div>
+        </div>
+      </div>
     </div>
   );
 }

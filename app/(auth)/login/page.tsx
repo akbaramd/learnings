@@ -132,6 +132,35 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, isReady, isLogoutFlow, returnUrl, router, dispatch]);
   
+  // Handle OTP expiry (5 minutes)
+  useEffect(() => {
+    if (!challengeId) return;
+
+    const expiryTime = 5 * 60 * 1000; // 5 minutes in milliseconds
+    const expiryTimeout = setTimeout(() => {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Login] ⏰ OTP expired, clearing challenge data');
+      }
+
+      // Clear expired OTP data
+      dispatch(setChallengeId(null));
+      dispatch(setMaskedPhoneNumber(null));
+      dispatch(setNationalCode(null));
+      dispatch(setAuthStatus('anonymous'));
+
+      // Clear local state
+      setNationalId(''); // Clear input field for fresh start
+      setStatus('idle');
+      setErrorText('کد تأیید منقضی شده است. لطفاً دوباره تلاش کنید.');
+      setTouched(true);
+
+      // Clear any error state
+      dispatch(clearUser());
+    }, expiryTime);
+
+    return () => clearTimeout(expiryTimeout);
+  }, [challengeId, dispatch]);
+
   // No need to handle session update for OTP - mutation handles it in onQueryStarted
 
   // Note: Navigation to verify-otp is now handled manually in the OTP sending success case
@@ -223,7 +252,14 @@ export default function LoginPage() {
   const handleChange = (val: string) => {
     const normalized = Melli.normalize(val);
     setNationalId(normalized);
-    
+
+    // Clear OTP-related state when user starts typing new national code
+    // This ensures clean state for new authentication attempt
+    dispatch(setChallengeId(null));
+    dispatch(setMaskedPhoneNumber(null));
+    dispatch(setNationalCode(null));
+    dispatch(setAuthStatus('anonymous'));
+
     // Close drawer if open when user starts typing
     if (showNotFoundDrawer) {
       setShowNotFoundDrawer(false);
