@@ -171,7 +171,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         ipAddress: { label: 'IP Address', type: 'text', required: false },
       },
       async authorize(credentials, req) {
+        // 🔥 CRITICAL: Log received credentials for debugging
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[NextAuth][SendOTP] 🔍 Authorize called with:', {
+            hasCredentials: !!credentials,
+            credentialsKeys: credentials ? Object.keys(credentials) : [],
+            hasNationalCode: !!credentials?.nationalCode,
+            nationalCode: credentials?.nationalCode ? String(credentials.nationalCode).substring(0, 3) + '***' : 'null',
+            deviceId: credentials?.deviceId || 'null',
+            userAgent: credentials?.userAgent || 'null',
+            ipAddress: credentials?.ipAddress || 'null',
+            requestMethod: (req as NextRequest)?.method || 'unknown',
+            requestUrl: (req as NextRequest)?.url ? new URL((req as NextRequest).url).pathname : 'unknown',
+          });
+        }
+
         if (!credentials?.nationalCode) {
+          console.error('[NextAuth][SendOTP] ❌ Missing nationalCode in credentials');
           return null;
         }
 
@@ -190,20 +206,104 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           // Extract national code
           const nationalCode = String(credentials.nationalCode);
 
+          // 🔥 DEBUG: Log request details
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[NextAuth][SendOTP] 🔍 Calling upstream sendOtp API:', {
+              nationalCode: nationalCode.substring(0, 3) + '***',
+              deviceId: requestInfo.deviceId || 'null',
+              userAgent: requestInfo.userAgent || 'null',
+              ipAddress: requestInfo.ipAddress || 'null',
+            });
+          }
+
           // Call send OTP endpoint directly to upstream
-          const response = await api.api.sendOtp({
-            nationalCode,
-            purpose: 'login',
-            scope: 'app',
-            deviceId: requestInfo.deviceId || null,
-            userAgent: requestInfo.userAgent || null,
-            ipAddress: requestInfo.ipAddress || null,
-          });
+          let response;
+          try {
+            response = await api.api.sendOtp({
+              nationalCode,
+              purpose: 'login',
+              scope: 'app',
+              deviceId: requestInfo.deviceId || null,
+              userAgent: requestInfo.userAgent || null,
+              ipAddress: requestInfo.ipAddress || null,
+            });
+          } catch (apiError) {
+            // 🔥 CRITICAL: Log API call errors with full details
+            console.error('[NextAuth][SendOTP] ❌ Upstream API call failed:', {
+              name: apiError instanceof Error ? apiError.name : 'Unknown',
+              message: apiError instanceof Error ? apiError.message : String(apiError),
+              stack: apiError instanceof Error ? apiError.stack : undefined,
+              nationalCode: nationalCode.substring(0, 3) + '***',
+            });
+            
+            // If it's an Axios error, log response details
+            if (apiError && typeof apiError === 'object' && 'response' in apiError) {
+              const axiosError = apiError as { response?: { status?: number; data?: unknown } };
+              console.error('[NextAuth][SendOTP] ❌ Upstream API response error:', {
+                status: axiosError.response?.status,
+                data: axiosError.response?.data,
+              });
+            }
+            
+            return null;
+          }
+
+          // 🔥 DEBUG: Log upstream response
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[NextAuth][SendOTP] 📥 Upstream response:', {
+              status: response.status,
+              isSuccess: response.data?.isSuccess,
+              message: response.data?.message,
+              errors: response.data?.errors,
+              hasData: !!response.data?.data,
+              hasChallengeId: !!response.data?.data?.challengeId,
+            });
+          }
+
+          // 🔥 CRITICAL: Handle non-200 status codes with detailed logging
+          if (response.status !== 200) {
+            // Log full response for error diagnosis
+            console.error('[NextAuth][SendOTP] ❌ Upstream API returned non-200 status:', {
+              status: response.status,
+              statusText: response.statusText,
+              headers: response.headers ? Object.keys(response.headers) : [],
+              dataType: typeof response.data,
+              dataIsNull: response.data === null,
+              dataIsUndefined: response.data === undefined,
+              fullData: response.data, // Log full data object to see what we actually received
+              dataKeys: response.data && typeof response.data === 'object' ? Object.keys(response.data) : [],
+            });
+            
+            // Try to extract error message from response
+            let errorMessage = 'Failed to send OTP';
+            if (response.data && typeof response.data === 'object') {
+              const data = response.data as Record<string, unknown>;
+              if (data.message && typeof data.message === 'string') {
+                errorMessage = data.message;
+              } else if (Array.isArray(data.errors) && data.errors[0]) {
+                errorMessage = String(data.errors[0]);
+              } else if (data.error && typeof data.error === 'string') {
+                errorMessage = data.error;
+              }
+            } else if (typeof response.data === 'string') {
+              errorMessage = response.data;
+            }
+            
+            console.error('[NextAuth][SendOTP] ❌ Error message extracted:', errorMessage);
+            return null;
+          }
 
           // Extract challengeId and maskedPhoneNumber from upstream response
-          if (response.status === 200 && response.data?.isSuccess && response.data?.data?.challengeId) {
+          if (response.data?.isSuccess && response.data?.data?.challengeId) {
             const challengeId = response.data.data.challengeId;
             const maskedPhoneNumber = response.data.data.maskedPhoneNumber || undefined;
+
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[NextAuth][SendOTP] ✅ OTP sent successfully:', {
+                challengeId: challengeId.substring(0, 20) + '...',
+                hasMaskedPhoneNumber: !!maskedPhoneNumber,
+              });
+            }
 
             // Return user object with OTP data (not authenticated yet)
             // The id 'otp-sent' is used to identify this as an OTP-sent session
@@ -215,9 +315,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             };
           }
 
+          // 🔥 CRITICAL: Log why OTP sending failed (200 status but invalid response structure)
+          console.error('[NextAuth][SendOTP] ❌ Failed to send OTP - invalid upstream response structure:', {
+            status: response.status,
+            isSuccess: response.data?.isSuccess,
+            message: response.data?.message,
+            errors: response.data?.errors,
+            hasData: !!response.data?.data,
+            hasChallengeId: !!response.data?.data?.challengeId,
+            responseData: response.data?.data,
+            fullResponseData: response.data, // Log full data to see actual structure
+          });
+
           return null;
         } catch (error) {
-          console.error('[NextAuth] Error sending OTP:', error);
+          // 🔥 CRITICAL: Log all errors with full details
+          console.error('[NextAuth][SendOTP] ❌ Unexpected error sending OTP:', {
+            name: error instanceof Error ? error.name : 'Unknown',
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+            type: typeof error,
+            nationalCode: credentials?.nationalCode ? String(credentials.nationalCode).substring(0, 3) + '***' : 'null',
+          });
           return null;
         }
       },
