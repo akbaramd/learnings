@@ -302,6 +302,23 @@ export default function LoginPage() {
     const text = e.clipboardData.getData('text');
     const normalized = Melli.normalize(text);
     setNationalId(normalized);
+
+    // Clear OTP-related state when user pastes new national code
+    // This ensures clean state for new authentication attempt (same as handleChange)
+    dispatch(setChallengeId(null));
+    dispatch(setMaskedPhoneNumber(null));
+    dispatch(setNationalCode(null));
+    dispatch(setAuthStatus('anonymous'));
+
+    // Close drawer if open when user pastes
+    if (showNotFoundDrawer) {
+      setShowNotFoundDrawer(false);
+      drawerShownForErrorRef.current = null;
+      previousErrorRef.current = null;
+      setValidationResult(null);
+      setValidationError(null);
+    }
+
     // move caret to end
     requestAnimationFrame(() => {
       const el = inputRef.current;
