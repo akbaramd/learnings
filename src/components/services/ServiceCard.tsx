@@ -10,9 +10,9 @@ import Card from '../ui/Card';
 export type Service = {
   id: string;
   title: string;
-  icon: React.ReactNode;
-  /** Tailwind color family keyword: 'emerald' | 'blue' | 'indigo' | 'amber' | 'rose' | 'cyan' | 'gray' */
-  accent: string;
+  icon: React.ComponentType<any>;
+  color: string;
+  bgColor: string;
   disabled?: boolean;
 };
 
@@ -116,56 +116,29 @@ function accentClasses(accent: string, disabled?: boolean) {
 ========================================================= */
 
 export function ServiceCard({ s, onClick, active, className, dir }: ServiceCardProps) {
-  const cls = accentClasses(s.accent, s.disabled);
+  const Icon = s.icon;
 
   return (
-    <Card
+    <button
       dir={dir}
       onClick={() => !s.disabled && onClick?.(s.id)}
-      aria-disabled={s.disabled || undefined}
+      disabled={s.disabled}
       className={[
-        'group relative w-full rounded-lg border p-3 text-center transition-all duration-200',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500 dark:focus-visible:ring-emerald-400',
-        cls.card,
-        s.disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
-        active && !s.disabled ? 'ring-1 ring-emerald-400/60 dark:ring-emerald-300/60' : '',
+        'rounded-2xl p-4 text-center transition-all active:scale-95',
+        'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500',
+        'disabled:opacity-50 disabled:cursor-not-allowed',
+        'bg-white hover:bg-gray-50 border border-gray-200 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 dark:border-slate-700',
         className || '',
       ].join(' ')}
     >
-      {/* Active marker (subtle) */}
-      {active && !s.disabled && (
-        <span className="absolute top-2 end-2 inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200 px-2 py-0.5 text-[10px] font-medium">
-          منتخب
-        </span>
-      )}
-
-
-
-      {/* Icon */}
-      <div
-        className={[
-          'mx-auto mb-2 grid h-8 w-8 place-items-center rounded-lg',
-          'transition-transform duration-200',
-          s.disabled ? '' : 'group-hover:scale-105',
-          cls.iconWrap,
-        ].join(' ')}
-        aria-hidden
-      >
-        <span className="text-[18px] leading-none">{s.icon}</span>
+      <div className={`w-12 h-12 mx-auto mb-2 rounded-xl flex items-center justify-center ${s.bgColor}`}>
+        <Icon className="w-6 h-6 text-white" />
       </div>
 
-      {/* Title */}
-      <span
-        className={[
-          'block text-xs font-semibold tracking-tight',
-          cls.title,
-        ].join(' ')}
-      >
+      <p className="text-xs text-gray-700 dark:text-slate-300">
         {s.title}
-      </span>
-
-
-    </Card>
+      </p>
+    </button>
   );
 }
 

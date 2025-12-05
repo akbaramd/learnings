@@ -3,8 +3,10 @@
 import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
+import { useSession } from 'next-auth/react';
 import { IconButton } from '@/src/components/ui/IconButton';
-import { PiEye, PiEyeSlash, PiGear, PiArrowClockwise } from 'react-icons/pi';
+import { selectUser, selectUserName, useGetMeQuery } from '@/src/store/auth';
+import { PiEye, PiEyeSlash, PiGear, PiArrowClockwise, PiHeart, PiBell, PiSun, PiMoon } from 'react-icons/pi';
 import { ServicesGrid } from '@/src/components/services/ServiceCard';
 import { TourSection } from '@/src/components/tours/TourSection';
 import { Tour, TourCardSkeleton } from '@/src/components/tours/TourCard';
@@ -14,7 +16,7 @@ import { SurveySection } from '@/src/components/surveys/SurveySection';
 import { Survey, SurveyCardSkeleton } from '@/src/components/surveys/SurveyCard';
 import { TutorialSection } from '@/src/components/tutorials';
 import { Tutorial } from '@/src/components/tutorials/TutorialCard';
-import { PiMoney, PiFileText, PiMapPinDuotone, PiInfo } from 'react-icons/pi';
+import { PiMoney, PiFileText, PiMapPinDuotone, PiInfo, PiWallet, PiCalendar } from 'react-icons/pi';
 import { useGetToursPaginatedQuery } from '@/src/store/tours/tours.queries';
 import { useGetFacilitiesQuery } from '@/src/store/facilities';
 import { useGetActiveSurveysQuery } from '@/src/store/surveys';
@@ -120,56 +122,82 @@ function WalletCard() {
   }
 
   return (
-    <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 p-4 text-white shadow-sm">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="text-sm/5 font-medium opacity-90">کیف پول اصلی</div>
-        <IconButton
-          aria-label={hidden ? 'نمایش موجودی' : 'مخفی کردن موجودی'}
-          onClick={() => setHidden(v => !v)}
-          variant="outline"
-          color="primary"
-          className="text-white hover:bg-white/15 border-white/20"
-        >
-          {hidden ? <PiEye className="h-4 w-4" /> : <PiEyeSlash className="h-4 w-4" />}
-        </IconButton>
+    <div className="rounded-3xl p-5 shadow-2xl border relative overflow-hidden bg-gradient-to-br from-emerald-600 to-teal-700 border-emerald-500/20">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full translate-y-1/2 -translate-x-1/2" />
       </div>
 
-      <div className="mb-1 text-2xl font-semibold tracking-tight">
-        {isLoading && !wallet ? 'در حال بارگذاری...' : hidden ? '•••••' : `${formatCurrencyFa(balance)} ریال`}
-      </div>
-      <div className="mb-4 text-sm font-normal text-emerald-100">
-        آخرین بروزرسانی: {formatRelativeFa(lastUpdate)}
-      </div>
-
-      {error && (
-        <div className="mb-4 rounded-md bg-red-500/20 p-2 text-sm text-red-100">
-          <div className="flex items-center justify-between">
-            <span>{error}</span>
-            <button onClick={handleRefresh} className="ml-2 text-xs underline hover:no-underline">
-              تلاش مجدد
-            </button>
+      <div className="relative">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <p className="text-emerald-100 text-sm mb-1 flex items-center gap-2">
+              <PiWallet className="w-4 h-4" />
+              کیف پول اصلی
+            </p>
+            <div className="flex items-center gap-3">
+              <h2 className="text-white">
+                {isLoading && !wallet ? 'در حال بارگذاری...' : hidden ? '•••••' : `${formatCurrencyFa(balance)} ریال`}
+              </h2>
+              <button
+                onClick={() => setHidden(v => !v)}
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+              >
+                {hidden ? (
+                  <PiEye className="w-4 h-4 text-white" />
+                ) : (
+                  <PiEyeSlash className="w-4 h-4 text-white" />
+                )}
+              </button>
+            </div>
+            <p className="text-emerald-100 text-xs mt-1">ریال</p>
           </div>
-        </div>
-      )}
 
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={handleManageWallet}
-          className="inline-flex items-center justify-center gap-2 rounded-md bg-white/15 px-3 py-2 text-sm font-medium backdrop-blur transition hover:bg-white/25 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white/40 active:scale-95"
-        >
-          <PiGear className="h-4 w-4" />
-          مدیریت
-        </button>
-        <button
-          type="button"
-          onClick={handleRefresh}
-          disabled={isLoading}
-          className="inline-flex items-center justify-center gap-2 rounded-md bg-white/15 px-3 py-2 text-sm font-medium backdrop-blur transition hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-white/40 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <PiArrowClockwise className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-          بروزرسانی
-        </button>
+          <button
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors disabled:opacity-50"
+          >
+            <PiArrowClockwise className={`w-5 h-5 text-white ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-3.5 h-3.5 rounded-full bg-emerald-400 animate-pulse" />
+          <p className="text-emerald-100 text-xs">
+            آخرین بروزرسانی: {formatRelativeFa(lastUpdate)}
+          </p>
+        </div>
+
+        {error && (
+          <div className="mb-4 rounded-lg bg-red-500/20 p-3 text-sm text-red-100">
+            <div className="flex items-center justify-between">
+              <span>{error}</span>
+              <button onClick={handleRefresh} className="text-xs underline hover:no-underline">
+                تلاش مجدد
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <button
+            onClick={handleManageWallet}
+            className="flex-1 py-2.5 bg-white text-emerald-600 rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-emerald-50 transition-colors active:scale-95"
+          >
+            <PiGear className="w-4 h-4" />
+            مدیریت
+          </button>
+          <button
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className="flex-1 py-2.5 bg-white/10 text-white rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-white/20 transition-colors active:scale-95 disabled:opacity-50"
+          >
+            <PiArrowClockwise className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            بروزرسانی
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -180,9 +208,30 @@ function WalletCard() {
 ========================= */
 
 const services = [
-  { id: 'tour', title: 'تور و رویداد', icon: <PiMapPinDuotone className="h-5 w-5" />, accent: 'blue', disabled: false },
-  { id: 'facility', title: 'تسهیلات', icon: <PiMoney className="h-5 w-5" />, accent: 'emerald', disabled: false },
-  { id: 'survey', title: 'نظرسنجی', icon: <PiFileText className="h-5 w-5" />, accent: 'amber', disabled: false },
+  {
+    id: 'facility',
+    title: 'تسهیلات مالی',
+    icon: PiWallet,
+    color: 'from-emerald-500 to-emerald-600',
+    bgColor: 'bg-emerald-500/10',
+    disabled: false
+  },
+  {
+    id: 'tour',
+    title: 'تور و رویداد',
+    icon: PiCalendar,
+    color: 'from-purple-500 to-purple-600',
+    bgColor: 'bg-purple-500/10',
+    disabled: false
+  },
+  {
+    id: 'survey',
+    title: 'نظرسنجی',
+    icon: PiFileText,
+    color: 'from-blue-500 to-blue-600',
+    bgColor: 'bg-blue-500/10',
+    disabled: false
+  },
 ];
 
 /* =========================
@@ -326,7 +375,23 @@ export default function HomeDashboard() {
   const { tours, isLoading: toursLoading, isError: toursError } = useToursList();
   const { facilities, isLoading: facilitiesLoading, isError: facilitiesError } = useFacilitiesList();
   const { surveys, isLoading: surveysLoading, isError: surveysError } = useSurveysList();
+  const { data: session, status } = useSession();
+  const user = useSelector(selectUser);
+  const userName = useSelector(selectUserName);
+  const { data: member } = useGetMeQuery();
   const router = useRouter();
+
+  const isAuthenticated = status === 'authenticated' && !!session;
+
+  // Fetch user profile when authenticated (same as profile page)
+  useGetMeQuery(undefined, {
+    skip: !isAuthenticated,
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+  });
+
+  const displayName = userName || user?.firstName || session?.user?.name || 'کاربر';
 
   function handleServiceSelect(id: string): void {
     if (id === 'facility') {
@@ -340,12 +405,37 @@ export default function HomeDashboard() {
   }
 
   return (
-    <div className="w-full flex flex-col" dir="rtl">
-        <div className="space-y-4">
-            {/* Wallet */}
-            <section>
-              <WalletCard />
-            </section>
+    <div
+      className="min-h-screen pb-6 transition-colors duration-300 bg-gradient-to-b from-gray-50 via-white to-gray-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900"
+      dir="rtl"
+    >
+      {/* Header with Gradient */}
+      <div className="sticky top-0 z-40 bg-gradient-to-b from-white/95 to-white/80 dark:from-slate-900/95 dark:to-slate-900/80 backdrop-blur-xl">
+        <div className="px-4 pt-8 pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                <PiHeart className="w-5 h-5 text-white" fill="white" />
+              </div>
+              <div>
+                <h1 className="text-base text-gray-900 dark:text-white">
+                  سلام {displayName} 👋
+                </h1>
+                <p className="text-xs text-gray-600 dark:text-slate-400">
+                  به سامانه رفاهی خوش آمدید
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div className="px-4 space-y-6 mt-4">
+        {/* Wallet */}
+        <section>
+          <WalletCard />
+        </section>
 
             {/* Services */}
             <section className="px-4">
@@ -450,7 +540,7 @@ export default function HomeDashboard() {
                 )
               )}
             </section>
-        </div>
+      </div>
     </div>
   );
 }
