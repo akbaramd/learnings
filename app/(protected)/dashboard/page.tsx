@@ -122,48 +122,54 @@ function WalletCard() {
   }
 
   return (
-    <div className="rounded-3xl p-5 shadow-2xl border relative overflow-hidden bg-gradient-to-br from-emerald-600 to-teal-700 border-emerald-500/20">
+    <div className="rounded-3xl p-4 shadow-2xl border relative overflow-hidden bg-gradient-to-br from-emerald-600 to-teal-700 border-emerald-500/20">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full translate-y-1/2 -translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-1/2 -translate-x-1/2" />
       </div>
 
       <div className="relative">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <p className="text-emerald-100 text-sm mb-1 flex items-center gap-2">
-              <PiWallet className="w-4 h-4" />
-              کیف پول اصلی
-            </p>
-            <div className="flex items-center gap-3">
-              <h2 className="text-white">
-                {isLoading && !wallet ? 'در حال بارگذاری...' : hidden ? '•••••' : `${formatCurrencyFa(balance)} ریال`}
-              </h2>
-              <button
-                onClick={() => setHidden(v => !v)}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-              >
-                {hidden ? (
-                  <PiEye className="w-4 h-4 text-white" />
-                ) : (
-                  <PiEyeSlash className="w-4 h-4 text-white" />
-                )}
-              </button>
-            </div>
-            <p className="text-emerald-100 text-xs mt-1">ریال</p>
-          </div>
+        {/* Header with icons */}
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-emerald-100 text-sm flex items-center gap-2">
+            <PiWallet className="w-4 h-4" />
+            کیف پول اصلی
+          </p>
 
-          <button
-            onClick={handleRefresh}
-            disabled={isLoading}
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors disabled:opacity-50"
-          >
-            <PiArrowClockwise className={`w-5 h-5 text-white ${isLoading ? 'animate-spin' : ''}`} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setHidden(v => !v)}
+              className="p-1 rounded-md bg-white/10 hover:bg-white/20 transition-colors"
+            >
+              {hidden ? (
+                <PiEye className="w-3.5 h-3.5 text-white" />
+              ) : (
+                <PiEyeSlash className="w-3.5 h-3.5 text-white" />
+              )}
+            </button>
+            <button
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="p-1 rounded-md bg-white/10 hover:bg-white/20 transition-colors disabled:opacity-50"
+            >
+              <PiArrowClockwise className={`w-3.5 h-3.5 text-white ${isLoading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 mb-4">
+        {/* Centered Balance */}
+        <div className="text-center mb-3">
+          <h2 className="text-2xl font-bold text-white">
+            {isLoading && !wallet ? 'در حال بارگذاری...' : hidden ? '•••••' : (
+              <>
+                {formatCurrencyFa(balance)} <span className="text-lg font-normal text-emerald-100">ریال</span>
+              </>
+            )}
+          </h2>
+        </div>
+
+        <div className="flex items-center gap-2 mb-3">
           <div className="w-3.5 h-3.5 rounded-full bg-emerald-400 animate-pulse" />
           <p className="text-emerald-100 text-xs">
             آخرین بروزرسانی: {formatRelativeFa(lastUpdate)}
@@ -171,7 +177,7 @@ function WalletCard() {
         </div>
 
         {error && (
-          <div className="mb-4 rounded-lg bg-red-500/20 p-3 text-sm text-red-100">
+          <div className="mb-3 rounded-lg bg-red-500/20 p-2 text-xs text-red-100">
             <div className="flex items-center justify-between">
               <span>{error}</span>
               <button onClick={handleRefresh} className="text-xs underline hover:no-underline">
@@ -184,7 +190,7 @@ function WalletCard() {
         <div className="flex gap-2">
           <button
             onClick={handleManageWallet}
-            className="flex-1 py-2.5 bg-white text-emerald-600 rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-emerald-50 transition-colors active:scale-95"
+            className="flex-1 py-2 bg-white text-emerald-600 rounded-lg text-sm flex items-center justify-center gap-1.5 hover:bg-emerald-50 transition-colors active:scale-95"
           >
             <PiGear className="w-4 h-4" />
             مدیریت
@@ -192,7 +198,7 @@ function WalletCard() {
           <button
             onClick={handleRefresh}
             disabled={isLoading}
-            className="flex-1 py-2.5 bg-white/10 text-white rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-white/20 transition-colors active:scale-95 disabled:opacity-50"
+            className="flex-1 py-2 bg-white/10 text-white rounded-lg text-sm flex items-center justify-center gap-1.5 hover:bg-white/20 transition-colors active:scale-95 disabled:opacity-50"
           >
             <PiArrowClockwise className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             بروزرسانی
