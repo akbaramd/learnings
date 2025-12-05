@@ -48,17 +48,23 @@ export default function LoginLayout({ children }: { children: ReactNode }) {
     <div
       ref={containerRef}
       dir="rtl"
-      className="flex flex-col overflow-hidden bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-gray-800"
+      className="flex flex-col overflow-hidden bg-gradient-to-br from-blue-50 via-white to-emerald-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900"
       style={{
         // Fallback to dvh, but JavaScript will override with exact pixel value
         height: '100dvh',
         maxHeight: '100dvh',
       }}
     >
+      {/* Decorative Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 right-20 w-72 h-72 rounded-full blur-3xl opacity-20 bg-emerald-400 dark:bg-emerald-500" />
+        <div className="absolute bottom-20 left-20 w-96 h-96 rounded-full blur-3xl opacity-20 bg-blue-400 dark:bg-blue-500" />
+      </div>
+
       {/* MAIN: fills remaining space; is the only scroll container */}
-      <div className="flex items-center justify-center px-4 py-4 flex-1 min-h-0">
+      <div className="relative flex items-center justify-center flex-1 min-h-0">
         {/* Card container - centered and constrained */}
-        <div className="w-full max-w-28rem">
+        <div className="w-full">
           {children}
         </div>
       </div>

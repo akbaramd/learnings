@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import Button from '@/src/components/ui/Button';
-import Card from '@/src/components/ui/Card';
-import OtpField from '@/src/components/forms/OtpField';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/src/hooks/useToast';
 import { selectChallengeId, selectMaskedPhone, selectNationalCode, selectAuthStatus, setChallengeId, setMaskedPhoneNumber, setNationalCode, setAuthStatus, clearError, setAccessToken } from '@/src/store/auth';
@@ -11,6 +9,7 @@ import { useAppSelector } from '@/src/hooks/store';
 import { useDispatch } from 'react-redux';
 import { signIn, useSession, getSession } from 'next-auth/react';
 import { getDeviceId, getUserAgent } from '@/src/lib/deviceInfo';
+import { PiArrowRight, PiArrowClockwise, PiSun, PiMoon, PiCheck } from 'react-icons/pi';
 
 type UiStatus = 'idle' | 'typing' | 'valid' | 'invalid';
 
@@ -69,10 +68,6 @@ export default function VerifyOtpPage() {
   // NextAuth session for resend OTP
   const { data: session } = useSession();
   
-  const [otp, setOtp] = useState('');
-  const [status, setStatus] = useState<UiStatus>('idle');
-  const [errorText, setErrorText] = useState<string | null>(null);
-  const [touched, setTouched] = useState(false);
   const [timeLeft, setTimeLeft] = useState(120); // 2 minutes for OTP
   const [canResend, setCanResend] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -96,25 +91,18 @@ export default function VerifyOtpPage() {
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [isResendingOtp, setIsResendingOtp] = useState(false);
   const [verifyError, setVerifyError] = useState<{ message?: string } | null>(null);
-  
+  const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Auto-focus first input on mount
+  useEffect(() => {
+    inputRefs.current[0]?.focus();
+  }, []);
+
   // محاسبه وضعیت
   const isLoading = isResendingOtp || isVerifyingOtp;
   const error = verifyError;
 
-
-  // Show error from mutations
-  useEffect(() => {
-    if (error) {
-      setTimeout(() => {
-        setStatus('invalid');
-        const errorMessage = error && typeof error === 'object' && 'data' in error 
-          ? (error as { data?: { errors?: string[] } }).data?.errors?.[0] || 'خطا در عملیات'
-          : 'خطا در عملیات';
-        setErrorText(errorMessage);
-        setTouched(true);
-      }, 0);
-    }
-  }, [error]);
 
   // Note: NextAuth session check will be handled by middleware or protected layout
   // We don't need to check authentication here anymore
@@ -149,19 +137,63 @@ export default function VerifyOtpPage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
-  const explain = useCallback((code: string): string | null => {
-    if (code.length !== 6) return 'کد باید دقیقاً ۶ رقم باشد.';
-    return null;
-  }, []);
 
-  const fieldStatus = useMemo(() => {
-    if (status === 'invalid') return 'danger';
-    if (status === 'valid') return 'success';
-    if (status === 'typing') return 'typing';
-    return 'default';
-  }, [status]);
+  const canSubmit = otp.every((digit) => digit !== '') && !isLoading && challengeId;
 
-  const canSubmit = otp.length === 6 && !isLoading && challengeId;
+  // Helper functions for individual OTP inputs
+  const handleOtpChange = (index: number, value: string) => {
+    // Only allow numbers
+    if (value && !/^\d$/.test(value)) return;
+
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+
+    // Clear error
+    setVerifyError(null);
+
+    // Auto-advance to next input
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+
+    // Auto-verify when all inputs are filled
+    if (newOtp.every((digit) => digit !== '') && index === 5) {
+      const form = document.querySelector('form');
+      form?.requestSubmit();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Handle backspace
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    const newOtp = [...otp];
+
+    pastedData.split('').forEach((char, index) => {
+      if (index < 6) {
+        newOtp[index] = char;
+      }
+    });
+
+    setOtp(newOtp);
+
+    // Focus last filled input or last input
+    const lastFilledIndex = Math.min(pastedData.length, 5);
+    inputRefs.current[lastFilledIndex]?.focus();
+
+    // Auto-verify if complete
+    if (newOtp.every((digit) => digit !== '')) {
+      const form = document.querySelector('form');
+      form?.requestSubmit();
+    }
+  };
 
   // Handle session update after resending OTP via NextAuth
   useEffect(() => {
@@ -177,15 +209,13 @@ export default function VerifyOtpPage() {
       }
       dispatch(setAuthStatus('otp-sent'));
       dispatch(clearError());
-      
+
       // Reset UI state for resend
       setIsResendingOtp(false);
       setResendLoading(false);
       setTimeLeft(120); // Reset timer to 2 minutes
       setCanResend(false);
-      setOtp('');
-      setStatus('idle');
-      setErrorText(null);
+      setOtp(['', '', '', '', '', '']); // Reset OTP array
       success('کد جدید ارسال شد', `لطفاً کد جدید را بررسی کنید.`);
     }
   }, [session, isResendingOtp, dispatch, success]);
@@ -241,50 +271,67 @@ export default function VerifyOtpPage() {
   }, [canResend, resendLoading, showError, nationalCode, router]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      {/* Title above card */}
-      <div className="mb-8 text-center">
-        <h1 className="text-heading-1 text-emerald-700 dark:text-emerald-400 mb-2">
-          سامانه خدمات رفاهی   
-        </h1>
-        <p className="text-caption text-gray-500 dark:text-gray-400">
-          نظام مهندسی ساختمان آذربایجان غربی
-        </p>
-      </div>
-      
-      <Card
-        variant="elevated"
-        padding="md"
-        radius="md"
-        className="w-full"
-      >
-          <div className="mb-6 text-center">
-            <h2 className="text-heading-3-alt text-neutral-900 dark:text-neutral-100">تأیید کد</h2>
-            <p className="mt-1 text-body text-neutral-600 dark:text-neutral-400">
-              کد ۶ رقمی ارسال شده به شماره تلفن خود را وارد کنید.
+    <div
+      className="min-h-screen transition-colors duration-300 flex flex-col px-4 pt-12 pb-6 sm:px-6 lg:px-8 sm:pt-16 lg:pt-20"
+      dir="rtl"
+    >
+      {/* Centered Content */}
+      <div className="flex items-center justify-center flex-1 min-h-0">
+        <div className="w-full max-w-sm sm:max-w-md space-y-3">
+          {/* Branding Header */}
+          <div className="text-center animate-fade-in">
+            <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl mb-2 bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg shadow-emerald-500/30">
+              <span className="text-base">🔐</span>
+            </div>
+            <h1 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
+              سامانه خدمات رفاهی
+            </h1>
+            <p className="text-xs text-slate-600 dark:text-slate-400">
+              نظام مهندسی ساختمان آذربایجان غربی
             </p>
-            <div className="mt-3 p-3 bg-neutral-50 dark:bg-gray-700 rounded-lg border border-neutral-200 dark:border-gray-600">
-              <p className="text-body text-neutral-700 dark:text-neutral-300">
-                <span className="text-label">شماره تلفن:</span>
-                <span className="mr-2 font-mono text-base sm:ltr" dir="ltr">{maskedPhone || 'در حال بارگذاری...'}</span>
+            <div className="mt-2 h-px bg-gradient-to-r from-transparent via-slate-300 dark:via-slate-600 to-transparent"></div>
+          </div>
+
+          {/* OTP Card */}
+          <div className="relative w-full animate-slide-up backdrop-blur-xl rounded-3xl p-6 shadow-2xl border transition-all duration-300 bg-white/80 border-slate-200/50 dark:bg-slate-800/50 dark:border-slate-700/50">
+
+          {/* Back Button - Inside Card */}
+          <div className="flex justify-start mb-4">
+            <button
+              onClick={() => router.push('/login')}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:border-slate-600"
+              aria-label="بازگشت به صفحه ورود"
+            >
+              <PiArrowRight className="w-4 h-4" />
+              <span className="text-sm font-medium">بازگشت</span>
+            </button>
+          </div>
+          {/* Title */}
+          <div className="text-center mb-4">
+            <div className="space-y-1">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                کد ۶ رقمی ارسال شده به شماره تلفن زیر را وارد کنید:
+              </p>
+              <p className="font-mono text-base font-semibold text-slate-900 dark:text-white" dir="ltr">
+                {maskedPhone || 'در حال بارگذاری...'}
               </p>
             </div>
           </div>
+
 
         <form
           noValidate
           className="space-y-6"
           onSubmit={async (e) => {
             e.preventDefault();
-            
+
                     // Prevent multiple submissions
                     if (isLoading || !challengeId) return;
-            
-            const err = explain(otp);
-            if (err) {
-              setTouched(true);
-              setStatus('invalid');
-              setErrorText(err);
+
+            const otpCode = otp.join('');
+            console.log(otpCode);
+            if (otpCode.length !== 6) {
+              setVerifyError({ message: 'کد باید دقیقاً ۶ رقم باشد.' });
               return;
             }
 
@@ -303,7 +350,7 @@ export default function VerifyOtpPage() {
               
               const result = await signIn('otp', {
                 challengeId: challengeId!,
-                otp: otp,
+                otp: otpCode,
                 deviceId: deviceId || null,
                 userAgent: userAgent || null,
                 redirect: false, // Handle redirect manually
@@ -320,16 +367,12 @@ export default function VerifyOtpPage() {
                   message: errorMessage,
                 });
                 
-                // Update UI state
-                setStatus('invalid');
-                setErrorText(errorMessage);
-                setTouched(true);
-                
                 // Show error toast
                 showError('خطا در تأیید', errorMessage);
-                
-                // Clear OTP field to allow retry
-                setOtp('');
+
+                // Clear OTP inputs to allow retry
+                setOtp(['', '', '', '', '', '']);
+                inputRefs.current[0]?.focus();
                 
                 setVerifyError({ message: errorMessage });
                 return; // Don't redirect
@@ -403,116 +446,133 @@ export default function VerifyOtpPage() {
               }
             } catch (error: unknown) {
               // Handle network errors or exceptions
-              setStatus('invalid');
-              const errorMessage = error instanceof Error 
-                ? error.message 
+              const errorMessage = error instanceof Error
+                ? error.message
                 : 'کد تأیید نامعتبر. لطفاً دوباره تلاش کنید.';
-              setErrorText(errorMessage);
-              setTouched(true);
               showError('خطا', errorMessage);
               setVerifyError({ message: errorMessage });
+              setOtp(['', '', '', '', '', '']);
+              inputRefs.current[0]?.focus();
             } finally {
               setIsVerifyingOtp(false);
             }
           }}
         >
-          <div className="space-y-3">
-            <OtpField
-              name="otp"
-              label="رمز یکبار مصرف"
-              description={errorText ?? '۶ رقم دریافتی را وارد کنید. فقط کاراکترهای عددی پذیرفته می‌شود.'}
-              length={6}
-              value={otp}
-              onChange={(v) => {
-                setOtp(v);
-                setStatus(v.length === 0 ? 'idle' : v.length < 6 ? 'typing' : 'valid');
-                if (touched) setErrorText(explain(v));
-              }}
-              onComplete={(v) => {
-                const err = explain(v);
-                if (err) {
-                  setStatus('invalid');
-                  setErrorText(err);
-                } else {
-                  setStatus('valid');
-                  // No toast - UI status change is enough
-                }
-              }}
-              disabled={isLoading}
-              variant="outline"
-              size="md"
-              status={fieldStatus}
-              fullWidth
-              numericOnly
-              mask={false}
-              autoFocus
-              focusStrategy="start"
-              showLabel={true}
-              labelPosition="center"
-            />
-            
-            {/* Timer and Resend button in a row */}
-            <div className="flex items-center justify-between gap-3">
+          {/* OTP Input Boxes */}
+          <div className="mb-4">
+            <label className="block text-sm mb-3 text-center text-slate-700 dark:text-slate-300">
+              رمز یکبار مصرف
+            </label>
+
+            <div className="flex justify-center gap-2 mb-4" dir="ltr">
+              {otp.map((digit, index) => (
+                <input
+                  key={index}
+                  ref={(el) => { inputRefs.current[index] = el; }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleOtpChange(index, e.target.value)}
+                  onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                  onPaste={index === 0 ? handleOtpPaste : undefined}
+                  disabled={isLoading}
+                  className={`w-12 h-14 text-center text-xl rounded-xl border-2 transition-all duration-200 bg-white border-slate-300 text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-slate-900/50 dark:border-slate-600 dark:text-white ${
+                    digit ? 'border-emerald-600 dark:border-emerald-500' : ''
+                  } ${
+                    verifyError ? 'border-red-500 animate-shake' : ''
+                  } ${
+                    isVerifyingOtp ? 'opacity-50 cursor-not-allowed' : ''
+                  } focus:outline-none`}
+                  aria-label={`رقم ${index + 1}`}
+                />
+              ))}
+            </div>
+
+            {/* Error Message */}
+            {verifyError && (
+              <div className="text-center text-red-500 text-sm mb-4 animate-shake">
+                {verifyError.message}
+              </div>
+            )}
+
+            {/* Timer and Resend */}
+            <div className="text-center">
               {!canResend ? (
-                <div className="flex items-center gap-2 text-caption text-neutral-500 dark:text-neutral-400">
-                  <span>زمان باقی‌مانده:</span>
-                  <span className="font-mono text-red-600 dark:text-red-400 sm:ltr" dir="ltr">{formatTime(timeLeft)}</span>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-900/50">
+                  <div className={`w-2 h-2 rounded-full animate-pulse ${
+                    timeLeft < 30 ? 'bg-red-500' : 'bg-emerald-500'
+                  }`} />
+                  <p className={`text-sm ${
+                    timeLeft < 30
+                      ? 'text-red-500'
+                      : 'text-slate-600 dark:text-slate-400'
+                  }`}>
+                    زمان باقی‌مانده: <span className="font-mono">{formatTime(timeLeft)}</span>
+                  </p>
                 </div>
-              ) : null}
-              
-              {canResend && (
-                <Button
-                  type="button"
-                  variant="subtle"
-                  size="sm"
-                  radius="xs"
-                  loading={resendLoading}
-                  loadingText="در حال ارسال..."
+              ) : (
+                <button
                   onClick={handleResendOtp}
-                  disabled={resendLoading}
-                  className="mr-0"
+                  disabled={isResendingOtp}
+                  className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all duration-200 ${
+                    'bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-300'
+                  } ${isResendingOtp ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'}`}
                 >
-                  ارسال مجدد کد
-                </Button>
+                  <PiArrowClockwise className={`w-4 h-4 ${isResendingOtp ? 'animate-spin' : ''}`} />
+                  <span>ارسال مجدد کد</span>
+                </button>
               )}
             </div>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <Button
-              type="submit"
-              variant="solid"
-              size="md"
-              radius="xs"
-              block
-              loading={isLoading}
-              loadingText="در حال تأیید..."
-              shimmer
-              disabled={!canSubmit}
-            >
-              تأیید کد
-            </Button>
-            
-            <Button
-              type="button"
-              variant="subtle"
-              size="md"
-              radius="xs"
-              block
-              onClick={() => router.push('/login')}
-            >
-              تغییر شماره ملی
-            </Button>
+          {/* Helper Text */}
+          <div className="text-xs text-center mb-4 text-slate-600 dark:text-slate-500">
+            ۶ رقم دریافتی را وارد کنید. فقط کاراکترهای عددی پذیرفته می‌شود.
           </div>
-          
-          {/* Info message about organization phone numbers at bottom */}
-          <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800/50">
-            <p className="text-caption text-blue-700 dark:text-blue-300 text-center">
-              کد تأیید به شماره تلفن ثبت‌شده در سیستم سازمان ارسال شده است.
+
+          {/* Verify Button */}
+          <button
+            onClick={() => {
+              const otpCode = otp.join('');
+              if (otpCode.length === 6) {
+                // Trigger form submit
+                const form = document.querySelector('form');
+                form?.requestSubmit();
+              }
+            }}
+            disabled={!canSubmit}
+            className={`w-full py-3.5 rounded-xl transition-all duration-200 mb-4 ${
+              !canSubmit
+                ? 'bg-slate-200 text-slate-400 cursor-not-allowed dark:bg-slate-700 dark:text-slate-500'
+                : 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 active:scale-[0.98]'
+            }`}
+          >
+            {isVerifyingOtp ? (
+              <span className="flex items-center justify-center gap-2">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                در حال تایید...
+              </span>
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                <PiCheck className="w-5 h-5" />
+                تایید کد
+              </span>
+            )}
+          </button>
+
+          {/* Info Box */}
+          <div className="mt-4 p-3 rounded-xl border bg-blue-50 border-blue-200/50 dark:bg-blue-500/10 dark:border-blue-500/20">
+            <p className="text-xs text-center text-blue-600 dark:text-blue-400">
+              اگر شماره تلفن نادرست است، با پشتیبانی تماس بگیرید.
             </p>
           </div>
+
         </form>
-      </Card>
-    </div>
+        </div>
+        </div>
+        </div>
+      </div>
+
   );
 }
