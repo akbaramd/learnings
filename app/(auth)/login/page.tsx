@@ -11,7 +11,7 @@ import { useAppSelector } from '@/src/hooks/store';
 import { selectAccessToken, selectIsInitialized } from '@/src/store/auth/auth.selectors';
 import { getDeviceId, getUserAgent } from '@/src/lib/deviceInfo';
 import { signIn, getSession } from 'next-auth/react';
-import { PiShieldCheck, PiWarningCircle } from 'react-icons/pi';
+import { PiShieldCheck, PiWarningCircle, PiInfo, PiX } from 'react-icons/pi';
 import Drawer, { DrawerHeader, DrawerBody, DrawerFooter } from '@/src/components/overlays/Drawer';
 /* ---- Iranian National ID (Melli) utilities ---- */
 const Melli = {
@@ -38,6 +38,11 @@ const Melli = {
 } as const;
 
 type UiStatus = 'idle' | 'typing' | 'valid' | 'invalid';
+
+// Helper function for national ID cleaning
+const cleanNationalId = (value: string): string => {
+  return value.replace(/\D/g, '').slice(0, 10);
+};
 
 export default function LoginPage() {
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -221,7 +226,7 @@ export default function LoginPage() {
   // Debounced live validation while typing
   useEffect(() => {
     const digits = Melli.normalize(nationalId);
-    
+
     if (!digits) {
       // Use setTimeout to avoid synchronous setState in effect
       setTimeout(() => {
@@ -230,7 +235,7 @@ export default function LoginPage() {
       }, 0);
       return;
     }
-    
+
     setTimeout(() => setStatus('typing'), 0);
     const t = setTimeout(() => {
       const res = Melli.validate(digits);
@@ -246,12 +251,32 @@ export default function LoginPage() {
     return () => clearTimeout(t);
   }, [nationalId, touched, explain]);
 
-  const canSubmit = !isLoading  && nationalId.length === 10;
+  const canSubmit = !isLoading && nationalId.length === 10;
+
+  // Reset function - return to start
+  const resetToStart = () => {
+    setNationalId('');
+    setStatus('idle');
+    setErrorText(null);
+    setTouched(false);
+    dispatch(setChallengeId(null));
+    dispatch(setMaskedPhoneNumber(null));
+    dispatch(setNationalCode(null));
+    dispatch(setAuthStatus('anonymous'));
+    if (showNotFoundDrawer) {
+      setShowNotFoundDrawer(false);
+      drawerShownForErrorRef.current = null;
+      previousErrorRef.current = null;
+      setValidationResult(null);
+      setValidationError(null);
+    }
+    inputRef.current?.focus();
+  };
 
   // Handlers
   const handleChange = (val: string) => {
-    const normalized = Melli.normalize(val);
-    setNationalId(normalized);
+    const cleaned = cleanNationalId(val);
+    setNationalId(cleaned);
 
     // Clear OTP-related state when user starts typing new national code
     // This ensures clean state for new authentication attempt
@@ -259,6 +284,11 @@ export default function LoginPage() {
     dispatch(setMaskedPhoneNumber(null));
     dispatch(setNationalCode(null));
     dispatch(setAuthStatus('anonymous'));
+
+    // Reset local state for fresh start
+    setStatus('idle');
+    setErrorText(null);
+    setTouched(false);
 
     // Close drawer if open when user starts typing
     if (showNotFoundDrawer) {
@@ -300,8 +330,8 @@ export default function LoginPage() {
   const handlePaste: React.ClipboardEventHandler<HTMLInputElement> = (e) => {
     e.preventDefault();
     const text = e.clipboardData.getData('text');
-    const normalized = Melli.normalize(text);
-    setNationalId(normalized);
+    const cleaned = cleanNationalId(text);
+    setNationalId(cleaned);
 
     // Clear OTP-related state when user pastes new national code
     // This ensures clean state for new authentication attempt (same as handleChange)
@@ -323,7 +353,7 @@ export default function LoginPage() {
     requestAnimationFrame(() => {
       const el = inputRef.current;
       if (el) {
-        el.selectionStart = el.selectionEnd = normalized.length;
+        el.selectionStart = el.selectionEnd = cleaned.length;
       }
     });
   };
@@ -331,52 +361,59 @@ export default function LoginPage() {
 
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 ">
-      {/* Title above card */}
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-emerald-700 dark:text-emerald-400 mb-2">
-          سامانه خدمات رفاهی   
-        </h1>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          نظام مهندسی ساختمان آذربایجان غربی
-        </p>
-      </div>
-      
-      <Card
-        variant="elevated"
-        padding="md"
-        radius="md"
-        className="w-full max-w-md"
-      >
-          <div className="mb-6 text-center">
-            <div className="mb-4 flex items-center justify-center">
-              <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
-                <PiShieldCheck className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-              </div>
+    <div
+      className="min-h-screen transition-colors duration-300 flex flex-col px-4 pt-16 pb-8 sm:px-6 lg:px-8 sm:pt-20 lg:pt-24"
+      dir="rtl"
+    >
+      {/* Centered Content */}
+      <div className="flex items-center justify-center flex-1 min-h-0">
+        <div className="w-full max-w-sm sm:max-w-md space-y-6">
+          {/* Branding Header */}
+          <div className="text-center animate-fade-in">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl mb-2 bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg shadow-emerald-500/30">
+              <span className="text-lg">🏢</span>
             </div>
-            <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">ورود به سامانه</h2>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white mb-1">
+              سامانه خدمات رفاهی
+            </h1>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              نظام مهندسی ساختمان آذربایجان غربی
+            </p>
+            <div className="mt-3 h-px bg-gradient-to-r from-transparent via-slate-300 dark:via-slate-600 to-transparent"></div>
+          </div>
+
+          {/* Login Card */}
+        <div className="relative w-full max-w-sm sm:max-w-md animate-slide-up">
+        <div className="backdrop-blur-xl rounded-3xl p-8 shadow-2xl border transition-all duration-300 bg-white/80 border-slate-200/50 dark:bg-slate-800/50 dark:border-slate-700/50">
+
+          {/* Title */}
+          <div className="text-center mb-8">
+            <h2 className="mb-2 text-slate-900 dark:text-white">
+              ورود به سامانه
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               برای ورود، شماره ملی خود را وارد کنید
             </p>
           </div>
 
-        <form
-          noValidate
-          className="space-y-6"
-          onSubmit={async (e) => {
-            e.preventDefault();
+          {/* Form */}
+          <form
+            noValidate
+            className="space-y-6"
+            onSubmit={async (e) => {
+              e.preventDefault();
 
-                    // Prevent multiple submissions
-                    if (isLoading) return;
+              // Prevent multiple submissions
+              if (isLoading) return;
 
-            // Prevent sending OTP if user is already authenticated
-            // This can happen if session is restored after page load
-            if (authStatus === 'authenticated' && !isLogoutFlow) {
-              // Always redirect to dashboard if no returnUrl, or if logout flow
-              const redirectTo = (isLogoutFlow || !returnUrl) ? '/dashboard' : returnUrl;
-              router.replace(redirectTo);
-              return;
-            }
+              // Prevent sending OTP if user is already authenticated
+              // This can happen if session is restored after page load
+              if (authStatus === 'authenticated' && !isLogoutFlow) {
+                // Always redirect to dashboard if no returnUrl, or if logout flow
+                const redirectTo = (isLogoutFlow || !returnUrl) ? '/dashboard' : returnUrl;
+                router.replace(redirectTo);
+                return;
+              }
 
             // Final guard
             const res = Melli.validate(nationalId);
@@ -387,17 +424,17 @@ export default function LoginPage() {
               return;
             }
 
-            // Use NextAuth signIn for sending OTP (consistent with resend)
-            try {
-              setIsSendingOtp(true);
+              // Use NextAuth signIn for sending OTP (consistent with resend)
+              try {
+                setIsSendingOtp(true);
 
-              // Get device ID and user agent to send with request
-              // CRITICAL: Use getDeviceId() to ensure SAME device ID as other requests
-              // Device ID comes from localStorage (same source as baseApi.ts)
-              // This ensures the SAME device ID is used across all authentication requests
-              // Device ID is NEVER regenerated - always returns existing ID from localStorage
-              const deviceId = getDeviceId();
-              const userAgent = getUserAgent();
+                // Get device ID and user agent to send with request
+                // CRITICAL: Use getDeviceId() to ensure SAME device ID as other requests
+                // Device ID comes from localStorage (same source as baseApi.ts)
+                // This ensures the SAME device ID is used across all authentication requests
+                // Device ID is NEVER regenerated - always returns existing ID from localStorage
+                const deviceId = getDeviceId();
+                const userAgent = getUserAgent();
 
               const result = await signIn('send-otp', {
                 nationalCode: nationalId,
@@ -406,130 +443,181 @@ export default function LoginPage() {
                 redirect: false,
               });
 
-              if (result?.error) {
-                // Handle error from NextAuth
-                const errorMessage = result.error === 'CredentialsSignin'
-                  ? 'شماره ملی نامعتبر است. لطفاً دوباره تلاش کنید.'
-                  : result.error;
+                if (result?.error) {
+                  // Handle error from NextAuth
+                  const errorMessage = result.error === 'CredentialsSignin'
+                    ? 'شماره ملی نامعتبر است. لطفاً دوباره تلاش کنید.'
+                    : result.error;
 
-                setStatus('invalid');
-                setErrorText(errorMessage);
-                setTouched(true);
-              } else {
-                // Success case - wait for session update and redirect manually
-                if (process.env.NODE_ENV === 'development') {
-                  console.log('[Login] ✅ OTP sent successfully, waiting for session update...');
-                }
-
-                // Wait a bit for session to update, then check it
-                await new Promise(resolve => setTimeout(resolve, 200));
-
-                // Manually check session to ensure it has OTP data
-                const updatedSession = await getSession();
-
-                if (updatedSession?.challengeId && updatedSession?.nationalCode) {
+                  setStatus('invalid');
+                  setErrorText(errorMessage);
+                  setTouched(true);
+                } else {
+                  // Success case - wait for session update and redirect manually
                   if (process.env.NODE_ENV === 'development') {
-                    console.log('[Login] 📱 Session updated with OTP data, updating Redux and redirecting...');
+                    console.log('[Login] ✅ OTP sent successfully, waiting for session update...');
                   }
 
-                  // 🔐 SECURITY: Update Redux with sensitive data (from session, not URL)
-                  dispatch(setChallengeId(updatedSession.challengeId));
-                  if (updatedSession.maskedPhoneNumber) {
-                    dispatch(setMaskedPhoneNumber(updatedSession.maskedPhoneNumber));
-                  }
+                  // Wait a bit for session to update, then check it
+                  await new Promise(resolve => setTimeout(resolve, 200));
+
+                  // Manually check session to ensure it has OTP data
+                  const updatedSession = await getSession();
+
+                  if (updatedSession?.challengeId && updatedSession?.nationalCode) {
+                    if (process.env.NODE_ENV === 'development') {
+                      console.log('[Login] 📱 Session updated with OTP data, updating Redux and redirecting...');
+                    }
+
+                    // 🔐 SECURITY: Update Redux with sensitive data (from session, not URL)
+                    dispatch(setChallengeId(updatedSession.challengeId));
+                    if (updatedSession.maskedPhoneNumber) {
+                      dispatch(setMaskedPhoneNumber(updatedSession.maskedPhoneNumber));
+                    }
                   if (updatedSession.nationalCode) {
                     dispatch(setNationalCode(updatedSession.nationalCode));
                   } else {
                     // Fallback: use the nationalId that user entered
                     dispatch(setNationalCode(nationalId));
                   }
-                  dispatch(setAuthStatus('otp-sent'));
+                    dispatch(setAuthStatus('otp-sent'));
 
-                  // 🔐 SECURITY: Only pass non-sensitive navigation data in URL
-                  const searchParams = new URLSearchParams();
-                  if (isLogoutFlow) {
-                    searchParams.set('logout', 'true');
-                  }
-                  if (returnUrl) {
-                    searchParams.set('r', returnUrl);
-                  }
+                    // 🔐 SECURITY: Only pass non-sensitive navigation data in URL
+                    const searchParams = new URLSearchParams();
+                    if (isLogoutFlow) {
+                      searchParams.set('logout', 'true');
+                    }
+                    if (returnUrl) {
+                      searchParams.set('r', returnUrl);
+                    }
 
-                  const queryString = searchParams.toString();
-                  const redirectTo = queryString ? `/verify-otp?${queryString}` : '/verify-otp';
-                  router.push(redirectTo);
-                } else {
-                  // Session not updated yet, show error
-                  if (process.env.NODE_ENV === 'development') {
-                    console.log('[Login] ❌ Session not updated with OTP data');
+                    const queryString = searchParams.toString();
+                    const redirectTo = queryString ? `/verify-otp?${queryString}` : '/verify-otp';
+                    router.push(redirectTo);
+                  } else {
+                    // Session not updated yet, show error
+                    if (process.env.NODE_ENV === 'development') {
+                      console.log('[Login] ❌ Session not updated with OTP data');
+                    }
+                    setStatus('invalid');
+                    setErrorText('ارسال کد ناموفق. لطفاً دوباره تلاش کنید.');
+                    setTouched(true);
                   }
-                  setStatus('invalid');
-                  setErrorText('ارسال کد ناموفق. لطفاً دوباره تلاش کنید.');
-                  setTouched(true);
                 }
+
+              } catch (error: unknown) {
+                // Handle network errors or exceptions
+                const errorMessage = error instanceof Error
+                  ? error.message
+                  : 'ارسال کد ناموفق. لطفاً شماره ملی خود را بررسی کنید.';
+
+                setStatus('invalid');
+                setErrorText(errorMessage);
+                setTouched(true);
+              } finally {
+                setIsSendingOtp(false);
               }
-
-            } catch (error: unknown) {
-              // Handle network errors or exceptions
-              const errorMessage = error instanceof Error
-                ? error.message
-                : 'ارسال کد ناموفق. لطفاً شماره ملی خود را بررسی کنید.';
-
-              setStatus('invalid');
-              setErrorText(errorMessage);
-              setTouched(true);
-            } finally {
-              setIsSendingOtp(false);
-            }
-          }}
-        >
-          <InputField
-            ref={inputRef}
-            name="national-id"
-            label="شماره ملی"
-            placeholder="شماره ملی خود را وارد کنید"
-            description={errorText ?? 'شماره ملی باید دقیقاً ۱۰ رقم باشد و شامل چکسام معتبر باشد'}
-            inputMode="numeric"
-            autoComplete="off"
-            enterKeyHint="done"
-            pattern="\d{10}"
-            maxLength={10}
-            variant="outline"
-            size="md"
-            showBoxOnSuccess={false}
-            showValidationBox={false} 
-            status={fieldStatus}
-            required
-            value={nationalId}
-            disabled={isLoading}
-            onChange={(e) => handleChange(e.target.value)}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
-            onPaste={handlePaste}
-            aria-invalid={status === 'invalid'}
-            aria-describedby="national-id-desc"
-          />
-
-          <Button
-            type="submit"
-            variant="solid"
-            size="md"
-            radius="xs"
-            block
-            loading={isLoading}
-            loadingText="در حال ارسال کد..."
-            shimmer
-            disabled={!canSubmit}
-            className="mt-2"
+            }}
           >
-            ارسال کد تأیید
-          </Button>
-          
-          {/* Subtle notice about organization membership */}
-          <p className="mt-6 text-center text-caption text-neutral-400 dark:text-neutral-500">
-            این سامانه مخصوص اعضای سازمان است. در صورت مشکل در ورود، با پشتیبانی تماس بگیرید.
-          </p>
+            <div>
+              <label
+                htmlFor="nationalId"
+                className="block text-sm mb-2 text-right text-slate-700 dark:text-slate-300"
+              >
+                شماره ملی <span className="text-red-500">*</span>
+              </label>
+
+              <div className="relative">
+                <input
+                  id="nationalId"
+                  type="text"
+                  value={nationalId}
+                  onChange={(e) => handleChange(e.target.value)}
+                  onBlur={handleBlur}
+                  onKeyDown={handleKeyDown}
+                  onPaste={handlePaste}
+                  placeholder="کد ملی خود را وارد کنید" 
+                  className={`w-full px-4 py-3.5 rounded-xl text-right pr-12 pl-12 transition-all duration-200 bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:bg-slate-900/50 dark:border-slate-600 dark:text-white dark:placeholder:text-slate-600 border focus:outline-none ${
+                    status === 'invalid' ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''
+                  }`}
+                  maxLength={10}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  disabled={isLoading}
+                  aria-describedby={errorText ? 'error-message' : 'helper-text'}
+                  aria-invalid={status === 'invalid'}
+                  ref={inputRef}
+                />
+
+                {/* Status Icon (Left) */}
+                <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                  {status === 'valid' && <PiShieldCheck className="w-5 h-5 text-emerald-500" />}
+                  {status === 'invalid' && <PiWarningCircle className="w-5 h-5 text-red-500" />}
+                  {status === 'typing' && <div className="w-5 h-5 flex items-center justify-center"><div className="w-2 h-2 bg-slate-400 rounded-full animate-pulse"></div></div>}
+                </div>
+
+                {/* Clear Button (Right) */}
+                {nationalId && !isLoading && (
+                  <button
+                    type="button"
+                    onClick={resetToStart}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-colors text-slate-500 hover:text-slate-700 hover:bg-slate-200/50 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:bg-slate-700/50"
+                    aria-label="بازگشت به شروع"
+                  >
+                    <PiX className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Error Message */}
+              {errorText && touched && (
+                <div
+                  id="error-message"
+                  className="flex items-start gap-2 mt-2 text-red-500 text-sm animate-shake"
+                  role="alert"
+                >
+                  <PiInfo className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>{errorText}</span>
+                </div>
+              )}
+
+              {/* Helper Text */}
+              {!errorText && (
+                <div
+                  id="helper-text"
+                  className="flex items-start gap-2 mt-2 text-xs text-slate-600 dark:text-slate-500"
+                >
+                  <PiInfo className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                  <span>شماره ملی باید دقیقاً ۱۰ رقم باشد و شامل چکسام معتبر باشد</span>
+                </div>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              className={`w-full py-3.5 rounded-xl transition-all duration-200 ${
+                !canSubmit
+                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed dark:bg-slate-700 dark:text-slate-500'
+                  : 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 active:scale-[0.98]'
+              }`}
+            >
+              {isLoading ? 'در حال ارسال کد...' : 'ارسال کد تایید'}
+            </button>
+
+          {/* Info Box */}
+          <div className="mt-6 p-4 rounded-xl border bg-blue-50 border-blue-200/50 dark:bg-blue-500/10 dark:border-blue-500/20">
+            <p className="text-xs leading-relaxed text-center text-blue-700 dark:text-blue-300">
+              این سامانه مخصوص اعضای سازمان است. در صورت مشکل در ورود، با پشتیبانی تماس بگیرید.
+            </p>
+          </div>
+
         </form>
-      </Card>
+        </div>
+        </div>
+        </div>
+      </div>
 
       {/* Drawer for user not found error */}
       <Drawer
@@ -749,6 +837,46 @@ export default function LoginPage() {
           </div>
         </DrawerFooter>
       </Drawer>
+
+    
+
+      {/* Custom Animations */}
+      <style>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          75% { transform: translateX(5px); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.6s ease-out;
+        }
+        .animate-slide-up {
+          animation: slide-up 0.6s ease-out;
+        }
+        .animate-shake {
+          animation: shake 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
