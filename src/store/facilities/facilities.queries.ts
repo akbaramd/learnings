@@ -18,7 +18,6 @@ import {
   RejectFacilityRequestRequest,
   RejectFacilityRequestResponse,
   CancelFacilityRequestRequest,
-  CancelFacilityRequestResponse,
   PaginationInfo,
 } from './facilities.types';
 import {
@@ -451,7 +450,7 @@ export const facilitiesApi = createApi({
 
     // Cancel Facility Request
     cancelFacilityRequest: builder.mutation<
-      CancelFacilityRequestResponse,
+      void,
       CancelFacilityRequestRequest
     >({
       query: (request) => ({

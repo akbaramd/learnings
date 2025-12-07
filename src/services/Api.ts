@@ -71,6 +71,27 @@ export enum PaymentStatus {
   Refunded = "Refunded",
 }
 
+export enum FacilityRequestStatus {
+  RequestSent = "RequestSent",
+  PendingApproval = "PendingApproval",
+  PendingDocuments = "PendingDocuments",
+  Waitlisted = "Waitlisted",
+  ReturnedForAmendment = "ReturnedForAmendment",
+  UnderReview = "UnderReview",
+  Approved = "Approved",
+  Rejected = "Rejected",
+  RequiresPresence = "RequiresPresence",
+  Cancelled = "Cancelled",
+  QueuedForDispatch = "QueuedForDispatch",
+  SentToBank = "SentToBank",
+  BankScheduled = "BankScheduled",
+  ProcessedByBank = "ProcessedByBank",
+  Completed = "Completed",
+  Disbursed = "Disbursed",
+  Expired = "Expired",
+  BankCancelled = "BankCancelled",
+}
+
 export enum AutoSaveMode {
   Merge = "Merge",
   Overwrite = "Overwrite",
@@ -435,14 +456,10 @@ export interface BillDetailDto {
   id?: string;
   /** @format date-time */
   createdAt?: string;
-  createdBy?: string | null;
   /** @format date-time */
-  lastModifiedAt?: string | null;
-  lastModifiedBy?: string | null;
-  isDeleted?: boolean;
+  modifiedAt?: string | null;
   /** @format date-time */
   deletedAt?: string | null;
-  deletedBy?: string | null;
   billNumber?: string | null;
   title?: string | null;
   referenceTrackingCode?: string | null;
@@ -542,14 +559,10 @@ export interface BillDto {
   id?: string;
   /** @format date-time */
   createdAt?: string;
-  createdBy?: string | null;
   /** @format date-time */
-  lastModifiedAt?: string | null;
-  lastModifiedBy?: string | null;
-  isDeleted?: boolean;
+  modifiedAt?: string | null;
   /** @format date-time */
   deletedAt?: string | null;
-  deletedBy?: string | null;
   billNumber?: string | null;
   title?: string | null;
   referenceTrackingCode?: string | null;
@@ -689,32 +702,6 @@ export interface CancelBillResponseApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: CancelBillResponse;
-}
-
-export interface CancelFacilityRequestRequest {
-  reason?: string | null;
-  /** @format uuid */
-  cancelledByUserId?: string;
-}
-
-export interface CancelFacilityRequestResult {
-  /** @format uuid */
-  requestId?: string;
-  requestNumber?: string | null;
-  status?: string | null;
-  reason?: string | null;
-  /** @format date-time */
-  cancelledAt?: string;
-  /** @format uuid */
-  cancelledByUserId?: string;
-}
-
-export interface CancelFacilityRequestResultApplicationResult {
-  isSuccess?: boolean;
-  status?: ResultStatus;
-  message?: string | null;
-  errors?: string[] | null;
-  data?: CancelFacilityRequestResult;
 }
 
 export interface CancelResponseResponse {
@@ -1559,6 +1546,24 @@ export interface FacilityRequestDto {
   isLastRequest?: boolean;
 }
 
+export interface FacilityRequestDtoPaginatedResult {
+  items?: FacilityRequestDto[] | null;
+  /** @format int32 */
+  totalCount?: number;
+  /** @format int32 */
+  pageNumber?: number;
+  /** @format int32 */
+  pageSize?: number;
+}
+
+export interface FacilityRequestDtoPaginatedResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: FacilityRequestDtoPaginatedResult;
+}
+
 export interface FailedUpdate {
   /** @format uuid */
   settingId?: string;
@@ -1984,10 +1989,70 @@ export interface MarkByContextAsReadRequest {
   context?: string | null;
 }
 
+export interface MemberAgencySummaryDto {
+  /** @format uuid */
+  id?: string;
+  name?: string | null;
+}
+
+export interface MemberDetailDto {
+  /** @format uuid */
+  id?: string;
+  membershipNumber?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  nationalCode?: string | null;
+  isSpecial?: boolean;
+  phoneNumber?: string | null;
+  email?: string | null;
+  /** @format date-time */
+  birthDate?: string | null;
+  gender?: string | null;
+  isActive?: boolean;
+  status?: string | null;
+  statusText?: string | null;
+  /** @format date-time */
+  createdAt?: string;
+  /** @format date-time */
+  modifiedAt?: string | null;
+  fullName?: string | null;
+  /** @format uuid */
+  externalUserId?: string;
+  hasActiveMembership?: boolean;
+  capabilities?: string[] | null;
+  features?: string[] | null;
+  roleIds?: string[] | null;
+  agencyIds?: string[] | null;
+  capabilityList?: NamedValueDto[] | null;
+  featureList?: NamedValueDto[] | null;
+  agencyList?: MemberAgencySummaryDto[] | null;
+  /** @format date-time */
+  membershipStartDate?: string | null;
+  /** @format date-time */
+  membershipEndDate?: string | null;
+  address?: string | null;
+  notes?: string | null;
+  createdBy?: string | null;
+  modifiedBy?: string | null;
+}
+
+export interface MemberDetailDtoApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: MemberDetailDto;
+}
+
 export interface Money {
   /** @format double */
   amountRials?: number;
   currency?: string | null;
+}
+
+export interface NamedValueDto {
+  id?: string | null;
+  title?: string | null;
 }
 
 export interface NavigationQuestionDto {
@@ -2038,14 +2103,6 @@ export interface NotificationDtoPaginatedResultApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: NotificationDtoPaginatedResult;
-}
-
-export interface ObjectApplicationResult {
-  isSuccess?: boolean;
-  status?: ResultStatus;
-  message?: string | null;
-  errors?: string[] | null;
-  data?: any;
 }
 
 export interface PaginationInfo {
@@ -2930,6 +2987,33 @@ export interface RepeatableQuestionProgressDto {
   repeatAnswers?: RepeatableAnswerDto[] | null;
 }
 
+export interface RequestDocumentsRequest {
+  notes?: string | null;
+  /** @format uuid */
+  requestedByUserId?: string;
+}
+
+export interface RequestDocumentsResult {
+  /** @format uuid */
+  requestId?: string;
+  requestNumber?: string | null;
+  previousStatus?: FacilityRequestStatus;
+  newStatus?: FacilityRequestStatus;
+  /** @format date-time */
+  requestedAt?: string;
+  /** @format uuid */
+  requestedByUserId?: string;
+  notes?: string | null;
+}
+
+export interface RequestDocumentsResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: RequestDocumentsResult;
+}
+
 export interface RequestFinancialInfoDto {
   /** @format double */
   requestedAmountRials?: number;
@@ -3655,6 +3739,30 @@ export interface StartReservationRequest {
   tourId?: string;
   /** @format uuid */
   capacityId?: string;
+}
+
+export interface StartReviewRequest {
+  /** @format uuid */
+  reviewedByUserId?: string;
+}
+
+export interface StartReviewResult {
+  /** @format uuid */
+  requestId?: string;
+  requestNumber?: string | null;
+  status?: string | null;
+  /** @format uuid */
+  reviewedByUserId?: string;
+  /** @format date-time */
+  startedAt?: string;
+}
+
+export interface StartReviewResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: StartReviewResult;
 }
 
 export interface StartSurveyResponseRequest {
@@ -4511,7 +4619,7 @@ export interface UserDetailDto {
   /** @format date-time */
   lastLoginAt?: string | null;
   /** @format date-time */
-  lastAuthenticatedAt?: string | null;
+  lastSuccessfulAuthenticationAt?: string | null;
   /** @format int32 */
   failedAttempts?: number;
   /** @format date-time */
@@ -4555,7 +4663,7 @@ export interface UserDto {
   /** @format date-time */
   lastLoginAt?: string | null;
   /** @format date-time */
-  lastAuthenticatedAt?: string | null;
+  lastSuccessfulAuthenticationAt?: string | null;
   /** @format int32 */
   failedAttempts?: number;
   /** @format date-time */
@@ -5210,7 +5318,7 @@ export class Api<
 > extends HttpClient<SecurityDataType> {
   api = {
     /**
-     * @description 🌐 Sends an OTP (One-Time Password) code to the user's phone number for authentication purposes
+     * @description 🌐 🌐 Sends an OTP (One-Time Password) code to the user's phone number for authentication purposes
      *
      * @tags Authentication
      * @name SendOtp
@@ -5238,7 +5346,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 Verifies an OTP code and returns authentication tokens if successful
+     * @description 🌐 🌐 Verifies an OTP code and returns authentication tokens if successful
      *
      * @tags Authentication
      * @name VerifyOtp
@@ -5266,7 +5374,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 RefreshToken an OTP code and returns authentication tokens if successful
+     * @description 🌐 🌐 RefreshToken an OTP code and returns authentication tokens if successful
      *
      * @tags Authentication
      * @name RefreshToken
@@ -5294,7 +5402,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Retrieves the profile information of the currently authenticated user
+     * @description 🔒 🔒 Retrieves the profile information of the currently authenticated user
      *
      * @tags Authentication
      * @name GetCurrentUser
@@ -5323,7 +5431,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Logs out the user and revokes both access and refresh tokens
+     * @description 🔒 🔒 Logs out the user and revokes both access and refresh tokens
      *
      * @tags Authentication
      * @name Logout
@@ -5353,7 +5461,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Logs out the user by revoking the session associated with the provided refresh token. Gets session from refresh token and revokes it.
+     * @description 🔒 🔒 Logs out the user by revoking the session associated with the provided refresh token. Gets session from refresh token and revokes it.
      *
      * @tags Authentication
      * @name LogoutByRefreshToken
@@ -5387,7 +5495,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Logs out the user from a specific session by revoking the session with the provided session ID. This allows users to logout from specific devices/sessions.
+     * @description 🔒 🔒 Logs out the user from a specific session by revoking the session with the provided session ID. This allows users to logout from specific devices/sessions.
      *
      * @tags Authentication
      * @name LogoutBySessionId
@@ -5421,7 +5529,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Logs out the user from all active sessions across all devices. This revokes all refresh tokens and sessions for the user.
+     * @description 🔒 🔒 Logs out the user from all active sessions across all devices. This revokes all refresh tokens and sessions for the user.
      *
      * @tags Authentication
      * @name LogoutAllSessions
@@ -5451,7 +5559,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Logs out the user from all other active sessions except the current one. CurrentSessionId is automatically extracted from claims. This allows users to keep their current session active while logging out from other devices.
+     * @description 🔒 🔒 Logs out the user from all other active sessions except the current one. CurrentSessionId is automatically extracted from claims. This allows users to keep their current session active while logging out from other devices.
      *
      * @tags Authentication
      * @name LogoutAllOtherSessions
@@ -5481,7 +5589,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Returns a paginated list of user sessions with full details including DeviceId (primary field), UserAgent, IpAddress, and security information. If userId is not provided, returns sessions for the current authenticated user.
+     * @description 🔒 🔒 Returns a paginated list of user sessions with full details including DeviceId (primary field), UserAgent, IpAddress, and security information. If userId is not provided, returns sessions for the current authenticated user.
      *
      * @tags Authentication
      * @name GetSessionsPaginated
@@ -5529,7 +5637,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 Validates a national code format and checks if a member exists with this national code
+     * @description 🌐 🌐 Validates a national code format and checks if a member exists with this national code
      *
      * @tags Authentication
      * @name ValidateNationalCode
@@ -5560,7 +5668,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Returns a paginated list of BillDto for the current user with filtering and sorting.
+     * @description 🔒 🔒 Returns a paginated list of BillDto for the current user with filtering and sorting.
      *
      * @tags Bills
      * @name GetMyBills
@@ -5612,7 +5720,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Admin/operator variant. Requires explicit externalUserId.
+     * @description 🔒 🔒 Admin/operator variant. Requires explicit externalUserId.
      *
      * @tags Discount Codes
      * @name ValidateDiscountCodeForUser
@@ -5646,7 +5754,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Returns BillDetailDto including items, payments, and refunds. User can only access their own bills.
+     * @description 🔒 🔒 Returns BillDetailDto including items, payments, and refunds. User can only access their own bills.
      *
      * @tags Bills
      * @name GetBillDetailsById
@@ -5679,7 +5787,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Returns a paginated list of payments (PaymentDto) associated with a given bill ID. Supports search, sorting, and pagination.
+     * @description 🔒 🔒 Returns a paginated list of payments (PaymentDto) associated with a given bill ID. Supports search, sorting, and pagination.
      *
      * @tags Payments
      * @name GetBillPayments
@@ -5722,7 +5830,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Returns BillDetailDto including items, payments, and refunds.
+     * @description 🔒 🔒 Returns BillDetailDto including items, payments, and refunds.
      *
      * @tags Bills
      * @name GetBillDetailsByNumber
@@ -5755,7 +5863,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Resolves a bill by tracking code (reference) and bill type; returns BillDetailDto.
+     * @description 🔒 🔒 Resolves a bill by tracking code (reference) and bill type; returns BillDetailDto.
      *
      * @tags Bills
      * @name GetBillDetailsByTrackingCode
@@ -5788,7 +5896,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Transitions a draft bill to the issued state.
+     * @description 🔒 🔒 Transitions a draft bill to the issued state.
      *
      * @tags Bills
      * @name IssueBill
@@ -5817,7 +5925,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Cancels an active bill; returns operation result.
+     * @description 🔒 🔒 Cancels an active bill; returns operation result.
      *
      * @tags Bills
      * @name CancelBill
@@ -5851,7 +5959,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Returns a list of all distinct claims from registered claim providers.
+     * @description 🔒 🔒 Returns a list of all distinct claims from registered claim providers.
      *
      * @tags Claims
      * @name GetClaims
@@ -5881,12 +5989,11 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 This endpoint requires authentication.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Facilities
      * @name GetFacilities
      * @request GET:/api/v1/facilities
-     * @secure
      */
     getFacilities: (
       query?: {
@@ -5920,7 +6027,167 @@ export class Api<
         path: `/api/v1/facilities`,
         method: "GET",
         query: query,
-        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🌐 This endpoint is publicly accessible.
+     *
+     * @tags Facilities
+     * @name GetFacilityCycles
+     * @request GET:/api/v1/facilities/{facilityId}/cycles
+     */
+    getFacilityCycles: (
+      facilityId: string,
+      query?: {
+        /**
+         * @format int32
+         * @default 1
+         */
+        page?: number;
+        /**
+         * @format int32
+         * @default 10
+         */
+        pageSize?: number;
+        status?: string;
+        searchTerm?: string;
+        /** @default true */
+        onlyActive?: boolean;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        GetFacilityCyclesWithUserQueryResponseApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/facilities/${facilityId}/cycles`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🌐 This endpoint is publicly accessible.
+     *
+     * @tags Facilities
+     * @name GetFacilityRequestsByCycle
+     * @request GET:/api/v1/facilities/cycles/{cycleId}/requests
+     */
+    getFacilityRequestsByCycle: (
+      cycleId: string,
+      query?: {
+        /**
+         * @format int32
+         * @default 1
+         */
+        page?: number;
+        /**
+         * @format int32
+         * @default 10
+         */
+        pageSize?: number;
+        status?: string;
+        searchTerm?: string;
+        /** @format date-time */
+        dateFrom?: string;
+        /** @format date-time */
+        dateTo?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        FacilityRequestDtoPaginatedResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/facilities/cycles/${cycleId}/requests`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🌐 This endpoint is publicly accessible.
+     *
+     * @tags Facilities
+     * @name GetFacilityRequestDetails2
+     * @request GET:/api/v1/facilities/requests/{requestId}
+     */
+    getFacilityRequestDetails2: (
+      requestId: string,
+      query?: {
+        /** @default true */
+        includeFacility?: boolean;
+        /** @default true */
+        includeCycle?: boolean;
+        /** @default true */
+        includePolicySnapshot?: boolean;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        FacilityRequestDetailsDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/facilities/requests/${requestId}`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🌐 This endpoint is publicly accessible.
+     *
+     * @tags Facilities
+     * @name GetRejectionReasons
+     * @request GET:/api/v1/facilities/rejection-reasons
+     */
+    getRejectionReasons: (
+      query?: {
+        /** @default true */
+        onlyActive?: boolean;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        GetRejectionReasonsResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/facilities/rejection-reasons`,
+        method: "GET",
+        query: query,
         format: "json",
         ...params,
       }),
@@ -5930,7 +6197,7 @@ export class Api<
      *
      * @tags Facilities
      * @name GetFacilityDetails
-     * @request GET:/api/v1/facilities/{facilityId}
+     * @request GET:/api/v1/facilities/me/{facilityId}
      * @secure
      */
     getFacilityDetails: (
@@ -5958,7 +6225,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/facilities/${facilityId}`,
+        path: `/api/v1/facilities/me/${facilityId}`,
         method: "GET",
         query: query,
         secure: true,
@@ -5971,7 +6238,7 @@ export class Api<
      *
      * @tags Facilities
      * @name GetFacilityCyclesWithUser
-     * @request GET:/api/v1/facilities/{facilityId}/cycles
+     * @request GET:/api/v1/facilities/me/{facilityId}/cycles
      * @secure
      */
     getFacilityCyclesWithUser: (
@@ -6015,7 +6282,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/facilities/${facilityId}/cycles`,
+        path: `/api/v1/facilities/me/${facilityId}/cycles`,
         method: "GET",
         query: query,
         secure: true,
@@ -6028,7 +6295,7 @@ export class Api<
      *
      * @tags Facilities
      * @name GetFacilityCycleDetails
-     * @request GET:/api/v1/facilities/cycles/{cycleId}
+     * @request GET:/api/v1/facilities/me/cycles/{cycleId}
      * @secure
      */
     getFacilityCycleDetails: (
@@ -6058,7 +6325,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/facilities/cycles/${cycleId}`,
+        path: `/api/v1/facilities/me/cycles/${cycleId}`,
         method: "GET",
         query: query,
         secure: true,
@@ -6071,7 +6338,7 @@ export class Api<
      *
      * @tags Facilities
      * @name GetFacilityRequestsByUser
-     * @request GET:/api/v1/facilities/requests
+     * @request GET:/api/v1/facilities/me/requests
      * @secure
      */
     getFacilityRequestsByUser: (
@@ -6110,7 +6377,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/facilities/requests`,
+        path: `/api/v1/facilities/me/requests`,
         method: "GET",
         query: query,
         secure: true,
@@ -6123,7 +6390,7 @@ export class Api<
      *
      * @tags Facilities
      * @name CreateFacilityRequest
-     * @request POST:/api/v1/facilities/requests
+     * @request POST:/api/v1/facilities/me/requests
      * @secure
      */
     createFacilityRequest: (
@@ -6141,7 +6408,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/facilities/requests`,
+        path: `/api/v1/facilities/me/requests`,
         method: "POST",
         body: data,
         secure: true,
@@ -6155,7 +6422,7 @@ export class Api<
      *
      * @tags Facilities
      * @name GetFacilityRequestDetails
-     * @request GET:/api/v1/facilities/requests/{requestId}
+     * @request GET:/api/v1/facilities/me/requests/{requestId}
      * @secure
      */
     getFacilityRequestDetails: (
@@ -6181,10 +6448,43 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/facilities/requests/${requestId}`,
+        path: `/api/v1/facilities/me/requests/${requestId}`,
         method: "GET",
         query: query,
         secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Facilities
+     * @name StartReviewRequest
+     * @request POST:/api/v1/facilities/requests/{requestId}/start-review
+     * @secure
+     */
+    startReviewRequest: (
+      requestId: string,
+      data: StartReviewRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        StartReviewResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/facilities/requests/${requestId}/start-review`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),
@@ -6226,40 +6526,6 @@ export class Api<
      * @description 🔒 This endpoint requires authentication.
      *
      * @tags Facilities
-     * @name GetRejectionReasons
-     * @request GET:/api/v1/facilities/rejection-reasons
-     * @secure
-     */
-    getRejectionReasons: (
-      query?: {
-        /** @default true */
-        onlyActive?: boolean;
-      },
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        GetRejectionReasonsResultApplicationResult,
-        void | {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/v1/facilities/rejection-reasons`,
-        method: "GET",
-        query: query,
-        secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Facilities
      * @name RejectFacilityRequest
      * @request POST:/api/v1/facilities/requests/{requestId}/reject
      * @secure
@@ -6293,17 +6559,17 @@ export class Api<
      * @description 🔒 This endpoint requires authentication.
      *
      * @tags Facilities
-     * @name CancelFacilityRequest
-     * @request POST:/api/v1/facilities/requests/{requestId}/cancel
+     * @name RequestDocuments
+     * @request POST:/api/v1/facilities/requests/{requestId}/request-documents
      * @secure
      */
-    cancelFacilityRequest: (
+    requestDocuments: (
       requestId: string,
-      data: CancelFacilityRequestRequest,
+      data: RequestDocumentsRequest,
       params: RequestParams = {},
     ) =>
       this.request<
-        CancelFacilityRequestResultApplicationResult,
+        RequestDocumentsResultApplicationResult,
         void | {
           /** @example "internal_server_error" */
           error?: string;
@@ -6313,7 +6579,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/facilities/requests/${requestId}/cancel`,
+        path: `/api/v1/facilities/requests/${requestId}/request-documents`,
         method: "POST",
         body: data,
         secure: true,
@@ -6768,18 +7034,18 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Returns membership information for the currently authenticated user
+     * @description 🔒 🔒 Returns detailed membership information for the currently authenticated user, including capabilities, features, roles, and agencies
      *
      * @tags Membership
      * @name GetCurrentMember
-     * @summary Get current member info
-     * @request GET:/api/v1/membership/me/member
+     * @summary Get current member information
+     * @request GET:/api/v1/membership/members/me
      * @secure
      */
     getCurrentMember: (data: any, params: RequestParams = {}) =>
       this.request<
-        ObjectApplicationResult,
-        {
+        MemberDetailDtoApplicationResult,
+        void | {
           /** @example "internal_server_error" */
           error?: string;
           /** @example "خطای داخلی سرور رخ داده است" */
@@ -6788,7 +7054,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/membership/me/member`,
+        path: `/api/v1/membership/members/me`,
         method: "GET",
         body: data,
         secure: true,
@@ -6797,18 +7063,18 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Synchronizes the current member from external source and returns MemberDto
+     * @description 🔒 🔒 Synchronizes the current authenticated member's data with the external membership system and returns updated member details
      *
      * @tags Membership
      * @name SyncCurrentMember
-     * @summary Sync current member
-     * @request POST:/api/v1/membership/me/member/sync
+     * @summary Synchronize current member with external source
+     * @request POST:/api/v1/membership/members/me/sync
      * @secure
      */
     syncCurrentMember: (data: any, params: RequestParams = {}) =>
       this.request<
-        ObjectApplicationResult,
-        {
+        MemberDetailDtoApplicationResult,
+        void | {
           /** @example "internal_server_error" */
           error?: string;
           /** @example "خطای داخلی سرور رخ داده است" */
@@ -6817,7 +7083,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/membership/me/member/sync`,
+        path: `/api/v1/membership/members/me/sync`,
         method: "POST",
         body: data,
         secure: true,
@@ -6826,7 +7092,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Returns a paginated list of notifications for a specific user with optional filtering.
+     * @description 🔒 🔒 Returns a paginated list of notifications for a specific user with optional filtering.
      *
      * @tags Notifications
      * @name GetUserNotificationsPaginated
@@ -6868,7 +7134,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Returns all notifications for a specific user with optional filtering.
+     * @description 🔒 🔒 Returns all notifications for a specific user with optional filtering.
      *
      * @tags Notifications
      * @name GetAllUserNotifications
@@ -6906,7 +7172,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Gets the count of unread notifications for a specific user.
+     * @description 🔒 🔒 Gets the count of unread notifications for a specific user.
      *
      * @tags Notifications
      * @name GetUnreadCount
@@ -6935,7 +7201,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Gets the count of unread notifications grouped by context for a specific user.
+     * @description 🔒 🔒 Gets the count of unread notifications grouped by context for a specific user.
      *
      * @tags Notifications
      * @name GetUnreadCountByContext
@@ -6964,7 +7230,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Gets the count of unread notifications grouped by action for a specific user.
+     * @description 🔒 🔒 Gets the count of unread notifications grouped by action for a specific user.
      *
      * @tags Notifications
      * @name GetUnreadCountByAction
@@ -6993,7 +7259,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Marks a specific notification as read for a user.
+     * @description 🔒 🔒 Marks a specific notification as read for a user.
      *
      * @tags Notifications
      * @name MarkAsRead
@@ -7025,7 +7291,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Marks all notifications as read for a specific user.
+     * @description 🔒 🔒 Marks all notifications as read for a specific user.
      *
      * @tags Notifications
      * @name MarkAllAsRead
@@ -7053,7 +7319,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Marks all notifications of a specific context as read for a user.
+     * @description 🔒 🔒 Marks all notifications of a specific context as read for a user.
      *
      * @tags Notifications
      * @name MarkByContextAsRead
@@ -7085,7 +7351,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Marks all notifications of a specific action as read for a user.
+     * @description 🔒 🔒 Marks all notifications of a specific action as read for a user.
      *
      * @tags Notifications
      * @name MarkByActionAsRead
@@ -7371,7 +7637,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetActiveOffices
@@ -7398,7 +7664,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name CreateOffice
@@ -7427,7 +7693,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetAllOffices
@@ -7454,7 +7720,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetOfficeById
@@ -7481,7 +7747,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name UpdateOffice
@@ -7514,7 +7780,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name DeleteOffice
@@ -7541,7 +7807,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetOfficeByCode
@@ -7568,7 +7834,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 This endpoint requires authentication.
+     * @description 🔒 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetOfficeByExternalCode
@@ -7598,7 +7864,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Returns all roles with optional filtering and includes.
+     * @description 🔒 🔒 Returns all roles with optional filtering and includes.
      *
      * @tags Roles
      * @name GetAllRoles
@@ -7636,7 +7902,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Creates a new role in the system.
+     * @description 🔒 🔒 Creates a new role in the system.
      *
      * @tags Roles
      * @name CreateRole
@@ -7665,7 +7931,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Returns a paginated list of roles with optional search and filtering.
+     * @description 🔒 🔒 Returns a paginated list of roles with optional search and filtering.
      *
      * @tags Roles
      * @name GetRolesPaginated
@@ -7708,7 +7974,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Returns a role by its unique identifier with claims and user count.
+     * @description 🔒 🔒 Returns a role by its unique identifier with claims and user count.
      *
      * @tags Roles
      * @name GetRoleById
@@ -7736,7 +8002,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Updates an existing role's details.
+     * @description 🔒 🔒 Updates an existing role's details.
      *
      * @tags Roles
      * @name UpdateRole
@@ -7769,7 +8035,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Adds claims to an existing role.
+     * @description 🔒 🔒 Adds claims to an existing role.
      *
      * @tags Roles
      * @name AddClaimsToRole
@@ -7802,7 +8068,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Removes claims from an existing role.
+     * @description 🔒 🔒 Removes claims from an existing role.
      *
      * @tags Roles
      * @name RemoveClaimsFromRole
@@ -7835,7 +8101,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 This endpoint is publicly accessible.
+     * @description 🌐 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name CreateSection
@@ -7853,7 +8119,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 This endpoint is publicly accessible.
+     * @description 🌐 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name CreateCategory
@@ -7871,7 +8137,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 This endpoint is publicly accessible.
+     * @description 🌐 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name SetSetting
@@ -7889,7 +8155,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 This endpoint is publicly accessible.
+     * @description 🌐 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name GetSettings
@@ -7921,7 +8187,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 This endpoint is publicly accessible.
+     * @description 🌐 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name BulkUpdateSettings
@@ -7942,7 +8208,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 This endpoint is publicly accessible.
+     * @description 🌐 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name UpdateSetting
@@ -7964,7 +8230,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 This endpoint is publicly accessible.
+     * @description 🌐 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name GetSettingsBySection
@@ -7988,7 +8254,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 This endpoint is publicly accessible.
+     * @description 🌐 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name GetSettingByKey
@@ -9261,7 +9527,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Returns a paginated list of tours with optional search and filtering.
+     * @description 🔒 🔒 Returns a paginated list of tours with optional search and filtering.
      *
      * @tags Tours
      * @name GetToursPaginated
@@ -9329,7 +9595,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Returns a paginated list of users with optional search filter.
+     * @description 🔒 🔒 Returns a paginated list of users with optional search filter.
      *
      * @tags Users
      * @name GetUsersPaginated
@@ -9369,7 +9635,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Creates a new user with the provided information.
+     * @description 🔒 🔒 Creates a new user with the provided information.
      *
      * @tags Users
      * @name CreateUser
@@ -9400,7 +9666,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Returns full UserDetail DTO with roles, claims, preferences and tokens.
+     * @description 🔒 🔒 Returns full UserDetail DTO with roles, claims, preferences and tokens.
      *
      * @tags Users
      * @name GetUserDetail
@@ -9430,7 +9696,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 Updates an existing user with the provided information.
+     * @description 🔒 🔒 Updates an existing user with the provided information.
      *
      * @tags Users
      * @name UpdateUser

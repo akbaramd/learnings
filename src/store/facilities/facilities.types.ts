@@ -14,7 +14,6 @@ import {
   CreateFacilityRequestResultApplicationResult,
   ApproveFacilityRequestResultApplicationResult,
   RejectFacilityRequestResultApplicationResult,
-  CancelFacilityRequestResultApplicationResult,
 } from '@/src/services/Api';
 
 // Re-export types from Api
@@ -37,7 +36,6 @@ export type GetFacilityRequestDetailsResponse = FacilityRequestDetailsDtoApplica
 export type CreateFacilityRequestResponse = CreateFacilityRequestResultApplicationResult;
 export type ApproveFacilityRequestResponse = ApproveFacilityRequestResultApplicationResult;
 export type RejectFacilityRequestResponse = RejectFacilityRequestResultApplicationResult;
-export type CancelFacilityRequestResponse = CancelFacilityRequestResultApplicationResult;
 
 // Request types
 export interface GetFacilitiesRequest {

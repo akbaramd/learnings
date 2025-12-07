@@ -157,7 +157,7 @@ const billsSlice = createSlice({
         state.bills[billIndex] = {
           ...state.bills[billIndex],
           status: status,
-          lastModifiedAt: new Date().toISOString(),
+          modifiedAt: new Date().toISOString(),
         };
       }
 
@@ -166,7 +166,7 @@ const billsSlice = createSlice({
         state.currentBill = {
           ...state.currentBill,
           status: status,
-          lastModifiedAt: new Date().toISOString(),
+          modifiedAt: new Date().toISOString(),
         };
       }
 
