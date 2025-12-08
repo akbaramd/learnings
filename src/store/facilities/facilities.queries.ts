@@ -13,8 +13,6 @@ import {
   GetFacilityRequestDetailsResponse,
   CreateFacilityRequestRequest,
   CreateFacilityRequestResponse,
-  ApproveFacilityRequestRequest,
-  ApproveFacilityRequestResponse,
   RejectFacilityRequestRequest,
   RejectFacilityRequestResponse,
   CancelFacilityRequestRequest,
@@ -390,63 +388,9 @@ export const facilitiesApi = createApi({
       },
     }),
 
-    // Approve Facility Request
-    approveFacilityRequest: builder.mutation<
-      ApproveFacilityRequestResponse,
-      ApproveFacilityRequestRequest
-    >({
-      query: (request) => ({
-        url: `/facilities/requests/${request.requestId}/approve`,
-        method: 'POST',
-        body: {
-          approvedAmountRials: request.approvedAmountRials,
-          currency: request.currency,
-          notes: request.notes,
-          approverUserId: request.approverUserId,
-        },
-      }),
-      invalidatesTags: (result, error, request) => [{ type: 'FacilityRequests', id: request.requestId }],
-      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
-        try {
-          dispatch(setLoading(true));
-          await queryFulfilled;
-          dispatch(setError(null));
-        } catch (error: unknown) {
-          const errorMessage = handleFacilitiesApiError(error);
-          dispatch(setError(errorMessage));
-        } finally {
-          dispatch(setLoading(false));
-        }
-      },
-    }),
+    
 
-    // Reject Facility Request
-    rejectFacilityRequest: builder.mutation<
-      RejectFacilityRequestResponse,
-      RejectFacilityRequestRequest
-    >({
-      query: (request) => ({
-        url: `/facilities/requests/${request.requestId}/reject`,
-        method: 'POST',
-        body: {
-          reason: request.reason,
-          rejectorUserId: request.rejectorUserId,
-        },
-      }),
-      invalidatesTags: (result, error, request) => [{ type: 'FacilityRequests', id: request.requestId }],
-      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
-        try {
-          dispatch(setLoading(true));
-          await queryFulfilled;
-          dispatch(setError(null));
-        } catch (error: unknown) {
-          const errorMessage = handleFacilitiesApiError(error);
-          dispatch(setError(errorMessage));
-        } finally {
-          dispatch(setLoading(false));
-        }
-      },
-    }),
+    
 
     // Cancel Facility Request
     cancelFacilityRequest: builder.mutation<
@@ -492,8 +436,6 @@ export const {
   useGetFacilityRequestDetailsQuery,
   useLazyGetFacilityRequestDetailsQuery,
   useCreateFacilityRequestMutation,
-  useApproveFacilityRequestMutation,
-  useRejectFacilityRequestMutation,
   useCancelFacilityRequestMutation,
 } = facilitiesApi;
 

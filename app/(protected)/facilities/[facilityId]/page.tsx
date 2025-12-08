@@ -16,13 +16,19 @@ import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
 import FacilityVideoTutorialDrawer from '@/src/components/overlays/FacilityVideoTutorialDrawer';
 import {
-  PiMoney,
   PiArrowRight,
   PiCalendar,
   PiCheckCircle,
   PiClock,
   PiFileText,
   PiVideo,
+  PiXCircle,
+  PiWarningCircle,
+  PiListChecks,
+  PiArrowCounterClockwise,
+  PiBuilding,
+  PiCalendarCheck,
+  PiWarning,
 } from 'react-icons/pi';
 
 interface FacilityDetailPageProps {
@@ -39,6 +45,111 @@ function formatCurrencyFa(amount: number | null | undefined): string {
     console.error('Error formatting currency:', error);
     return '0';
   }
+}
+
+function getRequestStatusInfo(status: string | null | undefined) {
+  const statusMap: Record<string, {
+    icon: React.ReactNode;
+    badgeClass: string;
+    iconColor: string;
+  }> = {
+    'RequestSent': {
+      icon: <PiFileText className="h-3.5 w-3.5" />,
+      badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
+      iconColor: 'text-blue-500 dark:text-blue-400',
+    },
+    'PendingApproval': {
+      icon: <PiClock className="h-3.5 w-3.5" />,
+      badgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
+      iconColor: 'text-amber-500 dark:text-amber-400',
+    },
+    'PendingDocuments': {
+      icon: <PiFileText className="h-3.5 w-3.5" />,
+      badgeClass: 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300',
+      iconColor: 'text-orange-500 dark:text-orange-400',
+    },
+    'Waitlisted': {
+      icon: <PiListChecks className="h-3.5 w-3.5" />,
+      badgeClass: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300',
+      iconColor: 'text-purple-500 dark:text-purple-400',
+    },
+    'ReturnedForAmendment': {
+      icon: <PiArrowCounterClockwise className="h-3.5 w-3.5" />,
+      badgeClass: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300',
+      iconColor: 'text-yellow-500 dark:text-yellow-400',
+    },
+    'UnderReview': {
+      icon: <PiClock className="h-3.5 w-3.5" />,
+      badgeClass: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300',
+      iconColor: 'text-indigo-500 dark:text-indigo-400',
+    },
+    'Approved': {
+      icon: <PiCheckCircle className="h-3.5 w-3.5" />,
+      badgeClass: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
+      iconColor: 'text-green-500 dark:text-green-400',
+    },
+    'QueuedForDispatch': {
+      icon: <PiCheckCircle className="h-3.5 w-3.5" />,
+      badgeClass: 'bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-300',
+      iconColor: 'text-teal-500 dark:text-teal-400',
+    },
+    'SentToBank': {
+      icon: <PiBuilding className="h-3.5 w-3.5" />,
+      badgeClass: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-300',
+      iconColor: 'text-cyan-500 dark:text-cyan-400',
+    },
+    'BankScheduled': {
+      icon: <PiCalendarCheck className="h-3.5 w-3.5" />,
+      badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300',
+      iconColor: 'text-emerald-500 dark:text-emerald-400',
+    },
+    'ProcessedByBank': {
+      icon: <PiCheckCircle className="h-3.5 w-3.5" />,
+      badgeClass: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
+      iconColor: 'text-green-500 dark:text-green-400',
+    },
+    'Completed': {
+      icon: <PiCheckCircle className="h-3.5 w-3.5" />,
+      badgeClass: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
+      iconColor: 'text-green-500 dark:text-green-400',
+    },
+    'Disbursed': {
+      icon: <PiCheckCircle className="h-3.5 w-3.5" />,
+      badgeClass: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
+      iconColor: 'text-green-500 dark:text-green-400',
+    },
+    'Rejected': {
+      icon: <PiXCircle className="h-3.5 w-3.5" />,
+      badgeClass: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
+      iconColor: 'text-red-500 dark:text-red-400',
+    },
+    'Cancelled': {
+      icon: <PiXCircle className="h-3.5 w-3.5" />,
+      badgeClass: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+      iconColor: 'text-gray-500 dark:text-gray-400',
+    },
+    'Expired': {
+      icon: <PiWarningCircle className="h-3.5 w-3.5" />,
+      badgeClass: 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300',
+      iconColor: 'text-orange-500 dark:text-orange-400',
+    },
+    'BankCancelled': {
+      icon: <PiXCircle className="h-3.5 w-3.5" />,
+      badgeClass: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
+      iconColor: 'text-red-500 dark:text-red-400',
+    },
+    'RequiresPresence': {
+      icon: <PiFileText className="h-3.5 w-3.5" />,
+      badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
+      iconColor: 'text-blue-500 dark:text-blue-400',
+    },
+  };
+
+  return statusMap[status || ''] || {
+    icon: <PiWarning className="h-3.5 w-3.5" />,
+    badgeClass: 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300',
+    iconColor: 'text-gray-500 dark:text-gray-400',
+  };
 }
 
 export default function FacilityDetailPage({ params }: FacilityDetailPageProps) {
@@ -206,7 +317,7 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
     <div className="h-full flex flex-col" dir="rtl">
       <PageHeader
         title={facility.name || 'جزئیات تسهیلات'}
-        titleIcon={<PiMoney className="h-5 w-5 text-primary" />}
+        titleIcon={<PiBuilding className="h-5 w-5 text-primary" />}
         showBackButton={true}
         onBack={handleBack}
         rightActions={[
@@ -291,20 +402,25 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
 
           {/* Cycles */}
           <Card variant="default" radius="lg" padding="md">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                <PiCalendar className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                دوره‌های فعال
-              </h3>
-              {cyclesData?.data?.totalCount && cyclesData.data.totalCount > cycles.length && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleViewCycles}
-                >
-                  مشاهده همه ({cyclesData.data.totalCount})
-                </Button>
-              )}
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <PiCalendar className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  دوره‌های فعال
+                </h3>
+                {cyclesData?.data?.totalCount && cyclesData.data.totalCount > cycles.length && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleViewCycles}
+                  >
+                    مشاهده همه ({cyclesData.data.totalCount})
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mr-6">
+                دوره به بازه زمانی مشخصی گفته می‌شود که در آن می‌توانید درخواست تسهیلات ثبت کنید
+              </p>
             </div>
             
             {isCyclesLoading ? (
@@ -321,9 +437,9 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
                 {cycles.map((cycle, index) => {
                   const isActive = cycle.isActive === true;
                   const hasRequest = !!cycle.lastRequest?.id;
-                  const canClick = isActive && !!cycle.id;
-                  const hasStarted = cycle.hasStarted === true;
-                  const hasEnded = cycle.hasEnded === true;
+                  const availableQuota = cycle.availableQuota ?? (cycle.quota ? (cycle.quota - (cycle.usedQuota || 0)) : 0);
+                  const isQuotaFull = cycle.quota !== undefined && availableQuota <= 0;
+                  const canClick = isActive && !!cycle.id && !isQuotaFull;
                   
                   // Subtle alternating backgrounds for visual separation
                   const bgClass = index % 2 === 0 
@@ -351,11 +467,12 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
                         ${canClick ? 'hover:ring-2 hover:ring-emerald-200 dark:hover:ring-emerald-800' : ''}
                       `}
                     >
-                      {/* Header Section */}
-                      <div className="flex items-start justify-between gap-3 mb-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-3 flex-wrap">
-                            <h4 className={`text-base font-semibold ${isActive ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                      {/* Header Section - Improved */}
+                      <div className="mb-4">
+                        {/* Title and Status Badges */}
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex-1">
+                            <h4 className={`text-lg font-bold mb-2 ${isActive ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
                               {cycle.name || 'بدون نام'}
                             </h4>
                             <div className="flex items-center gap-2 flex-wrap">
@@ -370,132 +487,136 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
                                   غیرفعال
                                 </span>
                               )}
-                              {hasRequest && (
-                                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
-                                  <PiFileText className="h-3.5 w-3.5" />
-                                  دارای درخواست
-                                </span>
-                              )}
+                              {hasRequest && cycle.lastRequest && (() => {
+                                const statusInfo = getRequestStatusInfo(cycle.lastRequest.status);
+                                return (
+                                  <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${statusInfo.badgeClass}`}>
+                                    <span className={statusInfo.iconColor}>
+                                      {statusInfo.icon}
+                                    </span>
+                                    وضعیت درخواست: {cycle.lastRequest.statusText || cycle.lastRequest.status || 'نامشخص'}
+                                  </span>
+                                );
+                              })()}
                             </div>
                           </div>
+                        </div>
 
-                          {/* Dates Section */}
+                          {/* Dates Section - Improved */}
                           {cycle.startDate && cycle.endDate && (
-                            <div className="border-t border-gray-200 dark:border-gray-800 pt-3 mb-3">
-                              <div className="flex items-center gap-4 text-sm">
-                                <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
-                                  <PiClock className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                                  <span className="font-medium">شروع:</span>
-                                  <span className="text-gray-900 dark:text-gray-100">{new Date(cycle.startDate).toLocaleDateString('fa-IR')}</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
-                                  <PiClock className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                                  <span className="font-medium">پایان:</span>
-                                  <span className="text-gray-900 dark:text-gray-100">{new Date(cycle.endDate).toLocaleDateString('fa-IR')}</span>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Financial Terms Section */}
-                          {((cycle.financialTerms?.priceOptions && cycle.financialTerms.priceOptions.length > 0) || cycle.financialTerms?.interestRatePercentage !== undefined) && (
-                            <div className="border-t border-gray-200 dark:border-gray-800 pt-3 mb-3">
-                              <div className="space-y-3">
-                                {/* Price Options */}
-                                {cycle.financialTerms?.priceOptions && cycle.financialTerms.priceOptions.length > 0 && (
-                                  <div>
-                                    <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                                      مبلغ‌های قابل درخواست:
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                      {cycle.financialTerms.priceOptions.map((option, idx) => (
-                                        <div
-                                          key={option?.id || idx}
-                                          className={`px-2.5 py-1.5 rounded-md text-xs font-medium ${
-                                            isActive 
-                                              ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' 
-                                              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700'
-                                          }`}
-                                        >
-                                          {formatCurrencyFa(option?.amountRials)} ریال
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Interest Rate */}
-                                {cycle.financialTerms?.interestRatePercentage !== undefined && (
-                                  <div className="flex items-center gap-2.5 text-sm">
-                                    <span className="font-medium text-gray-700 dark:text-gray-300">نرخ سود:</span>
-                                    <span className={`font-semibold ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-500'}`}>
-                                      {cycle.financialTerms.interestRatePercentage}%
-                                    </span>
-                                    {cycle.financialTerms.paymentMonths && (
-                                      <>
-                                        <span className="text-gray-400 dark:text-gray-600">•</span>
-                                        <span className="text-gray-600 dark:text-gray-400 text-xs">
-                                          بازپرداخت: <span className="font-medium">{formatCurrencyFa(cycle.financialTerms.paymentMonths)}</span> ماه
-                                        </span>
-                                      </>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Quota Section */}
-                          {cycle.quota !== undefined && (
-                            <div className="border-t border-gray-200 dark:border-gray-800 pt-3 mb-3">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">ظرفیت:</span>
-                                <div className="flex items-center gap-2 text-sm">
-                                  <span className="text-gray-600 dark:text-gray-400">
-                                    {formatCurrencyFa(cycle.usedQuota || 0)}
-                                  </span>
-                                  <span className="text-gray-400 dark:text-gray-600">/</span>
-                                  <span className="font-semibold text-gray-900 dark:text-gray-100">
-                                    {formatCurrencyFa(cycle.quota)}
-                                  </span>
-                                  {cycle.availableQuota !== undefined && cycle.availableQuota > 0 && (
-                                    <span className={`mr-2 text-xs font-medium px-2 py-0.5 rounded ${isActive ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'}`}>
-                                      {formatCurrencyFa(cycle.availableQuota)} باقیمانده
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Request Status Section */}
-                          {hasRequest && cycle.lastRequest && (
-                            <div className="border-t border-blue-200 dark:border-blue-800 pt-3 mb-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-md p-3 -mx-3 border-l-2 border-l-blue-400 dark:border-l-blue-600">
-                              <div className="flex items-center gap-2 mb-2">
-                                <PiFileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                                <span className="text-xs font-semibold text-blue-900 dark:text-blue-100">وضعیت درخواست شما</span>
-                              </div>
-                              <div className="space-y-1.5 bg-white/80 dark:bg-gray-800/50 rounded-md p-2.5 border border-blue-100 dark:border-blue-900/30">
+                            <div className="bg-gradient-to-r from-emerald-50 to-blue-50 dark:from-emerald-900/10 dark:to-blue-900/10 rounded-lg p-3 mb-3 border border-emerald-200/50 dark:border-emerald-800/50">
+                              <div className="flex items-center gap-4 flex-wrap">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xs text-blue-700 dark:text-blue-300">وضعیت:</span>
-                                  <span className="text-xs font-semibold text-blue-900 dark:text-blue-100">
-                                    {cycle.lastRequest.statusText || cycle.lastRequest.status || 'نامشخص'}
-                                  </span>
-                                </div>
-                                {cycle.lastRequest.requestedAmountRials && (
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs text-blue-700 dark:text-blue-300">مبلغ:</span>
-                                    <span className="text-xs font-semibold text-blue-900 dark:text-blue-100">
-                                      {formatCurrencyFa(cycle.lastRequest.requestedAmountRials)} ریال
-                                    </span>
+                                  <div className="p-1.5 rounded-md bg-emerald-100 dark:bg-emerald-900/30">
+                                    <PiCalendar className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                                   </div>
-                                )}
+                                  <div className="flex flex-col">
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">تاریخ شروع</span>
+                                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{new Date(cycle.startDate).toLocaleDateString('fa-IR')}</span>
+                                  </div>
+                                </div>
+                                <div className="h-8 w-px bg-gray-300 dark:bg-gray-600" />
+                                <div className="flex items-center gap-2">
+                                  <div className="p-1.5 rounded-md bg-blue-100 dark:bg-blue-900/30">
+                                    <PiCalendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">تاریخ پایان</span>
+                                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{new Date(cycle.endDate).toLocaleDateString('fa-IR')}</span>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           )}
+
+
+                          {/* Quota Section - Improved UX */}
+                          {cycle.quota !== undefined && (() => {
+                            const usedQuota = cycle.usedQuota || 0;
+                            const totalQuota = cycle.quota;
+                            const availableQuota = cycle.availableQuota ?? (totalQuota - usedQuota);
+                            const isQuotaFull = availableQuota <= 0;
+                            const quotaPercentage = totalQuota > 0 ? (usedQuota / totalQuota) * 100 : 0;
+                            const isQuotaNearlyFull = quotaPercentage >= 80;
+                            
+                            return (
+                              <div className="border-t border-gray-200 dark:border-gray-800 pt-3 mb-3">
+                                <div className="space-y-2">
+                                  {/* Quota Label and Value */}
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex flex-col gap-1">
+                                      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                        ظرفیت درخواست‌ها
+                                      </span>
+                                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                                        حداکثر تعداد درخواست‌های قابل ثبت در این دوره
+                                      </span>
+                                    </div>
+                                    <div className="flex items-baseline gap-1.5 text-sm">
+                                      <span className={`font-bold text-lg ${isQuotaFull ? 'text-red-600 dark:text-red-400' : isQuotaNearlyFull ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                                        {formatCurrencyFa(usedQuota)}
+                                      </span>
+                                      <span className="text-gray-400 dark:text-gray-600 text-base">/</span>
+                                      <span className="font-semibold text-gray-700 dark:text-gray-300">
+                                        {formatCurrencyFa(totalQuota)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Progress Bar */}
+                                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full transition-all duration-300 ${
+                                        isQuotaFull
+                                          ? 'bg-red-500 dark:bg-red-600'
+                                          : isQuotaNearlyFull
+                                          ? 'bg-amber-500 dark:bg-amber-600'
+                                          : 'bg-emerald-500 dark:bg-emerald-600'
+                                      }`}
+                                      style={{ width: `${Math.min(quotaPercentage, 100)}%` }}
+                                    />
+                                  </div>
+                                  
+                                  {/* Status Message */}
+                                  {isQuotaFull ? (
+                                    <div className="flex items-start gap-2 p-2.5 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                                      <PiWarningCircle className="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                                      <div className="flex-1">
+                                        <p className="text-xs font-semibold text-red-900 dark:text-red-100 mb-1">
+                                          ظرفیت این دوره تکمیل شده است
+                                        </p>
+                                        <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed">
+                                          متأسفانه ظرفیت این دوره به پایان رسیده است. لطفاً برای ثبت درخواست، منتظر شروع دوره‌های آینده باشید.
+                                        </p>
+                                      </div>
+                                    </div>
+                                  ) : isQuotaNearlyFull ? (
+                                    <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                                      <PiClock className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                                      <div className="flex-1">
+                                        <p className="text-xs font-semibold text-amber-900 dark:text-amber-100 mb-1">
+                                          ظرفیت در حال تکمیل است
+                                        </p>
+                                        <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+                                          فقط {formatCurrencyFa(availableQuota)} درخواست دیگر می‌توان ثبت کرد. در صورت تکمیل ظرفیت، باید منتظر دوره‌های آینده باشید.
+                                        </p>
+                                      </div>
+                                    </div>
+                                  ) : availableQuota > 0 ? (
+                                    <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                                      <PiCheckCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                                      <span>
+                                        <span className="font-semibold text-emerald-700 dark:text-emerald-300">{formatCurrencyFa(availableQuota)}</span> درخواست دیگر می‌توانید ثبت کنید
+                                      </span>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              </div>
+                            );
+                          })()}
 
                           {/* CTA Button */}
-                          {canClick && (
+                          {(hasRequest || canClick) && (
                             <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-800">
                               <Button
                                 variant="solid"
@@ -509,21 +630,6 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
                               </Button>
                             </div>
                           )}
-
-                          {!canClick && (
-                            <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-800">
-                              <div className="text-center py-2.5 bg-gray-50 dark:bg-gray-800/50 rounded-md">
-                                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                                  {!hasStarted
-                                    ? 'این دوره هنوز شروع نشده است'
-                                    : hasEnded
-                                    ? 'این دوره به پایان رسیده است'
-                                    : 'این دوره در حال حاضر غیرفعال است'}
-                                </span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
                       </div>
                     </Card>
                   );

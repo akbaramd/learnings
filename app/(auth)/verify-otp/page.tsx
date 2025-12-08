@@ -156,12 +156,6 @@ export default function VerifyOtpPage() {
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
-
-    // Auto-verify when all inputs are filled
-    if (newOtp.every((digit) => digit !== '') && index === 5) {
-      const form = document.querySelector('form');
-      form?.requestSubmit();
-    }
   };
 
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -187,12 +181,6 @@ export default function VerifyOtpPage() {
     // Focus last filled input or last input
     const lastFilledIndex = Math.min(pastedData.length, 5);
     inputRefs.current[lastFilledIndex]?.focus();
-
-    // Auto-verify if complete
-    if (newOtp.every((digit) => digit !== '')) {
-      const form = document.querySelector('form');
-      form?.requestSubmit();
-    }
   };
 
   // Handle session update after resending OTP via NextAuth
@@ -326,14 +314,9 @@ export default function VerifyOtpPage() {
             e.preventDefault();
 
                     // Prevent multiple submissions
-                    if (isLoading || !challengeId) return;
+            if (isLoading || !challengeId) return;
 
             const otpCode = otp.join('');
-            console.log(otpCode);
-            if (otpCode.length !== 6) {
-              setVerifyError({ message: 'کد باید دقیقاً ۶ رقم باشد.' });
-              return;
-            }
 
             // Use NextAuth signIn with OTP provider
             try {
@@ -356,29 +339,7 @@ export default function VerifyOtpPage() {
                 redirect: false, // Handle redirect manually
               });
               
-              if (result?.error) {
-                // Handle error from NextAuth
-                const errorMessage = result.error === 'CredentialsSignin' 
-                  ? 'کد تأیید نامعتبر است. لطفاً دوباره تلاش کنید.'
-                  : result.error;
-                
-                console.log('[VerifyOtp] ⚠️ OTP verification failed:', {
-                  error: result.error,
-                  message: errorMessage,
-                });
-                
-                // Show error toast
-                showError('خطا در تأیید', errorMessage);
-
-                // Clear OTP inputs to allow retry
-                setOtp(['', '', '', '', '', '']);
-                inputRefs.current[0]?.focus();
-                
-                setVerifyError({ message: errorMessage });
-                return; // Don't redirect
-              }
-              
-              // Success - NextAuth session is now established
+              // Check for success first - if ok is true, proceed even if error exists
               if (result?.ok && !navigatedRef.current) {
                 console.log('========================================');
                 console.log('[VerifyOtp] ✅ OTP VERIFIED SUCCESSFULLY via NextAuth');
@@ -443,6 +404,30 @@ export default function VerifyOtpPage() {
                 }
                 
                 router.replace(finalRedirectTo);
+                return; // Exit early on success
+              }
+              
+              // Only show error if result is not ok
+              if (result?.error) {
+                // Handle error from NextAuth
+                const errorMessage = result.error === 'CredentialsSignin' 
+                  ? 'کد تأیید نامعتبر است. لطفاً دوباره تلاش کنید.'
+                  : result.error;
+                
+                console.log('[VerifyOtp] ⚠️ OTP verification failed:', {
+                  error: result.error,
+                  message: errorMessage,
+                });
+                
+                // Show error toast
+                showError('خطا در تأیید', errorMessage);
+
+                // Clear OTP inputs to allow retry
+                setOtp(['', '', '', '', '', '']);
+                inputRefs.current[0]?.focus();
+                
+                setVerifyError({ message: errorMessage });
+                return; // Don't redirect
               }
             } catch (error: unknown) {
               // Handle network errors or exceptions
@@ -533,14 +518,7 @@ export default function VerifyOtpPage() {
 
           {/* Verify Button */}
           <button
-            onClick={() => {
-              const otpCode = otp.join('');
-              if (otpCode.length === 6) {
-                // Trigger form submit
-                const form = document.querySelector('form');
-                form?.requestSubmit();
-              }
-            }}
+            type="submit"
             disabled={!canSubmit}
             className={`w-full py-3.5 rounded-xl transition-all duration-200 mb-4 ${
               !canSubmit

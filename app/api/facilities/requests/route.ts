@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       ? Number(pageSizeRaw)
       : 10;
 
-    const upstream = await api.api.getFacilityRequestsByUser({
+    const upstream = await api.api.getMyFacilityRequests({
       page,
       pageSize,
       facilityId,
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
       requestPayload.idempotencyKey = idempotencyKey;
     }
 
-    const upstream = await api.api.createFacilityRequest(requestPayload, {});
+    const upstream = await api.api.createMyFacilityRequest(requestPayload, {});
     
     const status = upstream.status ?? 200;
 

@@ -52,7 +52,7 @@ export async function GET(
     const includeDetailedRequestInfo = includeDetailedRequestInfoParam === 'true' ? true : false;
     const includeStatistics = includeStatisticsParam === 'false' ? false : true;
 
-    const upstream = await api.api.getFacilityCyclesWithUser(facilityId, {
+    const upstream = await api.api.getMyFacilityCycles(facilityId, {
       page,
       pageSize,
       status,

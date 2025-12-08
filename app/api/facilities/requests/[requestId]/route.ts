@@ -33,7 +33,7 @@ export async function GET(
     const includeCycle = includeCycleParam === 'false' ? false : true;
     const includePolicySnapshot = includePolicySnapshotParam === 'false' ? false : true;
 
-    const upstream = await api.api.getFacilityRequestDetails(requestId, {
+    const upstream = await api.api.getMyFacilityRequestDetails(requestId, {
       includeFacility,
       includeCycle,
       includePolicySnapshot,

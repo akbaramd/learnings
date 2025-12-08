@@ -37,7 +37,7 @@ export async function GET(
     const includeDependencies = includeDependenciesParam === 'false' ? false : true;
     const includeStatistics = includeStatisticsParam === 'false' ? false : true;
 
-    const upstream = await api.api.getFacilityCycleDetails(cycleId, {
+    const upstream = await api.api.getMyFacilityCycleDetails(cycleId, {
       includeFacilityInfo,
       includeUserRequestHistory,
       includeEligibilityDetails,

@@ -444,7 +444,7 @@ export default function HomeDashboard() {
         </section>
 
             {/* Services */}
-            <section className="px-4">
+            <section className="">
               <div className="mb-3 px-1">
                 <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">خدمات</h2>
               </div>
@@ -452,7 +452,7 @@ export default function HomeDashboard() {
             </section>
 
             {/* Tutorials Section */}
-            <section className="px-4">
+            <section className="">
               <TutorialSection 
                 title="آموزش‌ها" 
                 seeAllHref="/tutorials"
@@ -463,7 +463,7 @@ export default function HomeDashboard() {
             </section>
 
             {/* Tours Section */}
-            <section className="px-4 my-6">
+            <section className=" my-6">
               {toursError && <div className="text-center text-red-600 py-6">خطا در دریافت اطلاعات تور و رویدادها</div>}
               {toursLoading ? (
                 <div className="space-y-3">
@@ -485,7 +485,7 @@ export default function HomeDashboard() {
             </section>
 
             {/* Future Services Alert */}
-            <section className="px-4 my-4">
+            <section className=" my-4">
               <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4">
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0 mt-0.5">
@@ -504,7 +504,7 @@ export default function HomeDashboard() {
             </section>
 
             {/* Facilities Section */}
-            <section className="px-4 my-6">
+            <section className=" my-6">
               {facilitiesError && <div className="text-center text-red-600 py-6">خطا در دریافت اطلاعات تسهیلات</div>}
               {facilitiesLoading ? (
                 <div className="space-y-3">
@@ -526,7 +526,7 @@ export default function HomeDashboard() {
             </section>
 
             {/* Surveys Section */}
-            <section className="px-4 my-6">
+            <section className=" my-6">
               {surveysError && <div className="text-center text-red-600 py-6">خطا در دریافت اطلاعات نظرسنجی‌ها</div>}
               {surveysLoading ? (
                 <div className="space-y-3">

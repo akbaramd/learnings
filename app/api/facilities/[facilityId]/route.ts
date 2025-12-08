@@ -35,7 +35,7 @@ export async function GET(
     const includePolicies = includePoliciesParam === 'false' ? false : true;
     const includeUserRequestHistory = includeUserRequestHistoryParam === 'true' ? true : false;
 
-    const upstream = await api.api.getFacilityDetails(facilityId, {
+    const upstream = await api.api.getMyFacilityDetails(facilityId, {
       includeCycles,
       includeFeatures,
       includePolicies,

@@ -363,8 +363,6 @@ export interface ApproveFacilityRequestRequest {
   approvedAmountRials?: number;
   currency?: string | null;
   notes?: string | null;
-  /** @format uuid */
-  approverUserId?: string;
 }
 
 export interface ApproveFacilityRequestResult {
@@ -1546,24 +1544,6 @@ export interface FacilityRequestDto {
   isLastRequest?: boolean;
 }
 
-export interface FacilityRequestDtoPaginatedResult {
-  items?: FacilityRequestDto[] | null;
-  /** @format int32 */
-  totalCount?: number;
-  /** @format int32 */
-  pageNumber?: number;
-  /** @format int32 */
-  pageSize?: number;
-}
-
-export interface FacilityRequestDtoPaginatedResultApplicationResult {
-  isSuccess?: boolean;
-  status?: ResultStatus;
-  message?: string | null;
-  errors?: string[] | null;
-  data?: FacilityRequestDtoPaginatedResult;
-}
-
 export interface FailedUpdate {
   /** @format uuid */
   settingId?: string;
@@ -1696,6 +1676,24 @@ export interface GetFacilityCyclesWithUserQueryResponseApplicationResult {
   data?: GetFacilityCyclesWithUserQueryResponse;
 }
 
+export interface GetFacilityRequestsByCycleQueryResult {
+  items?: FacilityRequestDto[] | null;
+  /** @format int32 */
+  totalCount?: number;
+  /** @format int32 */
+  pageNumber?: number;
+  /** @format int32 */
+  pageSize?: number;
+}
+
+export interface GetFacilityRequestsByCycleQueryResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: GetFacilityRequestsByCycleQueryResult;
+}
+
 export interface GetFacilityRequestsByUserQueryResult {
   items?: FacilityRequestDto[] | null;
   /** @format int32 */
@@ -1712,6 +1710,24 @@ export interface GetFacilityRequestsByUserQueryResultApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: GetFacilityRequestsByUserQueryResult;
+}
+
+export interface GetFacilityRequestsQueryResult {
+  items?: FacilityRequestDto[] | null;
+  /** @format int32 */
+  totalCount?: number;
+  /** @format int32 */
+  pageNumber?: number;
+  /** @format int32 */
+  pageSize?: number;
+}
+
+export interface GetFacilityRequestsQueryResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: GetFacilityRequestsQueryResult;
 }
 
 export interface GetPreviousQuestionsResponse {
@@ -2989,8 +3005,6 @@ export interface RepeatableQuestionProgressDto {
 
 export interface RequestDocumentsRequest {
   notes?: string | null;
-  /** @format uuid */
-  requestedByUserId?: string;
 }
 
 export interface RequestDocumentsResult {
@@ -3739,11 +3753,6 @@ export interface StartReservationRequest {
   tourId?: string;
   /** @format uuid */
   capacityId?: string;
-}
-
-export interface StartReviewRequest {
-  /** @format uuid */
-  reviewedByUserId?: string;
 }
 
 export interface StartReviewResult {
@@ -5989,13 +5998,14 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 This endpoint is publicly accessible.
+     * @description 🔒 This endpoint requires authentication.
      *
-     * @tags Facilities
-     * @name GetFacilities
-     * @request GET:/api/v1/facilities
+     * @tags Facilities - Admin
+     * @name GetAllFacilityRequestsAdmin
+     * @request GET:/api/v1/admin/facilities/requests
+     * @secure
      */
-    getFacilities: (
+    getAllFacilityRequestsAdmin: (
       query?: {
         /**
          * @format int32
@@ -6007,106 +6017,24 @@ export class Api<
          * @default 10
          */
         pageSize?: number;
-        searchTerm?: string;
-        /** @default true */
-        onlyActive?: boolean;
-      },
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        GetFacilitiesResultApplicationResult,
-        void | {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/v1/facilities`,
-        method: "GET",
-        query: query,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🌐 This endpoint is publicly accessible.
-     *
-     * @tags Facilities
-     * @name GetFacilityCycles
-     * @request GET:/api/v1/facilities/{facilityId}/cycles
-     */
-    getFacilityCycles: (
-      facilityId: string,
-      query?: {
-        /**
-         * @format int32
-         * @default 1
-         */
-        page?: number;
-        /**
-         * @format int32
-         * @default 10
-         */
-        pageSize?: number;
-        status?: string;
-        searchTerm?: string;
-        /** @default true */
-        onlyActive?: boolean;
-      },
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        GetFacilityCyclesWithUserQueryResponseApplicationResult,
-        void | {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/v1/facilities/${facilityId}/cycles`,
-        method: "GET",
-        query: query,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🌐 This endpoint is publicly accessible.
-     *
-     * @tags Facilities
-     * @name GetFacilityRequestsByCycle
-     * @request GET:/api/v1/facilities/cycles/{cycleId}/requests
-     */
-    getFacilityRequestsByCycle: (
-      cycleId: string,
-      query?: {
-        /**
-         * @format int32
-         * @default 1
-         */
-        page?: number;
-        /**
-         * @format int32
-         * @default 10
-         */
-        pageSize?: number;
+        /** @format uuid */
+        facilityId?: string;
+        /** @format uuid */
+        cycleId?: string;
         status?: string;
         searchTerm?: string;
         /** @format date-time */
         dateFrom?: string;
         /** @format date-time */
         dateTo?: string;
+        /** @format uuid */
+        memberId?: string;
+        sortBy?: string;
       },
       params: RequestParams = {},
     ) =>
       this.request<
-        FacilityRequestDtoPaginatedResultApplicationResult,
+        GetFacilityRequestsQueryResultApplicationResult,
         void | {
           /** @example "internal_server_error" */
           error?: string;
@@ -6116,21 +6044,23 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/facilities/cycles/${cycleId}/requests`,
+        path: `/api/v1/admin/facilities/requests`,
         method: "GET",
         query: query,
+        secure: true,
         format: "json",
         ...params,
       }),
 
     /**
-     * @description 🌐 This endpoint is publicly accessible.
+     * @description 🔒 This endpoint requires authentication.
      *
-     * @tags Facilities
-     * @name GetFacilityRequestDetails2
-     * @request GET:/api/v1/facilities/requests/{requestId}
+     * @tags Facilities - Admin
+     * @name GetFacilityRequestDetailsAdmin
+     * @request GET:/api/v1/admin/facilities/requests/{requestId}
+     * @secure
      */
-    getFacilityRequestDetails2: (
+    getFacilityRequestDetailsAdmin: (
       requestId: string,
       query?: {
         /** @default true */
@@ -6153,9 +6083,136 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/facilities/requests/${requestId}`,
+        path: `/api/v1/admin/facilities/requests/${requestId}`,
         method: "GET",
         query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Facilities - Admin
+     * @name StartReviewRequestAdmin
+     * @request POST:/api/v1/admin/facilities/requests/{requestId}/start-review
+     * @secure
+     */
+    startReviewRequestAdmin: (requestId: string, params: RequestParams = {}) =>
+      this.request<
+        StartReviewResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/facilities/requests/${requestId}/start-review`,
+        method: "POST",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Facilities - Admin
+     * @name ApproveFacilityRequestAdmin
+     * @request POST:/api/v1/admin/facilities/requests/{requestId}/approve
+     * @secure
+     */
+    approveFacilityRequestAdmin: (
+      requestId: string,
+      data: ApproveFacilityRequestRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ApproveFacilityRequestResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/facilities/requests/${requestId}/approve`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Facilities - Admin
+     * @name RejectFacilityRequestAdmin
+     * @request POST:/api/v1/admin/facilities/requests/{requestId}/reject
+     * @secure
+     */
+    rejectFacilityRequestAdmin: (
+      requestId: string,
+      data: RejectFacilityRequestRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        RejectFacilityRequestResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/facilities/requests/${requestId}/reject`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Facilities - Admin
+     * @name RequestDocumentsAdmin
+     * @request POST:/api/v1/admin/facilities/requests/{requestId}/request-documents
+     * @secure
+     */
+    requestDocumentsAdmin: (
+      requestId: string,
+      data: RequestDocumentsRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        RequestDocumentsResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/facilities/requests/${requestId}/request-documents`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),
@@ -6163,11 +6220,11 @@ export class Api<
     /**
      * @description 🌐 This endpoint is publicly accessible.
      *
-     * @tags Facilities
-     * @name GetRejectionReasons
+     * @tags Facilities - Public
+     * @name GetRejectionReasonsPublic
      * @request GET:/api/v1/facilities/rejection-reasons
      */
-    getRejectionReasons: (
+    getRejectionReasonsPublic: (
       query?: {
         /** @default true */
         onlyActive?: boolean;
@@ -6195,12 +6252,108 @@ export class Api<
     /**
      * @description 🔒 This endpoint requires authentication.
      *
-     * @tags Facilities
-     * @name GetFacilityDetails
-     * @request GET:/api/v1/facilities/me/{facilityId}
+     * @tags Facilities - User
+     * @name GetFacilities
+     * @request GET:/api/v1/me/facilities
      * @secure
      */
-    getFacilityDetails: (
+    getFacilities: (
+      query?: {
+        /**
+         * @format int32
+         * @default 1
+         */
+        page?: number;
+        /**
+         * @format int32
+         * @default 10
+         */
+        pageSize?: number;
+        searchTerm?: string;
+        /** @default true */
+        onlyActive?: boolean;
+        sortBy?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        GetFacilitiesResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/me/facilities`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Facilities - User
+     * @name GetMyFacilityRequestsByCycle
+     * @request GET:/api/v1/me/facilities/cycles/{cycleId}/requests
+     * @secure
+     */
+    getMyFacilityRequestsByCycle: (
+      cycleId: string,
+      query?: {
+        /**
+         * @format int32
+         * @default 1
+         */
+        page?: number;
+        /**
+         * @format int32
+         * @default 10
+         */
+        pageSize?: number;
+        status?: string;
+        searchTerm?: string;
+        /** @format date-time */
+        dateFrom?: string;
+        /** @format date-time */
+        dateTo?: string;
+        sortBy?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        GetFacilityRequestsByCycleQueryResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/me/facilities/cycles/${cycleId}/requests`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Facilities - User
+     * @name GetMyFacilityDetails
+     * @request GET:/api/v1/me/facilities/{facilityId}
+     * @secure
+     */
+    getMyFacilityDetails: (
       facilityId: string,
       query?: {
         /** @default true */
@@ -6225,7 +6378,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/facilities/me/${facilityId}`,
+        path: `/api/v1/me/facilities/${facilityId}`,
         method: "GET",
         query: query,
         secure: true,
@@ -6236,12 +6389,12 @@ export class Api<
     /**
      * @description 🔒 This endpoint requires authentication.
      *
-     * @tags Facilities
-     * @name GetFacilityCyclesWithUser
-     * @request GET:/api/v1/facilities/me/{facilityId}/cycles
+     * @tags Facilities - User
+     * @name GetMyFacilityCycles
+     * @request GET:/api/v1/me/facilities/{facilityId}/cycles
      * @secure
      */
-    getFacilityCyclesWithUser: (
+    getMyFacilityCycles: (
       facilityId: string,
       query?: {
         /**
@@ -6268,6 +6421,7 @@ export class Api<
         includeDetailedRequestInfo?: boolean;
         /** @default true */
         includeStatistics?: boolean;
+        sortBy?: string;
       },
       params: RequestParams = {},
     ) =>
@@ -6282,7 +6436,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/facilities/me/${facilityId}/cycles`,
+        path: `/api/v1/me/facilities/${facilityId}/cycles`,
         method: "GET",
         query: query,
         secure: true,
@@ -6293,12 +6447,12 @@ export class Api<
     /**
      * @description 🔒 This endpoint requires authentication.
      *
-     * @tags Facilities
-     * @name GetFacilityCycleDetails
-     * @request GET:/api/v1/facilities/me/cycles/{cycleId}
+     * @tags Facilities - User
+     * @name GetMyFacilityCycleDetails
+     * @request GET:/api/v1/me/facilities/cycles/{cycleId}
      * @secure
      */
-    getFacilityCycleDetails: (
+    getMyFacilityCycleDetails: (
       cycleId: string,
       query?: {
         /** @default true */
@@ -6325,7 +6479,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/facilities/me/cycles/${cycleId}`,
+        path: `/api/v1/me/facilities/cycles/${cycleId}`,
         method: "GET",
         query: query,
         secure: true,
@@ -6336,12 +6490,12 @@ export class Api<
     /**
      * @description 🔒 This endpoint requires authentication.
      *
-     * @tags Facilities
-     * @name GetFacilityRequestsByUser
-     * @request GET:/api/v1/facilities/me/requests
+     * @tags Facilities - User
+     * @name GetMyFacilityRequests
+     * @request GET:/api/v1/me/facilities/requests
      * @secure
      */
-    getFacilityRequestsByUser: (
+    getMyFacilityRequests: (
       query?: {
         /**
          * @format int32
@@ -6363,6 +6517,7 @@ export class Api<
         dateFrom?: string;
         /** @format date-time */
         dateTo?: string;
+        sortBy?: string;
       },
       params: RequestParams = {},
     ) =>
@@ -6377,7 +6532,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/facilities/me/requests`,
+        path: `/api/v1/me/facilities/requests`,
         method: "GET",
         query: query,
         secure: true,
@@ -6388,12 +6543,12 @@ export class Api<
     /**
      * @description 🔒 This endpoint requires authentication.
      *
-     * @tags Facilities
-     * @name CreateFacilityRequest
-     * @request POST:/api/v1/facilities/me/requests
+     * @tags Facilities - User
+     * @name CreateMyFacilityRequest
+     * @request POST:/api/v1/me/facilities/requests
      * @secure
      */
-    createFacilityRequest: (
+    createMyFacilityRequest: (
       data: CreateFacilityRequestCommand,
       params: RequestParams = {},
     ) =>
@@ -6408,7 +6563,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/facilities/me/requests`,
+        path: `/api/v1/me/facilities/requests`,
         method: "POST",
         body: data,
         secure: true,
@@ -6420,12 +6575,12 @@ export class Api<
     /**
      * @description 🔒 This endpoint requires authentication.
      *
-     * @tags Facilities
-     * @name GetFacilityRequestDetails
-     * @request GET:/api/v1/facilities/me/requests/{requestId}
+     * @tags Facilities - User
+     * @name GetMyFacilityRequestDetails
+     * @request GET:/api/v1/me/facilities/requests/{requestId}
      * @secure
      */
-    getFacilityRequestDetails: (
+    getMyFacilityRequestDetails: (
       requestId: string,
       query?: {
         /** @default true */
@@ -6448,142 +6603,10 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/facilities/me/requests/${requestId}`,
+        path: `/api/v1/me/facilities/requests/${requestId}`,
         method: "GET",
         query: query,
         secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Facilities
-     * @name StartReviewRequest
-     * @request POST:/api/v1/facilities/requests/{requestId}/start-review
-     * @secure
-     */
-    startReviewRequest: (
-      requestId: string,
-      data: StartReviewRequest,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        StartReviewResultApplicationResult,
-        void | {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/v1/facilities/requests/${requestId}/start-review`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Facilities
-     * @name ApproveFacilityRequest
-     * @request POST:/api/v1/facilities/requests/{requestId}/approve
-     * @secure
-     */
-    approveFacilityRequest: (
-      requestId: string,
-      data: ApproveFacilityRequestRequest,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        ApproveFacilityRequestResultApplicationResult,
-        void | {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/v1/facilities/requests/${requestId}/approve`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Facilities
-     * @name RejectFacilityRequest
-     * @request POST:/api/v1/facilities/requests/{requestId}/reject
-     * @secure
-     */
-    rejectFacilityRequest: (
-      requestId: string,
-      data: RejectFacilityRequestRequest,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        RejectFacilityRequestResultApplicationResult,
-        void | {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/v1/facilities/requests/${requestId}/reject`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Facilities
-     * @name RequestDocuments
-     * @request POST:/api/v1/facilities/requests/{requestId}/request-documents
-     * @secure
-     */
-    requestDocuments: (
-      requestId: string,
-      data: RequestDocumentsRequest,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        RequestDocumentsResultApplicationResult,
-        void | {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/v1/facilities/requests/${requestId}/request-documents`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
         format: "json",
         ...params,
       }),

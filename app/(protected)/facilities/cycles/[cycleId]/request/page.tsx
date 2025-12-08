@@ -18,6 +18,8 @@ import {
   PiCurrencyCircleDollar,
   PiInfo,
   PiWarning,
+  PiMoney,
+  PiPercent,
 } from 'react-icons/pi';
 
 interface CreateRequestPageProps {
@@ -357,86 +359,126 @@ export default function CreateRequestPage({ params }: CreateRequestPageProps) {
               <PiCalendar className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               اطلاعات دوره
             </h3>
-            <div className="space-y-3">
-              {cycle.name && (
-                <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">نام دوره</div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {cycle.name}
+            <div className="space-y-4">
+              {/* Basic Info */}
+              <div className="space-y-3">
+                {cycle.name && (
+                  <div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">نام دوره</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {cycle.name}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {cycle.startDate && cycle.endDate && (
-                <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">بازه زمانی</div>
-                  <div className="flex items-center gap-2 text-sm text-gray-900 dark:text-gray-100">
-                    <PiClock className="h-4 w-4" />
-                    <span>
-                      {new Date(cycle.startDate).toLocaleDateString('fa-IR')} - {new Date(cycle.endDate).toLocaleDateString('fa-IR')}
+                {cycle.startDate && cycle.endDate && (
+                  <div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">بازه زمانی</div>
+                    <div className="flex items-center gap-2 text-sm text-gray-900 dark:text-gray-100">
+                      <PiClock className="h-4 w-4" />
+                      <span>
+                        {new Date(cycle.startDate).toLocaleDateString('fa-IR')} - {new Date(cycle.endDate).toLocaleDateString('fa-IR')}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Financial Terms Section - Enhanced */}
+              {((cycle.financialTerms?.priceOptions && cycle.financialTerms.priceOptions.length > 0) || cycle.financialTerms?.interestRatePercentage !== undefined) && (
+                <div className="bg-gradient-to-r from-emerald-50 to-blue-50 dark:from-emerald-900/10 dark:to-blue-900/10 rounded-lg p-4 border border-emerald-200/50 dark:border-emerald-800/50">
+                  <div className="flex items-center gap-2 mb-3">
+                    <PiMoney className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      شرایط مالی
                     </span>
                   </div>
-                </div>
-              )}
-
-              {cycle.financialTerms?.interestRatePercentage !== undefined && (
-                <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">نرخ سود</div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {cycle.financialTerms.interestRatePercentage}%
-                  </div>
-                </div>
-              )}
-
-              {cycle.financialTerms?.paymentMonths && (
-                <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">مدت بازپرداخت</div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {formatCurrencyFa(cycle.financialTerms.paymentMonths)} ماه
-                  </div>
-                </div>
-              )}
-
-              {priceOptions.length > 0 && (
-                <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">مبالغ مجاز</div>
-                  <div className="flex flex-wrap gap-2">
-                    {priceOptions.map((option, idx) => (
-                      <div
-                        key={option?.id || idx}
-                        className="px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-xs font-medium text-emerald-700 dark:text-emerald-300"
-                      >
-                        {formatCurrencyFa(option?.amountRials)} ریال
+                  
+                  <div className="space-y-3">
+                    {/* Price Options */}
+                    {priceOptions.length > 0 && (
+                      <div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-2 font-medium">
+                          مبلغ‌های قابل درخواست
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {priceOptions.map((option, idx) => (
+                            <div
+                              key={option?.id || idx}
+                              className="px-3 py-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-sm font-semibold text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 shadow-sm"
+                            >
+                              {formatCurrencyFa(option?.amountRials)} ریال
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    ))}
+                    )}
+
+                    {/* Interest Rate and Payment Terms */}
+                    {(cycle.financialTerms?.interestRatePercentage !== undefined || cycle.financialTerms?.paymentMonths) && (
+                      <div className="flex items-center gap-4 pt-3 border-t border-emerald-200/50 dark:border-emerald-700/50 flex-wrap">
+                        {cycle.financialTerms?.interestRatePercentage !== undefined && (
+                          <div className="flex items-center gap-2">
+                            <PiPercent className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                            <div className="flex flex-col">
+                              <span className="text-xs text-gray-500 dark:text-gray-400">نرخ سود</span>
+                              <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">
+                                {cycle.financialTerms.interestRatePercentage}%
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                        {cycle.financialTerms?.paymentMonths && (
+                          <>
+                            {cycle.financialTerms?.interestRatePercentage !== undefined && (
+                              <span className="h-6 w-px bg-emerald-300 dark:bg-emerald-700" />
+                            )}
+                            <div className="flex items-center gap-2">
+                              <PiClock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                              <div className="flex flex-col">
+                                <span className="text-xs text-gray-500 dark:text-gray-400">مدت بازپرداخت</span>
+                                <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                                  {formatCurrencyFa(cycle.financialTerms.paymentMonths)} ماه
+                                </span>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
+              {/* Statistics */}
               {cycle.statistics && (
-                <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">آمار دوره</div>
-                  <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                <div className="bg-gray-50 dark:bg-gray-800/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">آمار دوره</div>
+                  <div className="space-y-1.5 text-xs text-gray-600 dark:text-gray-400">
                     {cycle.statistics.totalQuota !== undefined && (
-                      <div>ظرفیت کل: {formatCurrencyFa(cycle.statistics.totalQuota)} درخواست</div>
+                      <div className="flex items-center justify-between">
+                        <span>ظرفیت کل:</span>
+                        <span className="font-semibold text-gray-900 dark:text-gray-100">
+                          {formatCurrencyFa(cycle.statistics.totalQuota)} درخواست
+                        </span>
+                      </div>
                     )}
                     {cycle.statistics.usedQuota !== undefined && (
-                      <div>استفاده شده: {formatCurrencyFa(cycle.statistics.usedQuota)} درخواست</div>
-                    )}
-                    {cycle.statistics.availableQuota !== undefined && (
-                      <div className="text-emerald-600 dark:text-emerald-400 font-medium">
-                        ظرفیت باقیمانده: {formatCurrencyFa(cycle.statistics.availableQuota)} درخواست
+                      <div className="flex items-center justify-between">
+                        <span>استفاده شده:</span>
+                        <span className="font-semibold text-gray-700 dark:text-gray-300">
+                          {formatCurrencyFa(cycle.statistics.usedQuota)} درخواست
+                        </span>
                       </div>
                     )}
-                  </div>
-                </div>
-              )}
-
-              {cycle.availableQuota !== undefined && cycle.availableQuota > 0 && (
-                <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">ظرفیت باقیمانده</div>
-                  <div className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                    {formatCurrencyFa(cycle.availableQuota)} درخواست
+                    {cycle.statistics.availableQuota !== undefined && (
+                      <div className="flex items-center justify-between pt-1.5 border-t border-gray-200 dark:border-gray-700">
+                        <span>ظرفیت باقیمانده:</span>
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                          {formatCurrencyFa(cycle.statistics.availableQuota)} درخواست
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
