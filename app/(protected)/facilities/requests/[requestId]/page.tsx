@@ -356,7 +356,7 @@ export default function RequestDetailPage({ params }: RequestDetailPageProps) {
               </div>
             </Card>
           )}
-
+          
           {/* Rejection Details Card - Modern & Minimal */}
           {(request.status === 'Rejected' || request.isRejected) && (
             <Card variant="default" radius="lg" padding="md" className="border-red-200 dark:border-red-800/50 bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-900/10 dark:to-rose-900/10">
