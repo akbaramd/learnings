@@ -319,7 +319,7 @@ function SupportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
         {/* Content */}
         <div className="flex-1 h-full">
           <iframe
-            src="https://widget.raychat.io/5d259dc6961e95bd413e1358?version=2"
+            src="https://widget.raychat.io/697719977f329e741382366d?version=2"
             className="w-full h-full border-0"
             onLoad={handleIframeLoad}
             onError={handleIframeError}

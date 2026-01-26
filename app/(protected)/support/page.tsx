@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/src/components/ui/PageHeader';
 import { PiHeadset } from 'react-icons/pi';
 
-const RAYCHAT_URL = 'https://widget.raychat.io/5d259dc6961e95bd413e1358?version=2';
+const RAYCHAT_URL = 'https://widget.raychat.io/697719977f329e741382366d?version=2';
 
 export default function SupportPage() {
   const router = useRouter();

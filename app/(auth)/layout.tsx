@@ -80,7 +80,7 @@ export default function LoginLayout({ children }: { children: ReactNode }) {
       {/* Support Button - enhanced with text for better discoverability */}
       <div className="fixed bottom-4 left-4 z-50">
         <button
-          onClick={() => window.open('https://widget.raychat.io/5d259dc6961e95bd413e1358?version=2', '_blank', 'noopener,noreferrer')}
+          onClick={() => window.open('https://widget.raychat.io/697719977f329e741382366d?version=2', '_blank', 'noopener,noreferrer')}
           className="group flex items-center gap-2 px-4 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
           aria-label="پشتیبانی آنلاین"
           title="پشتیبانی آنلاین - کلیک کنید"
