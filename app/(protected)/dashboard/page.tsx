@@ -16,7 +16,7 @@ import { SurveySection } from '@/src/components/surveys/SurveySection';
 import { Survey, SurveyCardSkeleton } from '@/src/components/surveys/SurveyCard';
 import { TutorialSection } from '@/src/components/tutorials';
 import { Tutorial } from '@/src/components/tutorials/TutorialCard';
-import { PiMoney, PiFileText, PiMapPinDuotone, PiInfo, PiWallet, PiCalendar } from 'react-icons/pi';
+import { PiMoney, PiFileText, PiHouseSimple, PiInfo, PiWallet, PiCalendar } from 'react-icons/pi';
 import { useGetToursPaginatedQuery } from '@/src/store/tours/tours.queries';
 import { useGetFacilitiesQuery } from '@/src/store/facilities';
 import { useGetActiveSurveysQuery } from '@/src/store/surveys';
@@ -219,7 +219,7 @@ const services = [
     title: 'تسهیلات مالی',
     icon: PiWallet,
     color: 'from-emerald-500 to-emerald-600',
-    bgColor: 'bg-emerald-500/10',
+    bgColor: 'bg-emerald-500',
     disabled: false
   },
   {
@@ -227,7 +227,7 @@ const services = [
     title: 'تور و رویداد',
     icon: PiCalendar,
     color: 'from-purple-500 to-purple-600',
-    bgColor: 'bg-purple-500/10',
+    bgColor: 'bg-purple-500',
     disabled: false
   },
   {
@@ -235,7 +235,15 @@ const services = [
     title: 'نظرسنجی',
     icon: PiFileText,
     color: 'from-blue-500 to-blue-600',
-    bgColor: 'bg-blue-500/10',
+    bgColor: 'bg-blue-500',
+    disabled: false
+  },
+  {
+    id: 'hotels',
+    title: 'اسکان و هتل',
+    icon: PiHouseSimple,
+    color: 'from-green-500 to-green-600',
+    bgColor: 'bg-green-500',
     disabled: false
   },
 ];
@@ -404,6 +412,8 @@ export default function HomeDashboard() {
       router.push('/facilities');
     } else if (id === 'tour') {
       router.push('/tours');
+    }else if (id === 'hotels') {
+      router.push('/hotels');
     }
     else if (id === 'survey') {
       router.push('/surveys');

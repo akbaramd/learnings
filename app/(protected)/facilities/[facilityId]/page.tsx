@@ -641,7 +641,7 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
       </ScrollableArea>
 
       {/* Video Tutorial Drawer */}
-      <FacilityVideoTutorialDrawer
+      {/* <FacilityVideoTutorialDrawer
         open={isVideoDrawerOpen}
         onClose={handleCloseVideoDrawer}
         videoSrc="/video/facilities.mp4"
@@ -650,7 +650,7 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
         showRequestButton={activeCycle !== undefined}
         onRequestClick={handleRequestFromVideo}
         requestButtonText="ثبت درخواست تسهیلات"
-      />
+      /> */}
     </div>
   );
 }
