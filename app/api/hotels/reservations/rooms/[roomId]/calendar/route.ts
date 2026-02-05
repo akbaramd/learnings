@@ -40,7 +40,7 @@ export async function GET(
 
     const onlyActive = onlyActiveParam === 'false' ? false : true;
 
-    const upstream = await api.api.hotelsGetRoomReservationsInDateRange(
+    const upstream = await api.api.getRoomReservationsInDateRange(
       roomId,
       {
         startDate,

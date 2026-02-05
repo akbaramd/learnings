@@ -6,11 +6,18 @@ import {
   GetAccommodationDetailResponse,
   GetReservationDetailResponse,
   GetReservationPricingResponse,
-  StartReservationResponse,
+  CreateReservationResponse,
+  PayReservationResponse,
   AddGuestToReservationResponse,
   FinalizeReservationResponse,
-  StartReservationRequest,
+  SubmitReservationResponse,
+  RejectReservationResponse,
+  CancelReservationResponse,
+  RevertReservationResponse,
+  DeleteReservationResponse,
+  CreateReservationRequest,
   AddGuestToReservationRequest,
+  RemoveGuestFromReservationRequest,
   GetReservationsPaginatedRequest,
   GetReservationsPaginatedResponse,
   GetUserReservationsRequest,
@@ -159,10 +166,10 @@ export const accommodationsApi = createApi({
       },
     }),
 
-    // Start Reservation
-    startReservation: builder.mutation<StartReservationResponse, StartReservationRequest>({
+    // Create Reservation
+    createReservation: builder.mutation<CreateReservationResponse, CreateReservationRequest>({
       query: (request) => ({
-        url: '/hotels/reservations',
+        url: '/hotels/reservations/create',
         method: 'POST',
         body: request,
       }),
@@ -171,7 +178,30 @@ export const accommodationsApi = createApi({
         try {
           dispatch(setLoading(true));
           const { data } = await queryFulfilled;
-          if (data?.data?.reservationId) {
+          if (data?.data?.id) {
+            dispatch(setError(null));
+          }
+        } catch (error: unknown) {
+          const errorMessage = handleAccommodationsApiError(error);
+          dispatch(setError(errorMessage));
+        } finally {
+          dispatch(setLoading(false));
+        }
+      },
+    }),
+
+    // Pay Reservation
+    payReservation: builder.mutation<PayReservationResponse, string>({
+      query: (reservationId) => ({
+        url: `/hotels/reservations/${reservationId}/pay`,
+        method: 'POST',
+      }),
+      invalidatesTags: (result, error, reservationId) => [{ type: 'Reservations', id: reservationId }],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          dispatch(setLoading(true));
+          const { data } = await queryFulfilled;
+          if (data?.data) {
             dispatch(setError(null));
           }
         } catch (error: unknown) {
@@ -235,10 +265,31 @@ export const accommodationsApi = createApi({
       },
     }),
 
-    // Finalize Reservation
-    finalizeReservation: builder.mutation<FinalizeReservationResponse, string>({
+    // Remove Guest from Reservation
+    removeGuestFromReservation: builder.mutation<GetReservationDetailResponse, RemoveGuestFromReservationRequest>({
+      query: ({ reservationId, guestId }) => ({
+        url: `/hotels/reservations/${reservationId}/guests/${guestId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (result, error, { reservationId }) => [{ type: 'Reservations', id: reservationId }],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          dispatch(setLoading(true));
+          await queryFulfilled;
+          dispatch(setError(null));
+        } catch (error: unknown) {
+          const errorMessage = handleAccommodationsApiError(error);
+          dispatch(setError(errorMessage));
+        } finally {
+          dispatch(setLoading(false));
+        }
+      },
+    }),
+
+    // Submit Reservation
+    submitReservation: builder.mutation<SubmitReservationResponse, string>({
       query: (reservationId) => ({
-        url: `/hotels/reservations/${reservationId}/finalize`,
+        url: `/hotels/reservations/${reservationId}/submit`,
         method: 'POST',
       }),
       invalidatesTags: (result, error, reservationId) => [{ type: 'Reservations', id: reservationId }],
@@ -257,6 +308,104 @@ export const accommodationsApi = createApi({
         }
       },
     }),
+
+    // Reject Reservation
+    rejectReservation: builder.mutation<RejectReservationResponse, { reservationId: string; reason?: string }>({
+      query: ({ reservationId, reason }) => ({
+        url: `/hotels/reservations/${reservationId}/reject`,
+        method: 'POST',
+        body: reason ? { reason } : {},
+      }),
+      invalidatesTags: (result, error, { reservationId }) => [{ type: 'Reservations', id: reservationId }],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          dispatch(setLoading(true));
+          const { data } = await queryFulfilled;
+          if (data?.data) {
+            dispatch(setError(null));
+          }
+        } catch (error: unknown) {
+          const errorMessage = handleAccommodationsApiError(error);
+          dispatch(setError(errorMessage));
+        } finally {
+          dispatch(setLoading(false));
+        }
+      },
+    }),
+
+    // Cancel Reservation
+    cancelReservation: builder.mutation<CancelReservationResponse, { reservationId: string; reason?: string }>({
+      query: ({ reservationId, reason }) => ({
+        url: `/hotels/reservations/${reservationId}/cancel`,
+        method: 'POST',
+        body: reason ? { reason } : {},
+      }),
+      invalidatesTags: (result, error, { reservationId }) => [{ type: 'Reservations', id: reservationId }],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          dispatch(setLoading(true));
+          const { data } = await queryFulfilled;
+          if (data?.data) {
+            dispatch(setError(null));
+          }
+        } catch (error: unknown) {
+          const errorMessage = handleAccommodationsApiError(error);
+          dispatch(setError(errorMessage));
+        } finally {
+          dispatch(setLoading(false));
+        }
+      },
+    }),
+
+    // Revert Reservation (from Submitted to Pending)
+    revertReservation: builder.mutation<RevertReservationResponse, string>({
+      query: (reservationId) => ({
+        url: `/hotels/reservations/${reservationId}/revert`,
+        method: 'POST',
+      }),
+      invalidatesTags: (result, error, reservationId) => [{ type: 'Reservations', id: reservationId }],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          dispatch(setLoading(true));
+          const { data } = await queryFulfilled;
+          if (data?.data) {
+            dispatch(setError(null));
+          }
+        } catch (error: unknown) {
+          const errorMessage = handleAccommodationsApiError(error);
+          dispatch(setError(errorMessage));
+        } finally {
+          dispatch(setLoading(false));
+        }
+      },
+    }),
+
+    // Delete Reservation
+    deleteReservation: builder.mutation<DeleteReservationResponse, string>({
+      query: (reservationId) => ({
+        url: `/hotels/reservations/${reservationId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (result, error, reservationId) => [
+        { type: 'Reservations', id: reservationId },
+        { type: 'Reservations' },
+      ],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          dispatch(setLoading(true));
+          const { data } = await queryFulfilled;
+          if (data?.data) {
+            dispatch(setError(null));
+          }
+        } catch (error: unknown) {
+          const errorMessage = handleAccommodationsApiError(error);
+          dispatch(setError(errorMessage));
+        } finally {
+          dispatch(setLoading(false));
+        }
+      },
+    }),
+
 
     // Get Reservations Paginated
     getReservationsPaginated: builder.query<GetReservationsPaginatedResponse, GetReservationsPaginatedRequest>({
@@ -377,6 +526,32 @@ export const accommodationsApi = createApi({
       keepUnusedDataFor: 300,
     }),
 
+    // Get My Reservations For Accommodation
+    getMyReservationsForAccommodation: builder.query<GetUserReservationsResponse, { accommodationId: string; status?: string; onlyActive?: boolean; onlyFuture?: boolean; onlyPast?: boolean }>({
+      query: ({ accommodationId, status, onlyActive, onlyFuture, onlyPast }) => {
+        const searchParams = new URLSearchParams();
+        if (status) {
+          searchParams.append('status', status);
+        }
+        if (onlyActive !== undefined) {
+          searchParams.append('onlyActive', onlyActive.toString());
+        }
+        if (onlyFuture !== undefined) {
+          searchParams.append('onlyFuture', onlyFuture.toString());
+        }
+        if (onlyPast !== undefined) {
+          searchParams.append('onlyPast', onlyPast.toString());
+        }
+        const queryString = searchParams.toString();
+        return {
+          url: `/hotels/reservations/accommodations/${accommodationId}/my-reservations${queryString ? `?${queryString}` : ''}`,
+          method: 'GET',
+        };
+      },
+      providesTags: (result, error, { accommodationId }) => [{ type: 'Reservations', id: `accommodation-${accommodationId}` }],
+      keepUnusedDataFor: 300,
+    }),
+
     // Get Room Reservations In Date Range
     getRoomReservationsInDateRange: builder.query<GetRoomReservationsInDateRangeResponse, GetRoomReservationsInDateRangeRequest>({
       query: ({ roomId, startDate, endDate, onlyActive = true }) => {
@@ -400,17 +575,25 @@ export const {
   useLazyGetAccommodationsPaginatedQuery,
   useGetAccommodationDetailQuery,
   useLazyGetAccommodationDetailQuery,
-  useStartReservationMutation,
+  useCreateReservationMutation,
+  usePayReservationMutation,
   useGetReservationDetailQuery,
   useLazyGetReservationDetailQuery,
   useGetReservationPricingQuery,
   useLazyGetReservationPricingQuery,
   useAddGuestToReservationMutation,
-  useFinalizeReservationMutation,
+  useRemoveGuestFromReservationMutation,
+  useSubmitReservationMutation,
+  useRejectReservationMutation,
+  useCancelReservationMutation,
+  useRevertReservationMutation,
+  useDeleteReservationMutation,
   useGetReservationsPaginatedQuery,
   useLazyGetReservationsPaginatedQuery,
   useGetUserReservationsQuery,
   useLazyGetUserReservationsQuery,
+  useGetMyReservationsForAccommodationQuery,
+  useLazyGetMyReservationsForAccommodationQuery,
   useGetRoomReservationsInDateRangeQuery,
   useLazyGetRoomReservationsInDateRangeQuery,
 } = accommodationsApi;

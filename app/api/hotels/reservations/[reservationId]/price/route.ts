@@ -4,8 +4,8 @@ import { GetReservationPricingResponse } from '@/src/store/accommodations/accomm
 import { AxiosError } from 'axios';
 
 /**
- * GET /api/hotels/reservations/[reservationId]/pricing
- * Get reservation pricing information
+ * GET /api/hotels/reservations/[reservationId]/price
+ * Calculate price for a hotel reservation
  */
 export async function GET(
   req: NextRequest,
@@ -24,14 +24,20 @@ export async function GET(
       }, { status: 400 });
     }
 
-    const upstream = await api.api.getReservationPricing(reservationId, {});
+    const upstream = await api.api.calculatePrice(reservationId, {});
     const status = upstream.status ?? 200;
 
+    // Transform ReservationPricingDtoServiceResult to ApplicationResult format
+    const serviceResult = upstream.data;
     const response: GetReservationPricingResponse = {
-      isSuccess: !!upstream.data?.data,
-      message: upstream.data?.message || 'Operation completed',
-      errors: upstream.data?.errors || undefined,
-      data: upstream.data?.data || undefined,
+      isSuccess: !!serviceResult?.isSuccess && !!serviceResult?.value,
+      message: serviceResult?.message || 'Price calculated successfully',
+      errors: serviceResult?.errors?.map(e => e.message || e.code || 'Unknown error') || undefined,
+      data: serviceResult?.value ? {
+        reservationId: serviceResult.value.reservationId,
+        totalAmountRials: serviceResult.value.totalAmountRials,
+        dailyPrices: serviceResult.value.dailyPrices || undefined,
+      } : undefined,
     };
 
     const res = NextResponse.json(response, { status });
@@ -45,7 +51,7 @@ export async function GET(
 
     return res;
   } catch (error) {
-    console.error('[Hotels Reservations] Get Pricing BFF error:', {
+    console.error('[Hotels Reservations] Calculate Price BFF error:', {
       name: error instanceof Error ? error.name : 'Unknown',
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
@@ -55,4 +61,3 @@ export async function GET(
     return handleApiError(error as AxiosError);
   }
 }
-

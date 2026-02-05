@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createApiInstance, handleApiError } from '@/app/api/generatedClient';
-import { FinalizeReservationResponse } from '@/src/store/accommodations/accommodations.types';
+import { GetReservationDetailResponse } from '@/src/store/accommodations/accommodations.types';
 import { AxiosError } from 'axios';
 
 /**
- * POST /api/hotels/reservations/[reservationId]/finalize
- * Finalize a hotel reservation
+ * POST /api/hotels/reservations/[reservationId]/submit
+ * Submit a hotel reservation
  */
 export async function POST(
   req: NextRequest,
@@ -24,14 +24,16 @@ export async function POST(
       }, { status: 400 });
     }
 
-    const upstream = await api.api.hotelsFinalizeReservation(reservationId, {});
+    const upstream = await api.api.submitReservation(reservationId, {});
     const status = upstream.status ?? 200;
 
-    const response: FinalizeReservationResponse = {
-      isSuccess: !!upstream.data?.data,
-      message: upstream.data?.message || 'Reservation finalized successfully',
-      errors: upstream.data?.errors || undefined,
-      data: upstream.data?.data || undefined,
+    // Transform ReservationDetailsDtoServiceResult to ApplicationResult format
+    const serviceResult = upstream.data;
+    const response: GetReservationDetailResponse = {
+      isSuccess: !!serviceResult?.isSuccess && !!serviceResult?.value,
+      message: serviceResult?.message || 'Reservation submitted successfully',
+      errors: serviceResult?.errors?.map(e => e.message || e.code || 'Unknown error') || undefined,
+      data: serviceResult?.value || undefined,
     };
 
     const res = NextResponse.json(response, { status });
@@ -45,7 +47,7 @@ export async function POST(
 
     return res;
   } catch (error) {
-    console.error('[Hotels Reservations] Finalize BFF error:', {
+    console.error('[Hotels Reservations] Submit BFF error:', {
       name: error instanceof Error ? error.name : 'Unknown',
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
@@ -55,4 +57,3 @@ export async function POST(
     return handleApiError(error as AxiosError);
   }
 }
-

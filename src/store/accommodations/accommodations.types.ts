@@ -5,9 +5,8 @@ import {
   ReservationDetailsDto,
   ReservationDto,
   ReservationPricingResponse,
-  StartReservationBody,
   AddGuestBody,
-  AddGuestResponse,
+  AddGuestToReservationResponse as AddGuestToReservationResponseDto,
   GuestDto,
   RoomDto,
   RoomSummaryDto,
@@ -19,9 +18,8 @@ import {
   AccommodationDetailsDtoApplicationResult,
   ReservationDetailsDtoApplicationResult,
   ReservationPricingResponseApplicationResult,
-  StartReservationDtoApplicationResult,
-  AddGuestResponseApplicationResult,
-  FinalizeReservationResponseApplicationResult,
+  AddGuestToReservationResponseApplicationResult,
+  ReservationDetailsDtoServiceResult,
   GetReservationsPaginatedResultApplicationResult,
   GetUserReservationsResultApplicationResult,
   GetRoomReservationsInDateRangeDtoApplicationResult,
@@ -37,9 +35,8 @@ export type {
   ReservationDetailsDto,
   ReservationDto,
   ReservationPricingResponse,
-  StartReservationBody,
   AddGuestBody,
-  AddGuestResponse,
+  AddGuestToReservationResponseDto as AddGuestToReservationResponseDto,
   GuestDto,
   RoomDto,
   RoomSummaryDto,
@@ -60,11 +57,73 @@ export type GetReservationDetailResponse = ReservationDetailsDtoApplicationResul
 
 export type GetReservationPricingResponse = ReservationPricingResponseApplicationResult;
 
-export type StartReservationResponse = StartReservationDtoApplicationResult;
+// Note: createReservation, addGuestToReservation, finalizeReservation, and pay return ReservationDetailsDtoServiceResult
+// But BFF transforms it to ApplicationResult format
+export interface CreateReservationResponse {
+  isSuccess: boolean;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: ReservationDetailsDto | null;
+}
 
-export type AddGuestToReservationResponse = AddGuestResponseApplicationResult;
+export interface PayReservationResponse {
+  isSuccess: boolean;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: ReservationDetailsDto | null;
+}
 
-export type FinalizeReservationResponse = FinalizeReservationResponseApplicationResult;
+export interface AddGuestToReservationResponseType {
+  isSuccess: boolean;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: ReservationDetailsDto | null;
+}
+
+// Alias for BFF response
+export type AddGuestToReservationResponse = AddGuestToReservationResponseType;
+
+export interface SubmitReservationResponse {
+  isSuccess: boolean;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: ReservationDetailsDto | null;
+}
+
+export interface RejectReservationResponse {
+  isSuccess: boolean;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: ReservationDetailsDto | null;
+}
+
+export interface CancelReservationResponse {
+  isSuccess: boolean;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: ReservationDetailsDto | null;
+}
+
+export interface RevertReservationResponse {
+  isSuccess: boolean;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: ReservationDetailsDto | null;
+}
+
+export interface DeleteReservationResponse {
+  isSuccess: boolean;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: void | null;
+}
+
+export interface FinalizeReservationResponse {
+  isSuccess: boolean;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: ReservationDetailsDto | null;
+}
 
 export type GetReservationsPaginatedResponse = GetReservationsPaginatedResultApplicationResult;
 
@@ -86,17 +145,26 @@ export interface GetAccommodationsPaginatedRequest {
   maxPriceRials?: number;
 }
 
-export interface StartReservationRequest {
+export interface CreateReservationRequestType {
   roomId: string;
   checkInDate: string;
   checkOutDate: string;
-  guestCount: number;
-  notes?: string;
+  memberId?: string | null;
+  notes?: string | null;
+  tenantId?: string | null;
 }
+
+// Alias for consistency
+export type CreateReservationRequest = CreateReservationRequestType;
 
 export interface AddGuestToReservationRequest {
   reservationId: string;
   guest: AddGuestBody;
+}
+
+export interface RemoveGuestFromReservationRequest {
+  reservationId: string;
+  guestId: string;
 }
 
 export interface GetReservationsPaginatedRequest {

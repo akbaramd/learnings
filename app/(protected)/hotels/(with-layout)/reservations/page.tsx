@@ -24,58 +24,93 @@ import { formatDateFa, formatDateOnlyFa, formatCurrencyFa } from '@/src/lib/date
 
 /* ===================== Helpers ===================== */
 
-function getStatusInfo(status: string | null | undefined) {
+function getStatusInfo(status: string | null | undefined, statusText?: string | null) {
+  // Normalize status to handle both lowercase and uppercase
+  const normalizedStatus = status?.toLowerCase() || '';
+  
+  // Use statusText if available, otherwise use mapping
   const map: Record<
     string,
     { icon: React.ReactNode; label: string; badgeClass: string; iconBgClass: string }
   > = {
-    Pending: {
+    pending: {
       icon: <PiClock className="h-4 w-4 text-amber-500" />,
-      label: 'در انتظار',
+      label: statusText || 'در انتظار تایید کارشناس',
       badgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
       iconBgClass: 'bg-amber-50 dark:bg-amber-900/20',
     },
-    Confirmed: {
+    submitted: {
+      icon: <PiClock className="h-4 w-4 text-yellow-500" />,
+      label: statusText || 'ارسال شده',
+      badgeClass: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300',
+      iconBgClass: 'bg-yellow-50 dark:bg-yellow-900/20',
+    },
+    confirmed: {
       icon: <PiCheckCircle className="h-4 w-4 text-green-500" />,
-      label: 'تأیید شده',
+      label: statusText || 'تأیید شده',
       badgeClass: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
       iconBgClass: 'bg-green-50 dark:bg-green-900/20',
     },
-    Cancelled: {
-      icon: <PiXCircle className="h-4 w-4 text-red-500" />,
-      label: 'لغو شده',
-      badgeClass: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
-      iconBgClass: 'bg-red-50 dark:bg-red-900/20',
-    },
-    Completed: {
-      icon: <PiCheckCircle className="h-4 w-4 text-blue-500" />,
-      label: 'تکمیل شده',
-      badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
-      iconBgClass: 'bg-blue-50 dark:bg-blue-900/20',
-    },
-    Draft: {
-      icon: <PiClock className="h-4 w-4 text-sky-500" />,
-      label: 'پیش‌نویس',
-      badgeClass: 'bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300',
-      iconBgClass: 'bg-sky-50 dark:bg-sky-900/20',
-    },
-    OnHold: {
-      icon: <PiWarning className="h-4 w-4 text-orange-500" />,
-      label: 'در انتظار پرداخت',
+    paying: {
+      icon: <PiClock className="h-4 w-4 text-orange-500" />,
+      label: statusText || 'در حال پرداخت',
       badgeClass: 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300',
       iconBgClass: 'bg-orange-50 dark:bg-orange-900/20',
     },
-    Expired: {
+    paid: {
+      icon: <PiCheckCircle className="h-4 w-4 text-green-500" />,
+      label: statusText || 'پرداخت شده',
+      badgeClass: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
+      iconBgClass: 'bg-green-50 dark:bg-green-900/20',
+    },
+    canceled: {
+      icon: <PiXCircle className="h-4 w-4 text-red-500" />,
+      label: statusText || 'لغو شده',
+      badgeClass: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
+      iconBgClass: 'bg-red-50 dark:bg-red-900/20',
+    },
+    rejected: {
+      icon: <PiXCircle className="h-4 w-4 text-red-500" />,
+      label: statusText || 'رد شده',
+      badgeClass: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
+      iconBgClass: 'bg-red-50 dark:bg-red-900/20',
+    },
+    expired: {
       icon: <PiXCircle className="h-4 w-4 text-rose-500" />,
-      label: 'منقضی شده',
+      label: statusText || 'منقضی شده',
       badgeClass: 'bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-300',
       iconBgClass: 'bg-rose-50 dark:bg-rose-900/20',
     },
+    // Legacy statuses (uppercase)
+    cancelled: {
+      icon: <PiXCircle className="h-4 w-4 text-red-500" />,
+      label: statusText || 'لغو شده',
+      badgeClass: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
+      iconBgClass: 'bg-red-50 dark:bg-red-900/20',
+    },
+    completed: {
+      icon: <PiCheckCircle className="h-4 w-4 text-blue-500" />,
+      label: statusText || 'تکمیل شده',
+      badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
+      iconBgClass: 'bg-blue-50 dark:bg-blue-900/20',
+    },
+    draft: {
+      icon: <PiClock className="h-4 w-4 text-sky-500" />,
+      label: statusText || 'پیش‌نویس',
+      badgeClass: 'bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300',
+      iconBgClass: 'bg-sky-50 dark:bg-sky-900/20',
+    },
+    onhold: {
+      icon: <PiWarning className="h-4 w-4 text-orange-500" />,
+      label: statusText || 'در انتظار پرداخت',
+      badgeClass: 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300',
+      iconBgClass: 'bg-orange-50 dark:bg-orange-900/20',
+    },
   };
 
-  return map[status || ''] || {
+  return map[normalizedStatus] || {
     icon: <PiWarning className="h-4 w-4 text-gray-500" />,
-    label: status || 'نامشخص',
+    label: statusText || status || 'نامشخص',
     badgeClass: 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300',
     iconBgClass: 'bg-gray-50 dark:bg-gray-900/20',
   };
@@ -100,6 +135,7 @@ type HotelReservation = {
   trackingCode?: string | null;
 
   status?: string | null;
+  statusText?: string | null;
 
   accommodationId?: string | null;
   accommodationName?: string | null;
@@ -168,14 +204,28 @@ export default function HotelReservationsPage() {
   );
 
   const applyPayload = useCallback((payload: any, mode: 'replace' | 'append') => {
-    const newItems: HotelReservation[] = payload?.items || [];
+    // Handle both direct payload and nested data structure
+    const data = payload?.data || payload;
+    const newItems: HotelReservation[] = data?.items || payload?.items || [];
 
-    const pageSizeFromApi = payload?.pageSize ?? pageSize;
-    const totalCount = payload?.totalCount ?? 0;
+    // Extract pagination info from the correct location
+    const pageSizeFromApi = data?.pageSize ?? payload?.pageSize ?? pageSize;
+    const totalCount = data?.totalCount ?? payload?.totalCount ?? 0;
     const totalPages =
       pageSizeFromApi > 0 ? Math.max(1, Math.ceil(totalCount / pageSizeFromApi)) : 1;
 
-    const pageNumber = payload?.pageNumber ?? 1;
+    const pageNumber = data?.pageNumber ?? payload?.pageNumber ?? 1;
+
+    // Log for debugging
+    console.log('[Reservations Page] applyPayload:', {
+      mode,
+      itemsCount: newItems.length,
+      pageNumber,
+      totalPages,
+      totalCount,
+      pageSizeFromApi,
+      hasNextPage: pageNumber < totalPages,
+    });
 
     setPagination({
       pageNumber,
@@ -193,7 +243,7 @@ export default function HotelReservationsPage() {
       const filtered = newItems.filter((x) => x.id && !existingIds.has(x.id));
       return filtered.length ? [...prev, ...filtered] : prev;
     });
-  }, []);
+  }, [pageSize]);
 
   const fetchPage = useCallback(
     async (pageNumber: number, mode: 'replace' | 'append') => {
@@ -212,16 +262,60 @@ export default function HotelReservationsPage() {
             pageNumber,
             pageSize,
             status: normalizedStatus,
-            searchTerm: normalizedSearch || undefined, // NOTE: your DTO uses searchTerm (accommodations api)
+            searchTerm: normalizedSearch || undefined,
           } as any,
           true
         );
 
+        // Log response for debugging
+        console.log('[Reservations Page] API Response:', {
+          hasData: !!res.data,
+          hasDataData: !!res.data?.data,
+          isSuccess: res.data?.isSuccess,
+          message: res.data?.message,
+          itemsCount: res.data?.data?.items?.length || 0,
+          totalCount: res.data?.data?.totalCount,
+          pageNumber: res.data?.data?.pageNumber,
+          pageSize: res.data?.data?.pageSize,
+        });
+
+        // Handle response structure: res.data is ApplicationResult, res.data.data is the actual payload
         const payload = res.data?.data;
-        if (payload) applyPayload(payload, mode);
+        
+        if (payload) {
+          applyPayload(payload, mode);
+        } else if (res.data?.isSuccess === false) {
+          // API returned error
+          console.warn('[Reservations Page] API returned error:', res.data.message, res.data.errors);
+          if (mode === 'replace') {
+            setItems([]);
+            setPagination({
+              pageNumber: 1,
+              totalPages: 1,
+              hasNextPage: false,
+            });
+          }
+        } else if (mode === 'replace') {
+          // If no data returned and we're replacing, clear items
+          console.warn('[Reservations Page] No payload in response');
+          setItems([]);
+          setPagination({
+            pageNumber: 1,
+            totalPages: 1,
+            hasNextPage: false,
+          });
+        }
       } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error('Failed to fetch hotel reservations:', e);
+        console.error('[Reservations Page] Failed to fetch hotel reservations:', e);
+        // On error, if replacing, clear items
+        if (mode === 'replace') {
+          setItems([]);
+          setPagination({
+            pageNumber: 1,
+            totalPages: 1,
+            hasNextPage: false,
+          });
+        }
       } finally {
         inFlightRef.current = false;
         setIsLoading(false);
@@ -280,6 +374,9 @@ export default function HotelReservationsPage() {
 
   // refetch when filters/search change (single effect, safe guards)
   useEffect(() => {
+    // Skip initial fetch (handled by initialFetchedRef)
+    if (!initialFetchedRef.current) return;
+    
     // allow refetch even if last key matches previous first page
     lastKeyRef.current = '';
     fetchPage(1, 'replace');
@@ -348,13 +445,14 @@ export default function HotelReservationsPage() {
               <div className="flex gap-2 flex-wrap">
                 {[
                   { key: 'all', label: 'همه' },
-                  { key: 'Pending', label: 'در انتظار' },
-                  { key: 'Confirmed', label: 'تأیید شده' },
-                  { key: 'Completed', label: 'تکمیل شده' },
-                  { key: 'Cancelled', label: 'لغو شده' },
-                  { key: 'OnHold', label: 'در انتظار پرداخت' },
-                  { key: 'Expired', label: 'منقضی شده' },
-                  { key: 'Draft', label: 'پیش‌نویس' },
+                  { key: 'pending', label: 'در انتظار تایید کارشناس' },
+                  { key: 'submitted', label: 'ارسال شده' },
+                  { key: 'confirmed', label: 'تأیید شده' },
+                  { key: 'paying', label: 'در حال پرداخت' },
+                  { key: 'paid', label: 'پرداخت شده' },
+                  { key: 'canceled', label: 'لغو شده' },
+                  { key: 'rejected', label: 'رد شده' },
+                  { key: 'expired', label: 'منقضی شده' },
                 ].map((s) => (
                   <Button
                     key={s.key}
@@ -392,20 +490,32 @@ export default function HotelReservationsPage() {
               )}
 
               <div className="space-y-3">
-                {items.map((r) => {
-                  const statusInfo = getStatusInfo(r.status);
-                  const title = r.accommodationName || 'رزرو اقامتگاه';
+                {items.map((r: any) => {
+                  const statusInfo = getStatusInfo(r.status, r.statusText);
+                  // Map ReservationDto fields correctly
+                  // ReservationDto has: accommodation?: AccommodationSummaryDto, room?: RoomSummaryDto
+                  const title = r.accommodation?.name || r.accommodationName || 'رزرو اقامتگاه';
                   const code = r.trackingCode || r.id?.slice(0, 8) || 'نامشخص';
+                  const roomNumber = r.room?.number || r.roomNumber || null;
 
                   const checkIn = r.checkInDate ? formatDateOnlyFa(r.checkInDate) : '—';
                   const checkOut = r.checkOutDate ? formatDateOnlyFa(r.checkOutDate) : '—';
                   const guestCount = r.guestCount ?? 0;
 
-                  const priceText =
-                    r.isFree || !r.totalAmountRials ? 'رایگان' : formatCurrencyFa(r.totalAmountRials);
+                  // Map price fields - ReservationDto uses totalPrice (MoneyDto with amountMinor) or totalPriceRials
+                  // MoneyDto has: { amountMinor: number, currency: string }
+                  // For IRR, amountMinor is already in rials (smallest unit)
+                  const totalPriceRials = r.totalPrice?.amountMinor ?? r.totalPriceRials ?? r.totalAmountRials ?? null;
+                  const isFree = r.isFree ?? (totalPriceRials === 0 || totalPriceRials === null);
+                  
+                  // Always show price - if free, show "رایگان", otherwise show formatted price
+                  const priceText = isFree ? 'رایگان' : (totalPriceRials ? formatCurrencyFa(totalPriceRials) : '—');
 
-                  const showPayment =
-                    !r.isFree && (r.totalAmountRials ?? 0) > 0;
+                  const showPayment = !isFree && (totalPriceRials ?? 0) > 0;
+                  
+                  // Map payment status fields - check if fully paid based on status or billId
+                  const isFullyPaid = r.isFullyPaid ?? (r.status === 'Paid' || r.status === '4');
+                  const isPaying = r.isPaying ?? (r.status === 'Paying' || r.status === '3' || (r.billId && !isFullyPaid));
 
                   return (
                     <Card
@@ -446,7 +556,7 @@ export default function HotelReservationsPage() {
                           <div className="flex items-center gap-2">
                             <span className="text-gray-500 dark:text-gray-400 text-xs">🏨</span>
                             <span className="font-medium text-gray-900 dark:text-gray-100">
-                              {r.roomNumber ? `اتاق ${r.roomNumber}` : 'اتاق —'}
+                              {roomNumber ? `اتاق ${roomNumber}` : 'اتاق —'}
                             </span>
                           </div>
 
@@ -458,7 +568,11 @@ export default function HotelReservationsPage() {
                           </div>
                         </div>
 
-                        <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400 flex-shrink-0">
+                        <div className={`text-lg font-bold flex-shrink-0 ${
+                          isFree 
+                            ? 'text-gray-600 dark:text-gray-400' 
+                            : 'text-emerald-600 dark:text-emerald-400'
+                        }`}>
                           {priceText}
                         </div>
                       </div>
@@ -486,14 +600,14 @@ export default function HotelReservationsPage() {
                           <span className="text-xs text-gray-500 dark:text-gray-400">💳</span>
                           <span
                             className={`text-xs font-medium px-2 py-1 rounded-full ${
-                              r.isFullyPaid
+                              isFullyPaid
                                 ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'
-                                : r.isPaying
+                                : isPaying
                                 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300'
                                 : 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
                             }`}
                           >
-                            {r.isFullyPaid ? 'پرداخت شده' : r.isPaying ? 'در حال پرداخت' : 'نپرداخته'}
+                            {isFullyPaid ? 'پرداخت شده' : isPaying ? 'در حال پرداخت' : 'نپرداخته'}
                           </span>
                         </div>
                       ) : null}

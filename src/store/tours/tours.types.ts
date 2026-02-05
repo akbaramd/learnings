@@ -21,7 +21,7 @@ import {
   StartReservationCommandResultApplicationResult,
   AddGuestToReservationResponseApplicationResult,
   RemoveGuestFromReservationResponseApplicationResult,
-  FinalizeReservationResponseApplicationResult,
+  TourFinalizeReservationResponseApplicationResult,
   ReactivateReservationResponseApplicationResult,
   CapacityDetailDto,
 } from '@/src/services/Api';
@@ -61,7 +61,7 @@ export type AddGuestToReservationResponseWrapper = AddGuestToReservationResponse
 
 export type RemoveGuestFromReservationResponseWrapper = RemoveGuestFromReservationResponseApplicationResult;
 
-export type FinalizeReservationResponse = FinalizeReservationResponseApplicationResult;
+export type FinalizeReservationResponse = TourFinalizeReservationResponseApplicationResult;
 
 export type ReactivateReservationResponse = ReactivateReservationResponseApplicationResult;
 

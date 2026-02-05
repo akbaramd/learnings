@@ -1,58 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createApiInstance, handleApiError } from '@/app/api/generatedClient';
-import { AddGuestToReservationResponse } from '@/src/store/accommodations/accommodations.types';
+import { GetReservationDetailResponse } from '@/src/store/accommodations/accommodations.types';
 import { AxiosError } from 'axios';
 
 /**
- * POST /api/hotels/reservations/[reservationId]/guests
- * Add a guest to reservation
+ * POST /api/hotels/reservations/create
+ * Create a new hotel reservation
  */
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ reservationId: string }> }
-) {
+export async function POST(req: NextRequest) {
   try {
     const api = createApiInstance(req);
-    const { reservationId } = await params;
     const body = await req.json();
 
-    // Log incoming request
-    console.log('[Hotels Reservations] Add Guest - Request:', {
-      reservationId,
-      body: JSON.stringify(body, null, 2),
-      fullName: body?.fullName,
-      nationalNumber: body?.nationalNumber,
-      relationshipType: body?.relationshipType,
-    });
-
-    if (!reservationId) {
-      console.error('[Hotels Reservations] Add Guest - Missing reservationId');
+    if (!body.roomId || !body.checkInDate || !body.checkOutDate) {
       return NextResponse.json({
         isSuccess: false,
-        message: 'Reservation ID is required',
-        errors: ['Reservation ID is required'],
+        message: 'Room ID, check-in date, and check-out date are required',
+        errors: ['Room ID, check-in date, and check-out date are required'],
         data: null,
       }, { status: 400 });
     }
 
-    if (!body) {
-      console.error('[Hotels Reservations] Add Guest - Missing body');
-      return NextResponse.json({
-        isSuccess: false,
-        message: 'Guest data is required',
-        errors: ['Guest data is required'],
-        data: null,
-      }, { status: 400 });
-    }
-
-    const upstream = await api.api.addGuestToReservation(reservationId, body, {});
+    const upstream = await api.api.createReservation({
+      roomId: body.roomId,
+      checkInDate: body.checkInDate,
+      checkOutDate: body.checkOutDate,
+      memberId: body.memberId || undefined,
+      notes: body.notes || undefined,
+      tenantId: body.tenantId || undefined,
+    }, {});
+    
     const status = upstream.status ?? 200;
 
     // Transform ReservationDetailsDtoServiceResult to ApplicationResult format
     const serviceResult = upstream.data;
-
-    // Log upstream response
-    console.log('[Hotels Reservations] Add Guest - Upstream response:', {
+    
+    // Log response for debugging
+    console.log('[Hotels Reservations] Create upstream response:', {
       status,
       serviceResult: JSON.stringify(serviceResult, null, 2),
       hasValue: !!serviceResult?.value,
@@ -61,28 +45,21 @@ export async function POST(
       message: serviceResult?.message,
     });
 
-    const response: AddGuestToReservationResponse = {
+    const response: GetReservationDetailResponse = {
       isSuccess: !!serviceResult?.isSuccess && !!serviceResult?.value,
-      message: serviceResult?.message || 'Operation completed',
+      message: serviceResult?.message || 'Reservation created successfully',
       errors: serviceResult?.errors?.map(e => e.message || e.code || 'Unknown error') || undefined,
       data: serviceResult?.value || undefined,
     };
 
     // Log final response
-    console.log('[Hotels Reservations] Add Guest - Final response:', {
+    console.log('[Hotels Reservations] Create final response:', {
       isSuccess: response.isSuccess,
       message: response.message,
       errors: response.errors,
       hasData: !!response.data,
+      reservationId: response.data?.id,
     });
-
-    if (!response.isSuccess) {
-      console.error('[Hotels Reservations] Add Guest - Response Error:', {
-        status: upstream.status,
-        serviceResult: serviceResult,
-        response: response,
-      });
-    }
 
     const res = NextResponse.json(response, { status });
     res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
@@ -95,7 +72,7 @@ export async function POST(
 
     return res;
   } catch (error) {
-    console.error('[Hotels Reservations] Add Guest BFF error:', {
+    console.error('[Hotels Reservations] Create BFF error:', {
       name: error instanceof Error ? error.name : 'Unknown',
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
@@ -105,7 +82,7 @@ export async function POST(
     // Log detailed error information
     if (error && typeof error === 'object' && 'response' in error) {
       const axiosError = error as AxiosError;
-      console.error('[Hotels Reservations] Add Guest error response:', {
+      console.error('[Hotels Reservations] Create error response:', {
         status: axiosError.response?.status,
         statusText: axiosError.response?.statusText,
         data: JSON.stringify(axiosError.response?.data, null, 2),
@@ -116,4 +93,3 @@ export async function POST(
     return handleApiError(error as AxiosError);
   }
 }
-

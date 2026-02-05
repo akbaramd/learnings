@@ -1,41 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createApiInstance, handleApiError } from '@/app/api/generatedClient';
-import { StartReservationResponse } from '@/src/store/accommodations/accommodations.types';
+import { GetReservationDetailResponse } from '@/src/store/accommodations/accommodations.types';
 import { AxiosError } from 'axios';
 
 /**
- * POST /api/hotels/reservations/start
- * Start a new hotel reservation
+ * POST /api/hotels/reservations/[reservationId]/confirm
+ * Confirm a hotel reservation
  */
-export async function POST(req: NextRequest) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ reservationId: string }> }
+) {
   try {
     const api = createApiInstance(req);
-    const body = await req.json();
+    const { reservationId } = await params;
 
-    if (!body.roomId || !body.checkInDate || !body.checkOutDate || body.guestCount === undefined) {
+    if (!reservationId) {
       return NextResponse.json({
         isSuccess: false,
-        message: 'Room ID, check-in date, check-out date, and guest count are required',
-        errors: ['Room ID, check-in date, check-out date, and guest count are required'],
+        message: 'Reservation ID is required',
+        errors: ['Reservation ID is required'],
         data: null,
       }, { status: 400 });
     }
 
-    const upstream = await api.api.hotelsStartReservation({
-      roomId: body.roomId,
-      checkInDate: body.checkInDate,
-      checkOutDate: body.checkOutDate,
-      guestCount: body.guestCount,
-      notes: body.notes || undefined,
-    }, {});
-    
+    const upstream = await api.api.confirmReservation(reservationId, {});
     const status = upstream.status ?? 200;
 
-    const response: StartReservationResponse = {
-      isSuccess: !!upstream.data?.data,
-      message: upstream.data?.message || 'Operation completed',
-      errors: upstream.data?.errors || undefined,
-      data: upstream.data?.data || undefined,
+    // Transform ReservationDetailsDtoServiceResult to ApplicationResult format
+    const serviceResult = upstream.data;
+    const response: GetReservationDetailResponse = {
+      isSuccess: !!serviceResult?.isSuccess && !!serviceResult?.value,
+      message: serviceResult?.message || 'Reservation confirmed successfully',
+      errors: serviceResult?.errors?.map(e => e.message || e.code || 'Unknown error') || undefined,
+      data: serviceResult?.value || undefined,
     };
 
     const res = NextResponse.json(response, { status });
@@ -49,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     return res;
   } catch (error) {
-    console.error('[Hotels Reservations] Start BFF error:', {
+    console.error('[Hotels Reservations] Confirm BFF error:', {
       name: error instanceof Error ? error.name : 'Unknown',
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
@@ -59,4 +57,3 @@ export async function POST(req: NextRequest) {
     return handleApiError(error as AxiosError);
   }
 }
-

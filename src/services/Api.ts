@@ -10,6 +10,35 @@
  * ---------------------------------------------------------------
  */
 
+export enum TypeAttributes {
+  NotPublic = "NotPublic",
+  Public = "Public",
+  NestedPublic = "NestedPublic",
+  NestedPrivate = "NestedPrivate",
+  NestedFamily = "NestedFamily",
+  NestedAssembly = "NestedAssembly",
+  NestedFamANDAssem = "NestedFamANDAssem",
+  VisibilityMask = "VisibilityMask",
+  SequentialLayout = "SequentialLayout",
+  ExplicitLayout = "ExplicitLayout",
+  LayoutMask = "LayoutMask",
+  Interface = "Interface",
+  Abstract = "Abstract",
+  Sealed = "Sealed",
+  SpecialName = "SpecialName",
+  RTSpecialName = "RTSpecialName",
+  Import = "Import",
+  Serializable = "Serializable",
+  WindowsRuntime = "WindowsRuntime",
+  UnicodeClass = "UnicodeClass",
+  AutoClass = "AutoClass",
+  StringFormatMask = "StringFormatMask",
+  HasSecurity = "HasSecurity",
+  ReservedMask = "ReservedMask",
+  BeforeFieldInit = "BeforeFieldInit",
+  CustomFormatMask = "CustomFormatMask",
+}
+
 export enum TourReservationStatus {
   Draft = "Draft",
   Confirmed = "Confirmed",
@@ -40,6 +69,38 @@ export enum SettingType {
   Color = "Color",
 }
 
+export enum ServiceResultStatus {
+  Success = "Success",
+  Failure = "Failure",
+  ValidationFailed = "ValidationFailed",
+  NotFound = "NotFound",
+  Unauthorized = "Unauthorized",
+  Forbidden = "Forbidden",
+  Conflict = "Conflict",
+  Unavailable = "Unavailable",
+  Timeout = "Timeout",
+  Cancelled = "Cancelled",
+}
+
+export enum ServiceErrorCategory {
+  Failure = "Failure",
+  Validation = "Validation",
+  NotFound = "NotFound",
+  Unauthorized = "Unauthorized",
+  Forbidden = "Forbidden",
+  Conflict = "Conflict",
+  Unavailable = "Unavailable",
+  Timeout = "Timeout",
+  Cancelled = "Cancelled",
+  Exception = "Exception",
+}
+
+export enum SecurityRuleSet {
+  None = "None",
+  Level1 = "Level1",
+  Level2 = "Level2",
+}
+
 export enum ResultStatus {
   Success = "Success",
   BadRequest = "BadRequest",
@@ -54,10 +115,25 @@ export enum ResultStatus {
 }
 
 export enum ReservationStatus {
-  PendingPayment = "PendingPayment",
+  Pending = "Pending",
+  Submitted = "Submitted",
   Confirmed = "Confirmed",
+  Paying = "Paying",
+  Paid = "Paid",
   Canceled = "Canceled",
+  Rejected = "Rejected",
   Expired = "Expired",
+}
+
+export enum PropertyAttributes {
+  None = "None",
+  SpecialName = "SpecialName",
+  RTSpecialName = "RTSpecialName",
+  HasDefault = "HasDefault",
+  Reserved2 = "Reserved2",
+  Reserved3 = "Reserved3",
+  Reserved4 = "Reserved4",
+  ReservedMask = "ReservedMask",
 }
 
 export enum PaymentStatus {
@@ -69,6 +145,113 @@ export enum PaymentStatus {
   Cancelled = "Cancelled",
   Expired = "Expired",
   Refunded = "Refunded",
+}
+
+export enum ParameterAttributes {
+  None = "None",
+  In = "In",
+  Out = "Out",
+  Lcid = "Lcid",
+  Retval = "Retval",
+  Optional = "Optional",
+  HasDefault = "HasDefault",
+  HasFieldMarshal = "HasFieldMarshal",
+  Reserved3 = "Reserved3",
+  Reserved4 = "Reserved4",
+  ReservedMask = "ReservedMask",
+}
+
+export enum MethodImplAttributes {
+  IL = "IL",
+  Native = "Native",
+  OPTIL = "OPTIL",
+  CodeTypeMask = "CodeTypeMask",
+  ManagedMask = "ManagedMask",
+  NoInlining = "NoInlining",
+  ForwardRef = "ForwardRef",
+  Synchronized = "Synchronized",
+  NoOptimization = "NoOptimization",
+  PreserveSig = "PreserveSig",
+  AggressiveInlining = "AggressiveInlining",
+  AggressiveOptimization = "AggressiveOptimization",
+  InternalCall = "InternalCall",
+  MaxMethodImplVal = "MaxMethodImplVal",
+}
+
+export enum MethodAttributes {
+  PrivateScope = "PrivateScope",
+  Private = "Private",
+  FamANDAssem = "FamANDAssem",
+  Assembly = "Assembly",
+  Family = "Family",
+  FamORAssem = "FamORAssem",
+  Public = "Public",
+  MemberAccessMask = "MemberAccessMask",
+  UnmanagedExport = "UnmanagedExport",
+  Static = "Static",
+  Final = "Final",
+  Virtual = "Virtual",
+  HideBySig = "HideBySig",
+  NewSlot = "NewSlot",
+  CheckAccessOnOverride = "CheckAccessOnOverride",
+  Abstract = "Abstract",
+  SpecialName = "SpecialName",
+  RTSpecialName = "RTSpecialName",
+  PinvokeImpl = "PinvokeImpl",
+  HasSecurity = "HasSecurity",
+  RequireSecObject = "RequireSecObject",
+  ReservedMask = "ReservedMask",
+}
+
+export enum MemberTypes {
+  Constructor = "Constructor",
+  Event = "Event",
+  Field = "Field",
+  Method = "Method",
+  Property = "Property",
+  TypeInfo = "TypeInfo",
+  Custom = "Custom",
+  NestedType = "NestedType",
+  All = "All",
+}
+
+export enum LayoutKind {
+  Sequential = "Sequential",
+  Explicit = "Explicit",
+  Auto = "Auto",
+}
+
+export enum GenericParameterAttributes {
+  None = "None",
+  Covariant = "Covariant",
+  Contravariant = "Contravariant",
+  VarianceMask = "VarianceMask",
+  ReferenceTypeConstraint = "ReferenceTypeConstraint",
+  NotNullableValueTypeConstraint = "NotNullableValueTypeConstraint",
+  DefaultConstructorConstraint = "DefaultConstructorConstraint",
+  SpecialConstraintMask = "SpecialConstraintMask",
+}
+
+export enum FieldAttributes {
+  PrivateScope = "PrivateScope",
+  Private = "Private",
+  FamANDAssem = "FamANDAssem",
+  Assembly = "Assembly",
+  Family = "Family",
+  FamORAssem = "FamORAssem",
+  Public = "Public",
+  FieldAccessMask = "FieldAccessMask",
+  Static = "Static",
+  InitOnly = "InitOnly",
+  Literal = "Literal",
+  NotSerialized = "NotSerialized",
+  HasFieldRVA = "HasFieldRVA",
+  SpecialName = "SpecialName",
+  RTSpecialName = "RTSpecialName",
+  HasFieldMarshal = "HasFieldMarshal",
+  PinvokeImpl = "PinvokeImpl",
+  HasDefault = "HasDefault",
+  ReservedMask = "ReservedMask",
 }
 
 export enum FacilityRequestStatus {
@@ -90,6 +273,20 @@ export enum FacilityRequestStatus {
   Disbursed = "Disbursed",
   Expired = "Expired",
   BankCancelled = "BankCancelled",
+}
+
+export enum EventAttributes {
+  None = "None",
+  SpecialName = "SpecialName",
+  RTSpecialName = "RTSpecialName",
+}
+
+export enum CallingConventions {
+  Standard = "Standard",
+  VarArgs = "VarArgs",
+  Any = "Any",
+  HasThis = "HasThis",
+  ExplicitThis = "ExplicitThis",
 }
 
 export enum AutoSaveMode {
@@ -228,6 +425,14 @@ export interface ActiveSurveysResponseApplicationResult {
   data?: ActiveSurveysResponse;
 }
 
+export interface AddClaimToUserRequest {
+  claimType?: string | null;
+  claimValue?: string | null;
+  /** @format date-time */
+  expiresAt?: string | null;
+  notes?: string | null;
+}
+
 export interface AddClaimsRequest {
   claimValues?: string[] | null;
 }
@@ -235,23 +440,9 @@ export interface AddClaimsRequest {
 export interface AddGuestBody {
   fullName?: string | null;
   nationalNumber?: string | null;
-}
-
-export interface AddGuestResponse {
-  /** @format uuid */
-  guestId?: string;
-  /** @format uuid */
-  reservationId?: string;
   /** @format int32 */
-  currentGuestCount?: number;
-}
-
-export interface AddGuestResponseApplicationResult {
-  isSuccess?: boolean;
-  status?: ResultStatus;
-  message?: string | null;
-  errors?: string[] | null;
-  data?: AddGuestResponse;
+  age?: number;
+  relationshipType?: string | null;
 }
 
 export interface AddGuestToReservationResponse {
@@ -269,6 +460,29 @@ export interface AddGuestToReservationResponseApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: AddGuestToReservationResponse;
+}
+
+export interface AddMemberToCapacityCommandResult {
+  /** @format uuid */
+  reservationId?: string;
+  /** @format uuid */
+  capacityId?: string;
+  wasUpdated?: boolean;
+  message?: string | null;
+}
+
+export interface AddMemberToCapacityCommandResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: AddMemberToCapacityCommandResult;
+}
+
+export interface AddMemberToCapacityRequest {
+  nationalId?: string | null;
+  /** @format uuid */
+  capacityId?: string;
 }
 
 export interface AddressDto {
@@ -385,6 +599,39 @@ export interface ApproveFacilityRequestResultApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: ApproveFacilityRequestResult;
+}
+
+export interface Assembly {
+  definedTypes?: TypeInfo[] | null;
+  exportedTypes?: Type[] | null;
+  /** @deprecated */
+  codeBase?: string | null;
+  entryPoint?: MethodInfo;
+  fullName?: string | null;
+  imageRuntimeVersion?: string | null;
+  isDynamic?: boolean;
+  location?: string | null;
+  reflectionOnly?: boolean;
+  isCollectible?: boolean;
+  isFullyTrusted?: boolean;
+  customAttributes?: CustomAttributeData[] | null;
+  /** @deprecated */
+  escapedCodeBase?: string | null;
+  manifestModule?: Module;
+  modules?: Module[] | null;
+  /** @deprecated */
+  globalAssemblyCache?: boolean;
+  /** @format int64 */
+  hostContext?: number;
+  securityRuleSet?: SecurityRuleSet;
+}
+
+export interface AssignRoleToUserRequest {
+  /** @format uuid */
+  roleId?: string;
+  /** @format date-time */
+  expiresAt?: string | null;
+  notes?: string | null;
 }
 
 export interface AttemptSummary {
@@ -702,6 +949,34 @@ export interface CancelBillResponseApplicationResult {
   data?: CancelBillResponse;
 }
 
+export interface CancelFacilityRequestRequest {
+  reason?: string | null;
+}
+
+export interface CancelFacilityRequestResult {
+  /** @format uuid */
+  requestId?: string;
+  requestNumber?: string | null;
+  status?: string | null;
+  reason?: string | null;
+  /** @format date-time */
+  cancelledAt?: string;
+  /** @format uuid */
+  cancelledByUserId?: string;
+}
+
+export interface CancelFacilityRequestResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: CancelFacilityRequestResult;
+}
+
+export interface CancelReservationRequest {
+  reason?: string | null;
+}
+
 export interface CancelResponseResponse {
   canceled?: boolean;
   isAbandoned?: boolean;
@@ -793,6 +1068,32 @@ export interface CategoryWithSettingsDto {
   settingCount?: number;
 }
 
+export interface ChangeRequestStatusRequest {
+  newStatus?: string | null;
+  notes?: string | null;
+}
+
+export interface ChangeRequestStatusResult {
+  /** @format uuid */
+  requestId?: string;
+  requestNumber?: string | null;
+  previousStatus?: FacilityRequestStatus;
+  newStatus?: FacilityRequestStatus;
+  /** @format date-time */
+  statusChangedAt?: string;
+  /** @format uuid */
+  changedByUserId?: string;
+  notes?: string | null;
+}
+
+export interface ChangeRequestStatusResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: ChangeRequestStatusResult;
+}
+
 export interface ChangeReservationCapacityCommandResult {
   /** @format uuid */
   reservationId?: string;
@@ -834,6 +1135,53 @@ export interface CommandProgressDto {
   total?: number;
   /** @format double */
   completionPercentage?: number;
+}
+
+export interface CompletePaymentCommand {
+  /** @format uuid */
+  paymentId?: string;
+  gatewayTransactionId?: string | null;
+}
+
+export interface CompletePaymentRequest {
+  /** @format uuid */
+  billId?: string;
+}
+
+export interface ConstructorInfo {
+  name?: string | null;
+  declaringType?: Type;
+  reflectedType?: Type;
+  module?: Module;
+  customAttributes?: CustomAttributeData[] | null;
+  isCollectible?: boolean;
+  /** @format int32 */
+  metadataToken?: number;
+  attributes?: MethodAttributes;
+  methodImplementationFlags?: MethodImplAttributes;
+  callingConvention?: CallingConventions;
+  isAbstract?: boolean;
+  isConstructor?: boolean;
+  isFinal?: boolean;
+  isHideBySig?: boolean;
+  isSpecialName?: boolean;
+  isStatic?: boolean;
+  isVirtual?: boolean;
+  isAssembly?: boolean;
+  isFamily?: boolean;
+  isFamilyAndAssembly?: boolean;
+  isFamilyOrAssembly?: boolean;
+  isPrivate?: boolean;
+  isPublic?: boolean;
+  isConstructedGenericMethod?: boolean;
+  isGenericMethod?: boolean;
+  isGenericMethodDefinition?: boolean;
+  containsGenericParameters?: boolean;
+  methodHandle?: RuntimeMethodHandle;
+  isSecurityCritical?: boolean;
+  isSecuritySafeCritical?: boolean;
+  isSecurityTransparent?: boolean;
+  memberType?: MemberTypes;
 }
 
 export interface CooldownInfo {
@@ -997,6 +1345,19 @@ export interface CreatePaymentResponseApplicationResult {
   data?: CreatePaymentResponse;
 }
 
+export interface CreateReservationRequest {
+  /** @format uuid */
+  roomId?: string;
+  /** @format date-time */
+  checkInDate?: string;
+  /** @format date-time */
+  checkOutDate?: string;
+  /** @format uuid */
+  memberId?: string | null;
+  notes?: string | null;
+  tenantId?: string | null;
+}
+
 export interface CreateRoleRequest {
   name?: string | null;
   description?: string | null;
@@ -1152,6 +1513,25 @@ export interface CurrentUserResponseApplicationResult {
   data?: CurrentUserResponse;
 }
 
+export interface CustomAttributeData {
+  attributeType?: Type;
+  constructor?: ConstructorInfo;
+  constructorArguments?: CustomAttributeTypedArgument[] | null;
+  namedArguments?: CustomAttributeNamedArgument[] | null;
+}
+
+export interface CustomAttributeNamedArgument {
+  memberInfo?: MemberInfo;
+  typedValue?: CustomAttributeTypedArgument;
+  memberName?: string | null;
+  isField?: boolean;
+}
+
+export interface CustomAttributeTypedArgument {
+  argumentType?: Type;
+  value?: any;
+}
+
 export interface CycleRulesDto {
   restrictToPreviousCycles?: boolean;
   hasDependencies?: boolean;
@@ -1199,6 +1579,10 @@ export interface DailyPriceDto {
   priceRials?: number;
   currency?: string | null;
   isActive?: boolean;
+}
+
+export interface DeactivateUserRequest {
+  reason?: string | null;
 }
 
 export interface DiscountCodeSnapshotDto {
@@ -1269,6 +1653,42 @@ export interface DiscountValidationItemDto {
   metadata?: Record<string, string>;
 }
 
+export interface EventInfo {
+  name?: string | null;
+  declaringType?: Type;
+  reflectedType?: Type;
+  module?: Module;
+  customAttributes?: CustomAttributeData[] | null;
+  isCollectible?: boolean;
+  /** @format int32 */
+  metadataToken?: number;
+  memberType?: MemberTypes;
+  attributes?: EventAttributes;
+  isSpecialName?: boolean;
+  addMethod?: MethodInfo;
+  removeMethod?: MethodInfo;
+  raiseMethod?: MethodInfo;
+  isMulticast?: boolean;
+  eventHandlerType?: Type;
+}
+
+export interface Exception {
+  targetSite?: MethodBase;
+  message?: string | null;
+  data?: Record<string, any>;
+  innerException?: Exception;
+  helpLink?: string | null;
+  source?: string | null;
+  /** @format int32 */
+  hResult?: number;
+  stackTrace?: string | null;
+}
+
+export interface ExportSurveysToExcelRequest {
+  surveyIds?: string[] | null;
+  format?: string | null;
+}
+
 export interface FacilityCycleDependencyDto {
   /** @format uuid */
   id?: string;
@@ -1276,6 +1696,37 @@ export interface FacilityCycleDependencyDto {
   requiredFacilityId?: string;
   requiredFacilityName?: string | null;
   mustBeCompleted?: boolean;
+  /** @format date-time */
+  createdAt?: string;
+}
+
+export interface FacilityCycleDto {
+  /** @format uuid */
+  id?: string;
+  name?: string | null;
+  /** @format date-time */
+  startDate?: string;
+  /** @format date-time */
+  endDate?: string;
+  /** @format int32 */
+  daysUntilEnd?: number;
+  isActive?: boolean;
+  /** @format int32 */
+  quota?: number;
+  /** @format int32 */
+  usedQuota?: number;
+  /** @format int32 */
+  availableQuota?: number;
+  status?: string | null;
+  statusText?: string | null;
+  description?: string | null;
+  priceOptions?: FacilityCyclePriceOptionDto[] | null;
+  /** @format int32 */
+  paymentMonths?: number | null;
+  /** @format double */
+  interestRate?: number | null;
+  /** @format double */
+  interestRatePercentage?: number | null;
   /** @format date-time */
   createdAt?: string;
 }
@@ -1582,25 +2033,35 @@ export interface FeatureSummaryDto {
   iconClass?: string | null;
 }
 
-export interface FinalizeReservationResponse {
-  /** @format uuid */
-  reservationId?: string;
-  trackingCode?: string | null;
-  status?: string | null;
-  /** @format uuid */
-  billId?: string | null;
-  /** @format double */
-  totalAmountRials?: number;
-  /** @format date-time */
-  expiryDate?: string | null;
-}
-
-export interface FinalizeReservationResponseApplicationResult {
-  isSuccess?: boolean;
-  status?: ResultStatus;
-  message?: string | null;
-  errors?: string[] | null;
-  data?: FinalizeReservationResponse;
+export interface FieldInfo {
+  name?: string | null;
+  declaringType?: Type;
+  reflectedType?: Type;
+  module?: Module;
+  customAttributes?: CustomAttributeData[] | null;
+  isCollectible?: boolean;
+  /** @format int32 */
+  metadataToken?: number;
+  memberType?: MemberTypes;
+  attributes?: FieldAttributes;
+  fieldType?: Type;
+  isInitOnly?: boolean;
+  isLiteral?: boolean;
+  /** @deprecated */
+  isNotSerialized?: boolean;
+  isPinvokeImpl?: boolean;
+  isSpecialName?: boolean;
+  isStatic?: boolean;
+  isAssembly?: boolean;
+  isFamily?: boolean;
+  isFamilyAndAssembly?: boolean;
+  isFamilyOrAssembly?: boolean;
+  isPrivate?: boolean;
+  isPublic?: boolean;
+  isSecurityCritical?: boolean;
+  isSecuritySafeCritical?: boolean;
+  isSecurityTransparent?: boolean;
+  fieldHandle?: RuntimeFieldHandle;
 }
 
 export interface FinancialTermsDto {
@@ -1613,6 +2074,10 @@ export interface FinancialTermsDto {
   /** @format double */
   interestRatePercentage?: number | null;
   hasFinancialTerms?: boolean;
+}
+
+export interface GenerateSurveyReportRequest {
+  surveyIds?: string[] | null;
 }
 
 export interface GeoLocationDto {
@@ -1656,6 +2121,24 @@ export interface GetFacilitiesResultApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: GetFacilitiesResult;
+}
+
+export interface GetFacilityCyclesQueryResponse {
+  items?: FacilityCycleDto[] | null;
+  /** @format int32 */
+  totalCount?: number;
+  /** @format int32 */
+  pageNumber?: number;
+  /** @format int32 */
+  pageSize?: number;
+}
+
+export interface GetFacilityCyclesQueryResponseApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: GetFacilityCyclesQueryResponse;
 }
 
 export interface GetFacilityCyclesWithUserQueryResponse {
@@ -1893,9 +2376,13 @@ export interface GuestDto {
   /** @format uuid */
   reservationId?: string;
   fullName?: string | null;
-  phoneNumber?: string | null;
+  nationalNumberMasked?: string | null;
+  /** @format int32 */
+  age?: number;
+  relationshipType?: string | null;
+  relationshipTypeText?: string | null;
   /** @format date-time */
-  createdAt?: string;
+  createdAtUtc?: string;
 }
 
 export interface GuestParticipantDto {
@@ -1911,15 +2398,6 @@ export interface GuestParticipantDto {
   notes?: string | null;
 }
 
-export interface GuestSummaryDto {
-  /** @format uuid */
-  id?: string;
-  /** @format uuid */
-  reservationId?: string;
-  fullName?: string | null;
-  phoneNumber?: string | null;
-}
-
 export interface GuidApplicationResult {
   isSuccess?: boolean;
   status?: ResultStatus;
@@ -1928,6 +2406,10 @@ export interface GuidApplicationResult {
   /** @format uuid */
   data?: string;
 }
+
+export type ICustomAttributeProvider = object;
+
+export type IntPtr = object;
 
 export interface InvalidAnswerDto {
   /** @format uuid */
@@ -1976,6 +2458,12 @@ export interface JumpToQuestionResponseApplicationResult {
   data?: JumpToQuestionResponse;
 }
 
+export interface LockUserRequest {
+  reason?: string | null;
+  /** @format int32 */
+  lockDurationMinutes?: number;
+}
+
 export interface LogoutByRefreshTokenRequest {
   refreshToken?: string | null;
 }
@@ -2003,6 +2491,31 @@ export interface MarkByActionAsReadRequest {
 
 export interface MarkByContextAsReadRequest {
   context?: string | null;
+}
+
+export interface MarkDocumentsReceivedRequest {
+  notes?: string | null;
+}
+
+export interface MarkDocumentsReceivedResult {
+  /** @format uuid */
+  requestId?: string;
+  requestNumber?: string | null;
+  previousStatus?: FacilityRequestStatus;
+  newStatus?: FacilityRequestStatus;
+  /** @format date-time */
+  documentsReceivedAt?: string;
+  /** @format uuid */
+  markedByUserId?: string;
+  notes?: string | null;
+}
+
+export interface MarkDocumentsReceivedResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: MarkDocumentsReceivedResult;
 }
 
 export interface MemberAgencySummaryDto {
@@ -2033,7 +2546,7 @@ export interface MemberDetailDto {
   modifiedAt?: string | null;
   fullName?: string | null;
   /** @format uuid */
-  externalUserId?: string;
+  externalUserId?: string | null;
   hasActiveMembership?: boolean;
   capabilities?: string[] | null;
   features?: string[] | null;
@@ -2060,9 +2573,122 @@ export interface MemberDetailDtoApplicationResult {
   data?: MemberDetailDto;
 }
 
+export interface MemberInfo {
+  memberType?: MemberTypes;
+  name?: string | null;
+  declaringType?: Type;
+  reflectedType?: Type;
+  module?: Module;
+  customAttributes?: CustomAttributeData[] | null;
+  isCollectible?: boolean;
+  /** @format int32 */
+  metadataToken?: number;
+}
+
+export interface MethodBase {
+  memberType?: MemberTypes;
+  name?: string | null;
+  declaringType?: Type;
+  reflectedType?: Type;
+  module?: Module;
+  customAttributes?: CustomAttributeData[] | null;
+  isCollectible?: boolean;
+  /** @format int32 */
+  metadataToken?: number;
+  attributes?: MethodAttributes;
+  methodImplementationFlags?: MethodImplAttributes;
+  callingConvention?: CallingConventions;
+  isAbstract?: boolean;
+  isConstructor?: boolean;
+  isFinal?: boolean;
+  isHideBySig?: boolean;
+  isSpecialName?: boolean;
+  isStatic?: boolean;
+  isVirtual?: boolean;
+  isAssembly?: boolean;
+  isFamily?: boolean;
+  isFamilyAndAssembly?: boolean;
+  isFamilyOrAssembly?: boolean;
+  isPrivate?: boolean;
+  isPublic?: boolean;
+  isConstructedGenericMethod?: boolean;
+  isGenericMethod?: boolean;
+  isGenericMethodDefinition?: boolean;
+  containsGenericParameters?: boolean;
+  methodHandle?: RuntimeMethodHandle;
+  isSecurityCritical?: boolean;
+  isSecuritySafeCritical?: boolean;
+  isSecurityTransparent?: boolean;
+}
+
+export interface MethodInfo {
+  name?: string | null;
+  declaringType?: Type;
+  reflectedType?: Type;
+  module?: Module;
+  customAttributes?: CustomAttributeData[] | null;
+  isCollectible?: boolean;
+  /** @format int32 */
+  metadataToken?: number;
+  attributes?: MethodAttributes;
+  methodImplementationFlags?: MethodImplAttributes;
+  callingConvention?: CallingConventions;
+  isAbstract?: boolean;
+  isConstructor?: boolean;
+  isFinal?: boolean;
+  isHideBySig?: boolean;
+  isSpecialName?: boolean;
+  isStatic?: boolean;
+  isVirtual?: boolean;
+  isAssembly?: boolean;
+  isFamily?: boolean;
+  isFamilyAndAssembly?: boolean;
+  isFamilyOrAssembly?: boolean;
+  isPrivate?: boolean;
+  isPublic?: boolean;
+  isConstructedGenericMethod?: boolean;
+  isGenericMethod?: boolean;
+  isGenericMethodDefinition?: boolean;
+  containsGenericParameters?: boolean;
+  methodHandle?: RuntimeMethodHandle;
+  isSecurityCritical?: boolean;
+  isSecuritySafeCritical?: boolean;
+  isSecurityTransparent?: boolean;
+  memberType?: MemberTypes;
+  returnParameter?: ParameterInfo;
+  returnType?: Type;
+  returnTypeCustomAttributes?: ICustomAttributeProvider;
+}
+
+export interface Module {
+  assembly?: Assembly;
+  fullyQualifiedName?: string | null;
+  name?: string | null;
+  /** @format int32 */
+  mdStreamVersion?: number;
+  /** @format uuid */
+  moduleVersionId?: string;
+  scopeName?: string | null;
+  moduleHandle?: ModuleHandle;
+  customAttributes?: CustomAttributeData[] | null;
+  /** @format int32 */
+  metadataToken?: number;
+}
+
+export interface ModuleHandle {
+  /** @format int32 */
+  mdStreamVersion?: number;
+}
+
 export interface Money {
   /** @format double */
   amountRials?: number;
+  currency?: string | null;
+}
+
+export interface MoneyDto {
+  /** @format int64 */
+  amountMinor?: number;
   currency?: string | null;
 }
 
@@ -2130,6 +2756,26 @@ export interface PaginationInfo {
   totalPages?: number;
   hasPreviousPage?: boolean;
   hasNextPage?: boolean;
+}
+
+export interface ParameterInfo {
+  attributes?: ParameterAttributes;
+  member?: MemberInfo;
+  name?: string | null;
+  parameterType?: Type;
+  /** @format int32 */
+  position?: number;
+  isIn?: boolean;
+  isLcid?: boolean;
+  isOptional?: boolean;
+  isOut?: boolean;
+  isRetval?: boolean;
+  defaultValue?: any;
+  rawDefaultValue?: any;
+  hasDefaultValue?: boolean;
+  customAttributes?: CustomAttributeData[] | null;
+  /** @format int32 */
+  metadataToken?: number;
 }
 
 export interface ParticipantDto {
@@ -2574,6 +3220,25 @@ export interface ProgressInfoDto {
   requiredQuestionsRemaining?: number;
 }
 
+export interface PropertyInfo {
+  name?: string | null;
+  declaringType?: Type;
+  reflectedType?: Type;
+  module?: Module;
+  customAttributes?: CustomAttributeData[] | null;
+  isCollectible?: boolean;
+  /** @format int32 */
+  metadataToken?: number;
+  memberType?: MemberTypes;
+  propertyType?: Type;
+  attributes?: PropertyAttributes;
+  isSpecialName?: boolean;
+  canRead?: boolean;
+  canWrite?: boolean;
+  getMethod?: MethodInfo;
+  setMethod?: MethodInfo;
+}
+
 export interface QuestionAnswerDetailsDto {
   /** @format uuid */
   id?: string;
@@ -2942,6 +3607,10 @@ export interface RejectFacilityRequestResultApplicationResult {
   data?: RejectFacilityRequestResult;
 }
 
+export interface RejectReservationRequest {
+  reason?: string | null;
+}
+
 export interface RejectionReasonDto {
   /** @format uuid */
   id?: string;
@@ -3175,35 +3844,37 @@ export interface ReservationDetailDtoApplicationResult {
 export interface ReservationDetailsDto {
   /** @format uuid */
   id?: string;
-  /** @format uuid */
-  roomId?: string;
-  /** @format uuid */
-  accommodationId?: string;
   trackingCode?: string | null;
   status?: string | null;
   statusText?: string | null;
-  /** @format date-time */
-  checkInDate?: string;
-  /** @format date-time */
-  checkOutDate?: string;
+  checkInDate?: string | null;
+  checkOutDate?: string | null;
   /** @format int32 */
   nights?: number;
   /** @format int32 */
   guestCount?: number;
   /** @format uuid */
   externalUserId?: string;
-  /** @format double */
-  totalPriceRials?: number;
-  currency?: string | null;
+  /** @format uuid */
+  memberId?: string | null;
+  totalPrice?: MoneyDto;
   /** @format date-time */
-  reservationDate?: string;
+  createdAtUtc?: string;
   /** @format date-time */
-  holdExpiresAt?: string | null;
+  updatedAtUtc?: string | null;
   /** @format date-time */
-  confirmationDate?: string | null;
+  reservationDateUtc?: string | null;
   /** @format date-time */
-  cancellationDate?: string | null;
+  holdExpiresAtUtc?: string | null;
+  /** @format date-time */
+  confirmationDateUtc?: string | null;
+  /** @format date-time */
+  cancellationDateUtc?: string | null;
   cancellationReason?: string | null;
+  /** @format date-time */
+  rejectionDateUtc?: string | null;
+  rejectionReason?: string | null;
+  isRejected?: boolean;
   /** @format uuid */
   billId?: string | null;
   notes?: string | null;
@@ -3227,38 +3898,55 @@ export interface ReservationDetailsDtoApplicationResult {
   data?: ReservationDetailsDto;
 }
 
+export interface ReservationDetailsDtoServiceResult {
+  status?: ServiceResultStatus;
+  isSuccess?: boolean;
+  isFailure?: boolean;
+  message?: string | null;
+  errorCode?: string | null;
+  errors?: ServiceError[] | null;
+  exception?: Exception;
+  traceId?: string | null;
+  /** @format date-time */
+  timestampUtc?: string;
+  metadata?: Record<string, string>;
+  value?: ReservationDetailsDto;
+}
+
 export interface ReservationDto {
   /** @format uuid */
   id?: string;
-  /** @format uuid */
-  roomId?: string;
-  /** @format uuid */
-  accommodationId?: string;
   trackingCode?: string | null;
   status?: string | null;
   statusText?: string | null;
-  /** @format date-time */
-  checkInDate?: string;
-  /** @format date-time */
-  checkOutDate?: string;
+  checkInDate?: string | null;
+  checkOutDate?: string | null;
   /** @format int32 */
   nights?: number;
   /** @format int32 */
   guestCount?: number;
   /** @format uuid */
   externalUserId?: string;
-  /** @format double */
-  totalPriceRials?: number;
-  currency?: string | null;
+  /** @format uuid */
+  memberId?: string | null;
+  totalPrice?: MoneyDto;
   /** @format date-time */
-  reservationDate?: string;
+  createdAtUtc?: string;
   /** @format date-time */
-  holdExpiresAt?: string | null;
+  updatedAtUtc?: string | null;
   /** @format date-time */
-  confirmationDate?: string | null;
+  reservationDateUtc?: string | null;
   /** @format date-time */
-  cancellationDate?: string | null;
+  holdExpiresAtUtc?: string | null;
+  /** @format date-time */
+  confirmationDateUtc?: string | null;
+  /** @format date-time */
+  cancellationDateUtc?: string | null;
   cancellationReason?: string | null;
+  /** @format date-time */
+  rejectionDateUtc?: string | null;
+  rejectionReason?: string | null;
+  isRejected?: boolean;
   /** @format uuid */
   billId?: string | null;
   notes?: string | null;
@@ -3270,7 +3958,30 @@ export interface ReservationDto {
   canAddGuestError?: string | null;
   accommodation?: AccommodationSummaryDto;
   room?: RoomSummaryDto;
-  guests?: GuestSummaryDto[] | null;
+}
+
+export interface ReservationPricingDto {
+  /** @format uuid */
+  reservationId?: string;
+  /** @format double */
+  totalAmountRials?: number;
+  currency?: string | null;
+  dailyPrices?: ReservationDailyPriceDto[] | null;
+}
+
+export interface ReservationPricingDtoServiceResult {
+  status?: ServiceResultStatus;
+  isSuccess?: boolean;
+  isFailure?: boolean;
+  message?: string | null;
+  errorCode?: string | null;
+  errors?: ServiceError[] | null;
+  exception?: Exception;
+  traceId?: string | null;
+  /** @format date-time */
+  timestampUtc?: string;
+  metadata?: Record<string, string>;
+  value?: ReservationPricingDto;
 }
 
 export interface ReservationPricingResponse {
@@ -3295,14 +4006,11 @@ export interface ReservationSummaryDto {
   trackingCode?: string | null;
   status?: string | null;
   statusText?: string | null;
-  /** @format date-time */
-  checkInDate?: string;
-  /** @format date-time */
-  checkOutDate?: string;
+  checkInDate?: string | null;
+  checkOutDate?: string | null;
   /** @format int32 */
   nights?: number;
-  /** @format double */
-  totalPriceRials?: number;
+  totalPrice?: MoneyDto;
 }
 
 export interface ResponseDetailsDto {
@@ -3490,6 +4198,35 @@ export interface RestrictedTourSummaryDto {
   title?: string | null;
 }
 
+export interface ReturnToReviewRequest {
+  notes?: string | null;
+}
+
+export interface ReturnToReviewResult {
+  /** @format uuid */
+  requestId?: string;
+  requestNumber?: string | null;
+  previousStatus?: string | null;
+  newStatus?: string | null;
+  /** @format date-time */
+  returnedAt?: string;
+  /** @format uuid */
+  returnedByUserId?: string;
+  notes?: string | null;
+}
+
+export interface ReturnToReviewResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: ReturnToReviewResult;
+}
+
+export interface RevokeUserTokensRequest {
+  tokenType?: string | null;
+}
+
 export interface RoomDto {
   /** @format uuid */
   id?: string;
@@ -3510,6 +4247,14 @@ export interface RoomDto {
   canAccommodateGuests?: boolean;
 }
 
+export interface RoomDtoListApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: RoomDto[] | null;
+}
+
 export interface RoomSummaryDto {
   /** @format uuid */
   id?: string;
@@ -3519,6 +4264,18 @@ export interface RoomSummaryDto {
   /** @format int32 */
   capacity?: number;
   isActive?: boolean;
+}
+
+export interface RuntimeFieldHandle {
+  value?: IntPtr;
+}
+
+export interface RuntimeMethodHandle {
+  value?: IntPtr;
+}
+
+export interface RuntimeTypeHandle {
+  value?: IntPtr;
 }
 
 export interface SectionDetailDto {
@@ -3579,6 +4336,28 @@ export interface SendOtpResponseApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: SendOtpResponse;
+}
+
+export interface ServiceError {
+  code?: string | null;
+  message?: string | null;
+  category?: ServiceErrorCategory;
+  target?: string | null;
+  attemptedValue?: any;
+}
+
+export interface ServiceResult {
+  status?: ServiceResultStatus;
+  isSuccess?: boolean;
+  isFailure?: boolean;
+  message?: string | null;
+  errorCode?: string | null;
+  errors?: ServiceError[] | null;
+  exception?: Exception;
+  traceId?: string | null;
+  /** @format date-time */
+  timestampUtc?: string;
+  metadata?: Record<string, string>;
 }
 
 export interface SessionDto {
@@ -3703,18 +4482,6 @@ export interface SimpleSettingDto {
   displayOrder?: number;
 }
 
-export interface StartReservationBody {
-  /** @format uuid */
-  roomId?: string;
-  /** @format date-time */
-  checkInDate?: string;
-  /** @format date-time */
-  checkOutDate?: string;
-  /** @format int32 */
-  guestCount?: number;
-  notes?: string | null;
-}
-
 export interface StartReservationCommandResult {
   /** @format uuid */
   reservationId?: string;
@@ -3726,26 +4493,6 @@ export interface StartReservationCommandResultApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: StartReservationCommandResult;
-}
-
-export interface StartReservationDto {
-  /** @format uuid */
-  reservationId?: string;
-  trackingCode?: string | null;
-  isExistingReservation?: boolean;
-  /** @format double */
-  totalPriceRials?: number;
-  currency?: string | null;
-  /** @format date-time */
-  holdExpiresAt?: string | null;
-}
-
-export interface StartReservationDtoApplicationResult {
-  isSuccess?: boolean;
-  status?: ResultStatus;
-  message?: string | null;
-  errors?: string[] | null;
-  data?: StartReservationDto;
 }
 
 export interface StartReservationRequest {
@@ -3809,6 +4556,11 @@ export interface StartSurveyResponseResponseApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: StartSurveyResponseResponse;
+}
+
+export interface StructLayoutAttribute {
+  typeId?: any;
+  value?: LayoutKind;
 }
 
 export interface SubmitResponseResponse {
@@ -4492,6 +5244,179 @@ export interface TourWithUserReservationDtoPaginatedResultApplicationResult {
   data?: TourWithUserReservationDtoPaginatedResult;
 }
 
+export interface Type {
+  name?: string | null;
+  customAttributes?: CustomAttributeData[] | null;
+  isCollectible?: boolean;
+  /** @format int32 */
+  metadataToken?: number;
+  isInterface?: boolean;
+  memberType?: MemberTypes;
+  namespace?: string | null;
+  assemblyQualifiedName?: string | null;
+  fullName?: string | null;
+  assembly?: Assembly;
+  module?: Module;
+  isNested?: boolean;
+  declaringType?: Type;
+  declaringMethod?: MethodBase;
+  reflectedType?: Type;
+  underlyingSystemType?: Type;
+  isTypeDefinition?: boolean;
+  isArray?: boolean;
+  isByRef?: boolean;
+  isPointer?: boolean;
+  isConstructedGenericType?: boolean;
+  isGenericParameter?: boolean;
+  isGenericTypeParameter?: boolean;
+  isGenericMethodParameter?: boolean;
+  isGenericType?: boolean;
+  isGenericTypeDefinition?: boolean;
+  isSZArray?: boolean;
+  isVariableBoundArray?: boolean;
+  isByRefLike?: boolean;
+  isFunctionPointer?: boolean;
+  isUnmanagedFunctionPointer?: boolean;
+  hasElementType?: boolean;
+  genericTypeArguments?: Type[] | null;
+  /** @format int32 */
+  genericParameterPosition?: number;
+  genericParameterAttributes?: GenericParameterAttributes;
+  attributes?: TypeAttributes;
+  isAbstract?: boolean;
+  isImport?: boolean;
+  isSealed?: boolean;
+  isSpecialName?: boolean;
+  isClass?: boolean;
+  isNestedAssembly?: boolean;
+  isNestedFamANDAssem?: boolean;
+  isNestedFamily?: boolean;
+  isNestedFamORAssem?: boolean;
+  isNestedPrivate?: boolean;
+  isNestedPublic?: boolean;
+  isNotPublic?: boolean;
+  isPublic?: boolean;
+  isAutoLayout?: boolean;
+  isExplicitLayout?: boolean;
+  isLayoutSequential?: boolean;
+  isAnsiClass?: boolean;
+  isAutoClass?: boolean;
+  isUnicodeClass?: boolean;
+  isCOMObject?: boolean;
+  isContextful?: boolean;
+  isEnum?: boolean;
+  isMarshalByRef?: boolean;
+  isPrimitive?: boolean;
+  isValueType?: boolean;
+  isSignatureType?: boolean;
+  isSecurityCritical?: boolean;
+  isSecuritySafeCritical?: boolean;
+  isSecurityTransparent?: boolean;
+  structLayoutAttribute?: StructLayoutAttribute;
+  typeInitializer?: ConstructorInfo;
+  typeHandle?: RuntimeTypeHandle;
+  /** @format uuid */
+  guid?: string;
+  baseType?: Type;
+  /** @deprecated */
+  isSerializable?: boolean;
+  containsGenericParameters?: boolean;
+  isVisible?: boolean;
+}
+
+export interface TypeInfo {
+  name?: string | null;
+  customAttributes?: CustomAttributeData[] | null;
+  isCollectible?: boolean;
+  /** @format int32 */
+  metadataToken?: number;
+  isInterface?: boolean;
+  memberType?: MemberTypes;
+  namespace?: string | null;
+  assemblyQualifiedName?: string | null;
+  fullName?: string | null;
+  assembly?: Assembly;
+  module?: Module;
+  isNested?: boolean;
+  declaringType?: Type;
+  declaringMethod?: MethodBase;
+  reflectedType?: Type;
+  underlyingSystemType?: Type;
+  isTypeDefinition?: boolean;
+  isArray?: boolean;
+  isByRef?: boolean;
+  isPointer?: boolean;
+  isConstructedGenericType?: boolean;
+  isGenericParameter?: boolean;
+  isGenericTypeParameter?: boolean;
+  isGenericMethodParameter?: boolean;
+  isGenericType?: boolean;
+  isGenericTypeDefinition?: boolean;
+  isSZArray?: boolean;
+  isVariableBoundArray?: boolean;
+  isByRefLike?: boolean;
+  isFunctionPointer?: boolean;
+  isUnmanagedFunctionPointer?: boolean;
+  hasElementType?: boolean;
+  genericTypeArguments?: Type[] | null;
+  /** @format int32 */
+  genericParameterPosition?: number;
+  genericParameterAttributes?: GenericParameterAttributes;
+  attributes?: TypeAttributes;
+  isAbstract?: boolean;
+  isImport?: boolean;
+  isSealed?: boolean;
+  isSpecialName?: boolean;
+  isClass?: boolean;
+  isNestedAssembly?: boolean;
+  isNestedFamANDAssem?: boolean;
+  isNestedFamily?: boolean;
+  isNestedFamORAssem?: boolean;
+  isNestedPrivate?: boolean;
+  isNestedPublic?: boolean;
+  isNotPublic?: boolean;
+  isPublic?: boolean;
+  isAutoLayout?: boolean;
+  isExplicitLayout?: boolean;
+  isLayoutSequential?: boolean;
+  isAnsiClass?: boolean;
+  isAutoClass?: boolean;
+  isUnicodeClass?: boolean;
+  isCOMObject?: boolean;
+  isContextful?: boolean;
+  isEnum?: boolean;
+  isMarshalByRef?: boolean;
+  isPrimitive?: boolean;
+  isValueType?: boolean;
+  isSignatureType?: boolean;
+  isSecurityCritical?: boolean;
+  isSecuritySafeCritical?: boolean;
+  isSecurityTransparent?: boolean;
+  structLayoutAttribute?: StructLayoutAttribute;
+  typeInitializer?: ConstructorInfo;
+  typeHandle?: RuntimeTypeHandle;
+  /** @format uuid */
+  guid?: string;
+  baseType?: Type;
+  /** @deprecated */
+  isSerializable?: boolean;
+  containsGenericParameters?: boolean;
+  isVisible?: boolean;
+  genericTypeParameters?: Type[] | null;
+  declaredConstructors?: ConstructorInfo[] | null;
+  declaredEvents?: EventInfo[] | null;
+  declaredFields?: FieldInfo[] | null;
+  declaredMembers?: MemberInfo[] | null;
+  declaredMethods?: MethodInfo[] | null;
+  declaredNestedTypes?: TypeInfo[] | null;
+  declaredProperties?: PropertyInfo[] | null;
+  implementedInterfaces?: Type[] | null;
+}
+
+export interface UnlockUserRequest {
+  reason?: string | null;
+}
+
 export interface UnreadCountResponse {
   /** @format int32 */
   totalCount?: number;
@@ -4793,7 +5718,7 @@ export interface UserReservationSummary {
   /** @format int32 */
   confirmedReservations?: number;
   /** @format int32 */
-  pendingPaymentReservations?: number;
+  payingReservations?: number;
   /** @format int32 */
   canceledReservations?: number;
   /** @format int32 */
@@ -5327,7 +6252,7 @@ export class Api<
 > extends HttpClient<SecurityDataType> {
   api = {
     /**
-     * @description 🌐 🌐 Sends an OTP (One-Time Password) code to the user's phone number for authentication purposes
+     * @description 🌐 Sends an OTP (One-Time Password) code to the user's phone number for authentication purposes
      *
      * @tags Authentication
      * @name SendOtp
@@ -5355,7 +6280,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 Verifies an OTP code and returns authentication tokens if successful
+     * @description 🌐 Verifies an OTP code and returns authentication tokens if successful
      *
      * @tags Authentication
      * @name VerifyOtp
@@ -5383,7 +6308,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 RefreshToken an OTP code and returns authentication tokens if successful
+     * @description 🌐 RefreshToken an OTP code and returns authentication tokens if successful
      *
      * @tags Authentication
      * @name RefreshToken
@@ -5411,7 +6336,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Retrieves the profile information of the currently authenticated user
+     * @description 🔒 Retrieves the profile information of the currently authenticated user
      *
      * @tags Authentication
      * @name GetCurrentUser
@@ -5440,7 +6365,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Logs out the user and revokes both access and refresh tokens
+     * @description 🔒 Logs out the user and revokes both access and refresh tokens
      *
      * @tags Authentication
      * @name Logout
@@ -5470,7 +6395,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Logs out the user by revoking the session associated with the provided refresh token. Gets session from refresh token and revokes it.
+     * @description 🔒 Logs out the user by revoking the session associated with the provided refresh token. Gets session from refresh token and revokes it.
      *
      * @tags Authentication
      * @name LogoutByRefreshToken
@@ -5504,7 +6429,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Logs out the user from a specific session by revoking the session with the provided session ID. This allows users to logout from specific devices/sessions.
+     * @description 🔒 Logs out the user from a specific session by revoking the session with the provided session ID. This allows users to logout from specific devices/sessions.
      *
      * @tags Authentication
      * @name LogoutBySessionId
@@ -5538,7 +6463,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Logs out the user from all active sessions across all devices. This revokes all refresh tokens and sessions for the user.
+     * @description 🔒 Logs out the user from all active sessions across all devices. This revokes all refresh tokens and sessions for the user.
      *
      * @tags Authentication
      * @name LogoutAllSessions
@@ -5568,7 +6493,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Logs out the user from all other active sessions except the current one. CurrentSessionId is automatically extracted from claims. This allows users to keep their current session active while logging out from other devices.
+     * @description 🔒 Logs out the user from all other active sessions except the current one. CurrentSessionId is automatically extracted from claims. This allows users to keep their current session active while logging out from other devices.
      *
      * @tags Authentication
      * @name LogoutAllOtherSessions
@@ -5598,7 +6523,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns a paginated list of user sessions with full details including DeviceId (primary field), UserAgent, IpAddress, and security information. If userId is not provided, returns sessions for the current authenticated user.
+     * @description 🔒 Returns a paginated list of user sessions with full details including DeviceId (primary field), UserAgent, IpAddress, and security information. If userId is not provided, returns sessions for the current authenticated user.
      *
      * @tags Authentication
      * @name GetSessionsPaginated
@@ -5646,7 +6571,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 Validates a national code format and checks if a member exists with this national code
+     * @description 🌐 Validates a national code format and checks if a member exists with this national code
      *
      * @tags Authentication
      * @name ValidateNationalCode
@@ -5677,7 +6602,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns a paginated list of BillDto for the current user with filtering and sorting.
+     * @description 🔒 Returns a paginated list of BillDto for the current user with filtering and sorting.
      *
      * @tags Bills
      * @name GetMyBills
@@ -5729,7 +6654,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Admin/operator variant. Requires explicit externalUserId.
+     * @description 🔒 Admin/operator variant. Requires explicit externalUserId.
      *
      * @tags Discount Codes
      * @name ValidateDiscountCodeForUser
@@ -5763,7 +6688,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns BillDetailDto including items, payments, and refunds. User can only access their own bills.
+     * @description 🔒 Returns BillDetailDto including items, payments, and refunds. User can only access their own bills.
      *
      * @tags Bills
      * @name GetBillDetailsById
@@ -5796,7 +6721,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns a paginated list of payments (PaymentDto) associated with a given bill ID. Supports search, sorting, and pagination.
+     * @description 🔒 Returns a paginated list of payments (PaymentDto) associated with a given bill ID. Supports search, sorting, and pagination.
      *
      * @tags Payments
      * @name GetBillPayments
@@ -5839,7 +6764,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns BillDetailDto including items, payments, and refunds.
+     * @description 🔒 Returns BillDetailDto including items, payments, and refunds.
      *
      * @tags Bills
      * @name GetBillDetailsByNumber
@@ -5872,7 +6797,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Resolves a bill by tracking code (reference) and bill type; returns BillDetailDto.
+     * @description 🔒 Resolves a bill by tracking code (reference) and bill type; returns BillDetailDto.
      *
      * @tags Bills
      * @name GetBillDetailsByTrackingCode
@@ -5905,7 +6830,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Transitions a draft bill to the issued state.
+     * @description 🔒 Transitions a draft bill to the issued state.
      *
      * @tags Bills
      * @name IssueBill
@@ -5934,7 +6859,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Cancels an active bill; returns operation result.
+     * @description 🔒 Cancels an active bill; returns operation result.
      *
      * @tags Bills
      * @name CancelBill
@@ -5968,15 +6893,15 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns a list of all distinct claims from registered claim providers.
+     * @description 🔒 Returns a list of all distinct claims from registered claim providers. Admin only.
      *
-     * @tags Claims
-     * @name GetClaims
-     * @summary Get All Available Claims
-     * @request GET:/api/v1/claims
+     * @tags Claims - Admin
+     * @name GetClaimsAdmin
+     * @summary Get All Available Claims (Admin)
+     * @request GET:/api/v1/admin/claims
      * @secure
      */
-    getClaims: (data: any, params: RequestParams = {}) =>
+    getClaimsAdmin: (data: any, params: RequestParams = {}) =>
       this.request<
         ClaimDtoIEnumerableApplicationResult,
         | ClaimDtoIEnumerableApplicationResult
@@ -5989,7 +6914,7 @@ export class Api<
             timestamp?: string;
           }
       >({
-        path: `/api/v1/claims`,
+        path: `/api/v1/admin/claims`,
         method: "GET",
         body: data,
         secure: true,
@@ -6213,6 +7138,368 @@ export class Api<
         body: data,
         secure: true,
         type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Facilities - Admin
+     * @name CancelFacilityRequestAdmin
+     * @request POST:/api/v1/admin/facilities/requests/{requestId}/cancel
+     * @secure
+     */
+    cancelFacilityRequestAdmin: (
+      requestId: string,
+      data: CancelFacilityRequestRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        CancelFacilityRequestResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/facilities/requests/${requestId}/cancel`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Facilities - Admin
+     * @name ChangeRequestStatusAdmin
+     * @request POST:/api/v1/admin/facilities/requests/{requestId}/change-status
+     * @secure
+     */
+    changeRequestStatusAdmin: (
+      requestId: string,
+      data: ChangeRequestStatusRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ChangeRequestStatusResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/facilities/requests/${requestId}/change-status`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Facilities - Admin
+     * @name MarkDocumentsReceivedAdmin
+     * @request POST:/api/v1/admin/facilities/requests/{requestId}/mark-documents-received
+     * @secure
+     */
+    markDocumentsReceivedAdmin: (
+      requestId: string,
+      data: MarkDocumentsReceivedRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        MarkDocumentsReceivedResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/facilities/requests/${requestId}/mark-documents-received`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Facilities - Admin
+     * @name ReturnToReviewAdmin
+     * @request POST:/api/v1/admin/facilities/requests/{requestId}/return-to-review
+     * @secure
+     */
+    returnToReviewAdmin: (
+      requestId: string,
+      data: ReturnToReviewRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ReturnToReviewResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/facilities/requests/${requestId}/return-to-review`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Facilities - Admin
+     * @name GetFacilityRequestsByCycleAdmin
+     * @request GET:/api/v1/admin/facilities/cycles/{cycleId}/requests
+     * @secure
+     */
+    getFacilityRequestsByCycleAdmin: (
+      cycleId: string,
+      query?: {
+        /**
+         * @format int32
+         * @default 1
+         */
+        page?: number;
+        /**
+         * @format int32
+         * @default 10
+         */
+        pageSize?: number;
+        status?: string;
+        searchTerm?: string;
+        /** @format date-time */
+        dateFrom?: string;
+        /** @format date-time */
+        dateTo?: string;
+        sortBy?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        GetFacilityRequestsByCycleQueryResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/facilities/cycles/${cycleId}/requests`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Facilities - Admin
+     * @name GetAllFacilitiesAdmin
+     * @request GET:/api/v1/admin/facilities
+     * @secure
+     */
+    getAllFacilitiesAdmin: (
+      query?: {
+        /**
+         * @format int32
+         * @default 1
+         */
+        page?: number;
+        /**
+         * @format int32
+         * @default 10
+         */
+        pageSize?: number;
+        searchTerm?: string;
+        /** @default false */
+        onlyActive?: boolean;
+        sortBy?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        GetFacilitiesResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/facilities`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Facilities - Admin
+     * @name GetFacilityDetailsAdmin
+     * @request GET:/api/v1/admin/facilities/{facilityId}
+     * @secure
+     */
+    getFacilityDetailsAdmin: (
+      facilityId: string,
+      query?: {
+        /** @default true */
+        includeCycles?: boolean;
+        /** @default true */
+        includeFeatures?: boolean;
+        /** @default true */
+        includePolicies?: boolean;
+        /** @default false */
+        includeUserRequestHistory?: boolean;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        FacilityDetailsDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/facilities/${facilityId}`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Facilities - Admin
+     * @name GetFacilityCyclesAdmin
+     * @request GET:/api/v1/admin/facilities/{facilityId}/cycles
+     * @secure
+     */
+    getFacilityCyclesAdmin: (
+      facilityId: string,
+      query?: {
+        /**
+         * @format int32
+         * @default 1
+         */
+        page?: number;
+        /**
+         * @format int32
+         * @default 10
+         */
+        pageSize?: number;
+        status?: string;
+        searchTerm?: string;
+        /** @default false */
+        onlyActive?: boolean;
+        /** @default true */
+        includeStatistics?: boolean;
+        sortBy?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        GetFacilityCyclesQueryResponseApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/facilities/${facilityId}/cycles`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Facilities - Admin
+     * @name GetFacilityCycleDetailsAdmin
+     * @request GET:/api/v1/admin/facilities/cycles/{cycleId}
+     * @secure
+     */
+    getFacilityCycleDetailsAdmin: (
+      cycleId: string,
+      query?: {
+        /** @default true */
+        includeFacilityInfo?: boolean;
+        /** @default false */
+        includeUserRequestHistory?: boolean;
+        /** @default false */
+        includeEligibilityDetails?: boolean;
+        /** @default true */
+        includeDependencies?: boolean;
+        /** @default true */
+        includeStatistics?: boolean;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        FacilityCycleWithUserDetailDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/facilities/cycles/${cycleId}`,
+        method: "GET",
+        query: query,
+        secure: true,
         format: "json",
         ...params,
       }),
@@ -6692,19 +7979,22 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 This endpoint requires authentication.
+     * @description 🌐 This endpoint is publicly accessible.
      *
-     * @tags Hotel Reservations
-     * @name HotelsStartReservation
-     * @request POST:/api/v1/hotels/reservations
-     * @secure
+     * @tags Hotel Accommodations
+     * @name GetAccommodationRooms
+     * @request GET:/api/v1/hotels/accommodations/{accommodationId}/rooms
      */
-    hotelsStartReservation: (
-      data: StartReservationBody,
+    getAccommodationRooms: (
+      accommodationId: string,
+      query?: {
+        /** @default true */
+        activeOnly?: boolean;
+      },
       params: RequestParams = {},
     ) =>
       this.request<
-        StartReservationDtoApplicationResult,
+        RoomDtoListApplicationResult,
         void | {
           /** @example "internal_server_error" */
           error?: string;
@@ -6714,7 +8004,92 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/hotels/reservations`,
+        path: `/api/v1/hotels/accommodations/${accommodationId}/rooms`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name SubmitReservation
+     * @request POST:/api/v1/hotels/reservations/{reservationId}/submit
+     * @secure
+     */
+    submitReservation: (reservationId: string, params: RequestParams = {}) =>
+      this.request<
+        ReservationDetailsDtoServiceResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/${reservationId}/submit`,
+        method: "POST",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name RevertReservation
+     * @request POST:/api/v1/hotels/reservations/{reservationId}/revert
+     * @secure
+     */
+    revertReservation: (reservationId: string, params: RequestParams = {}) =>
+      this.request<
+        ReservationDetailsDtoServiceResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/${reservationId}/revert`,
+        method: "POST",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name AddGuestToReservation
+     * @request POST:/api/v1/hotels/reservations/{reservationId}/guests
+     * @secure
+     */
+    addGuestToReservation: (
+      reservationId: string,
+      data: AddGuestBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ReservationDetailsDtoServiceResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/${reservationId}/guests`,
         method: "POST",
         body: data,
         secure: true,
@@ -6727,11 +8102,98 @@ export class Api<
      * @description 🔒 This endpoint requires authentication.
      *
      * @tags Hotel Reservations
-     * @name HotelsGetReservationsPaginated
+     * @name GetReservationDetails
+     * @request GET:/api/v1/hotels/reservations/{reservationId}
+     * @secure
+     */
+    getReservationDetails: (
+      reservationId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ReservationDetailsDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/${reservationId}`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name DeleteReservation
+     * @request DELETE:/api/v1/hotels/reservations/{reservationId}
+     * @secure
+     */
+    deleteReservation: (reservationId: string, params: RequestParams = {}) =>
+      this.request<
+        ServiceResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/${reservationId}`,
+        method: "DELETE",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name GetReservationPricing
+     * @request GET:/api/v1/hotels/reservations/{reservationId}/pricing
+     * @secure
+     */
+    getReservationPricing: (
+      reservationId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ReservationPricingResponseApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/${reservationId}/pricing`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name GetReservationsPaginated
      * @request GET:/api/v1/hotels/reservations
      * @secure
      */
-    hotelsGetReservationsPaginated: (
+    getReservationsPaginated: (
       query?: {
         /**
          * @format int32
@@ -6793,16 +8255,22 @@ export class Api<
      * @description 🔒 This endpoint requires authentication.
      *
      * @tags Hotel Reservations
-     * @name HotelsFinalizeReservation
-     * @request POST:/api/v1/hotels/reservations/{reservationId}/finalize
+     * @name GetMyReservationsForAccommodation
+     * @request GET:/api/v1/hotels/reservations/accommodations/{accommodationId}/my-reservations
      * @secure
      */
-    hotelsFinalizeReservation: (
-      reservationId: string,
+    getMyReservationsForAccommodation: (
+      accommodationId: string,
+      query?: {
+        status?: ReservationStatus;
+        onlyActive?: boolean;
+        onlyFuture?: boolean;
+        onlyPast?: boolean;
+      },
       params: RequestParams = {},
     ) =>
       this.request<
-        FinalizeReservationResponseApplicationResult,
+        GetUserReservationsResultApplicationResult,
         void | {
           /** @example "internal_server_error" */
           error?: string;
@@ -6812,71 +8280,9 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/hotels/reservations/${reservationId}/finalize`,
-        method: "POST",
-        secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Hotel Reservations
-     * @name HotelsAddGuestToReservation
-     * @request POST:/api/v1/hotels/reservations/{reservationId}/guests
-     * @secure
-     */
-    hotelsAddGuestToReservation: (
-      reservationId: string,
-      data: AddGuestBody,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        AddGuestResponseApplicationResult,
-        void | {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/v1/hotels/reservations/${reservationId}/guests`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Hotel Reservations
-     * @name HotelsGetReservationDetails
-     * @request GET:/api/v1/hotels/reservations/{reservationId}
-     * @secure
-     */
-    hotelsGetReservationDetails: (
-      reservationId: string,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        ReservationDetailsDtoApplicationResult,
-        void | {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/v1/hotels/reservations/${reservationId}`,
+        path: `/api/v1/hotels/reservations/accommodations/${accommodationId}/my-reservations`,
         method: "GET",
+        query: query,
         secure: true,
         format: "json",
         ...params,
@@ -6886,41 +8292,11 @@ export class Api<
      * @description 🔒 This endpoint requires authentication.
      *
      * @tags Hotel Reservations
-     * @name HotelsGetReservationPricing
-     * @request GET:/api/v1/hotels/reservations/{reservationId}/pricing
-     * @secure
-     */
-    hotelsGetReservationPricing: (
-      reservationId: string,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        ReservationPricingResponseApplicationResult,
-        void | {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/v1/hotels/reservations/${reservationId}/pricing`,
-        method: "GET",
-        secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Hotel Reservations
-     * @name HotelsGetUserReservations
+     * @name GetUserReservations
      * @request GET:/api/v1/hotels/reservations/user/me
      * @secure
      */
-    hotelsGetUserReservations: (
+    getUserReservations: (
       query?: {
         /** @format uuid */
         accommodationId?: string;
@@ -6956,11 +8332,11 @@ export class Api<
      * @description 🔒 This endpoint requires authentication.
      *
      * @tags Hotel Reservations
-     * @name HotelsGetRoomReservationsInDateRange
+     * @name GetRoomReservationsInDateRange
      * @request GET:/api/v1/hotels/reservations/rooms/{roomId}/calendar
      * @secure
      */
-    hotelsGetRoomReservationsInDateRange: (
+    getRoomReservationsInDateRange: (
       roomId: string,
       query: {
         /** @format date-time */
@@ -6987,6 +8363,249 @@ export class Api<
         method: "GET",
         query: query,
         secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name CreateReservation
+     * @request POST:/api/v1/hotels/reservations/create
+     * @secure
+     */
+    createReservation: (
+      data: CreateReservationRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ReservationDetailsDtoServiceResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/create`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name ConfirmReservation
+     * @request POST:/api/v1/hotels/reservations/{reservationId}/confirm
+     * @secure
+     */
+    confirmReservation: (reservationId: string, params: RequestParams = {}) =>
+      this.request<
+        ReservationDetailsDtoServiceResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/${reservationId}/confirm`,
+        method: "POST",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name RejectReservation
+     * @request POST:/api/v1/hotels/reservations/{reservationId}/reject
+     * @secure
+     */
+    rejectReservation: (
+      reservationId: string,
+      data: RejectReservationRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ReservationDetailsDtoServiceResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/${reservationId}/reject`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name Pay
+     * @request POST:/api/v1/hotels/reservations/{reservationId}/pay
+     * @secure
+     */
+    pay: (reservationId: string, params: RequestParams = {}) =>
+      this.request<
+        ReservationDetailsDtoServiceResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/${reservationId}/pay`,
+        method: "POST",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name Paid
+     * @request POST:/api/v1/hotels/reservations/{reservationId}/paid
+     * @secure
+     */
+    paid: (
+      reservationId: string,
+      data: CompletePaymentRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ReservationDetailsDtoServiceResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/${reservationId}/paid`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name RemoveGuest
+     * @request DELETE:/api/v1/hotels/reservations/{reservationId}/guests/{guestId}
+     * @secure
+     */
+    removeGuest: (
+      reservationId: string,
+      guestId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ReservationDetailsDtoServiceResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/${reservationId}/guests/${guestId}`,
+        method: "DELETE",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name CalculatePrice
+     * @request GET:/api/v1/hotels/reservations/{reservationId}/price
+     * @secure
+     */
+    calculatePrice: (reservationId: string, params: RequestParams = {}) =>
+      this.request<
+        ReservationPricingDtoServiceResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/${reservationId}/price`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Hotel Reservations
+     * @name CancelReservation
+     * @request POST:/api/v1/hotels/reservations/{reservationId}/cancel
+     * @secure
+     */
+    cancelReservation: (
+      reservationId: string,
+      data: CancelReservationRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ReservationDetailsDtoServiceResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/hotels/reservations/${reservationId}/cancel`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),
@@ -7057,7 +8676,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns detailed membership information for the currently authenticated user, including capabilities, features, roles, and agencies
+     * @description 🔒 Returns detailed membership information for the currently authenticated user, including capabilities, features, roles, and agencies
      *
      * @tags Membership
      * @name GetCurrentMember
@@ -7086,7 +8705,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Synchronizes the current authenticated member's data with the external membership system and returns updated member details
+     * @description 🔒 Synchronizes the current authenticated member's data with the external membership system and returns updated member details
      *
      * @tags Membership
      * @name SyncCurrentMember
@@ -7115,7 +8734,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns a paginated list of notifications for a specific user with optional filtering.
+     * @description 🔒 Returns a paginated list of notifications for a specific user with optional filtering.
      *
      * @tags Notifications
      * @name GetUserNotificationsPaginated
@@ -7157,7 +8776,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns all notifications for a specific user with optional filtering.
+     * @description 🔒 Returns all notifications for a specific user with optional filtering.
      *
      * @tags Notifications
      * @name GetAllUserNotifications
@@ -7195,7 +8814,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Gets the count of unread notifications for a specific user.
+     * @description 🔒 Gets the count of unread notifications for a specific user.
      *
      * @tags Notifications
      * @name GetUnreadCount
@@ -7224,7 +8843,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Gets the count of unread notifications grouped by context for a specific user.
+     * @description 🔒 Gets the count of unread notifications grouped by context for a specific user.
      *
      * @tags Notifications
      * @name GetUnreadCountByContext
@@ -7253,7 +8872,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Gets the count of unread notifications grouped by action for a specific user.
+     * @description 🔒 Gets the count of unread notifications grouped by action for a specific user.
      *
      * @tags Notifications
      * @name GetUnreadCountByAction
@@ -7282,7 +8901,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Marks a specific notification as read for a user.
+     * @description 🔒 Marks a specific notification as read for a user.
      *
      * @tags Notifications
      * @name MarkAsRead
@@ -7314,7 +8933,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Marks all notifications as read for a specific user.
+     * @description 🔒 Marks all notifications as read for a specific user.
      *
      * @tags Notifications
      * @name MarkAllAsRead
@@ -7342,7 +8961,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Marks all notifications of a specific context as read for a user.
+     * @description 🔒 Marks all notifications of a specific context as read for a user.
      *
      * @tags Notifications
      * @name MarkByContextAsRead
@@ -7374,7 +8993,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Marks all notifications of a specific action as read for a user.
+     * @description 🔒 Marks all notifications of a specific action as read for a user.
      *
      * @tags Notifications
      * @name MarkByActionAsRead
@@ -7660,7 +9279,37 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 This endpoint requires authentication.
+     * @description 🌐 This endpoint is publicly accessible.
+     *
+     * @tags Payments
+     * @name CompletePayment
+     * @request POST:/api/v1/payments/complete
+     */
+    completePayment: (
+      data: CompletePaymentCommand,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        CreatePaymentResponseApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/payments/complete`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetActiveOffices
@@ -7687,7 +9336,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name CreateOffice
@@ -7716,7 +9365,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetAllOffices
@@ -7743,7 +9392,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetOfficeById
@@ -7770,7 +9419,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name UpdateOffice
@@ -7803,7 +9452,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name DeleteOffice
@@ -7830,7 +9479,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetOfficeByCode
@@ -7857,7 +9506,7 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 This endpoint requires authentication.
+     * @description 🔒 This endpoint requires authentication.
      *
      * @tags Representative Offices
      * @name GetOfficeByExternalCode
@@ -7887,15 +9536,15 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns all roles with optional filtering and includes.
+     * @description 🔒 Returns all roles with optional filtering and includes. Admin only.
      *
-     * @tags Roles
-     * @name GetAllRoles
-     * @summary Get All Roles
-     * @request GET:/api/v1/roles
+     * @tags Roles - Admin
+     * @name GetAllRolesAdmin
+     * @summary Get All Roles (Admin)
+     * @request GET:/api/v1/admin/roles
      * @secure
      */
-    getAllRoles: (
+    getAllRolesAdmin: (
       query: {
         isActive?: boolean;
         isSystemRole?: boolean;
@@ -7916,7 +9565,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/roles`,
+        path: `/api/v1/admin/roles`,
         method: "GET",
         query: query,
         body: data,
@@ -7925,15 +9574,15 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Creates a new role in the system.
+     * @description 🔒 Creates a new role in the system. Admin only.
      *
-     * @tags Roles
-     * @name CreateRole
-     * @summary Create Role
-     * @request POST:/api/v1/roles
+     * @tags Roles - Admin
+     * @name CreateRoleAdmin
+     * @summary Create Role (Admin)
+     * @request POST:/api/v1/admin/roles
      * @secure
      */
-    createRole: (data: CreateRoleRequest, params: RequestParams = {}) =>
+    createRoleAdmin: (data: CreateRoleRequest, params: RequestParams = {}) =>
       this.request<
         void,
         {
@@ -7945,7 +9594,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/roles`,
+        path: `/api/v1/admin/roles`,
         method: "POST",
         body: data,
         secure: true,
@@ -7954,15 +9603,15 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns a paginated list of roles with optional search and filtering.
+     * @description 🔒 Returns a paginated list of roles with optional search and filtering. Admin only.
      *
-     * @tags Roles
-     * @name GetRolesPaginated
-     * @summary Get Roles Paginated
-     * @request GET:/api/v1/roles/paginated
+     * @tags Roles - Admin
+     * @name GetRolesPaginatedAdmin
+     * @summary Get Roles Paginated (Admin)
+     * @request GET:/api/v1/admin/roles/paginated
      * @secure
      */
-    getRolesPaginated: (
+    getRolesPaginatedAdmin: (
       query: {
         /** @format int32 */
         pageNumber: number;
@@ -7988,7 +9637,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/roles/paginated`,
+        path: `/api/v1/admin/roles/paginated`,
         method: "GET",
         query: query,
         body: data,
@@ -7997,15 +9646,15 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns a role by its unique identifier with claims and user count.
+     * @description 🔒 Returns a role by its unique identifier with claims and user count. Admin only.
      *
-     * @tags Roles
-     * @name GetRoleById
-     * @summary Get Role By ID
-     * @request GET:/api/v1/roles/{id}
+     * @tags Roles - Admin
+     * @name GetRoleByIdAdmin
+     * @summary Get Role By ID (Admin)
+     * @request GET:/api/v1/admin/roles/{id}
      * @secure
      */
-    getRoleById: (id: string, data: any, params: RequestParams = {}) =>
+    getRoleByIdAdmin: (id: string, data: any, params: RequestParams = {}) =>
       this.request<
         void,
         {
@@ -8017,7 +9666,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/roles/${id}`,
+        path: `/api/v1/admin/roles/${id}`,
         method: "GET",
         body: data,
         secure: true,
@@ -8025,15 +9674,15 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Updates an existing role's details.
+     * @description 🔒 Updates an existing role's details. Admin only.
      *
-     * @tags Roles
-     * @name UpdateRole
-     * @summary Update Role
-     * @request PUT:/api/v1/roles/{id}
+     * @tags Roles - Admin
+     * @name UpdateRoleAdmin
+     * @summary Update Role (Admin)
+     * @request PUT:/api/v1/admin/roles/{id}
      * @secure
      */
-    updateRole: (
+    updateRoleAdmin: (
       id: string,
       data: UpdateRoleRequest,
       params: RequestParams = {},
@@ -8049,7 +9698,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/roles/${id}`,
+        path: `/api/v1/admin/roles/${id}`,
         method: "PUT",
         body: data,
         secure: true,
@@ -8058,15 +9707,43 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Adds claims to an existing role.
+     * @description 🔒 Deletes a role (soft delete). Admin only.
      *
-     * @tags Roles
-     * @name AddClaimsToRole
-     * @summary Add Claims to Role
-     * @request POST:/api/v1/roles/{id}/claims
+     * @tags Roles - Admin
+     * @name DeleteRoleAdmin
+     * @summary Delete Role (Admin)
+     * @request DELETE:/api/v1/admin/roles/{id}
      * @secure
      */
-    addClaimsToRole: (
+    deleteRoleAdmin: (id: string, data: any, params: RequestParams = {}) =>
+      this.request<
+        void,
+        {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/roles/${id}`,
+        method: "DELETE",
+        body: data,
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 Adds claims to an existing role. Admin only.
+     *
+     * @tags Roles - Admin
+     * @name AddClaimsToRoleAdmin
+     * @summary Add Claims to Role (Admin)
+     * @request POST:/api/v1/admin/roles/{id}/claims
+     * @secure
+     */
+    addClaimsToRoleAdmin: (
       id: string,
       data: AddClaimsRequest,
       params: RequestParams = {},
@@ -8082,7 +9759,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/roles/${id}/claims`,
+        path: `/api/v1/admin/roles/${id}/claims`,
         method: "POST",
         body: data,
         secure: true,
@@ -8091,15 +9768,15 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Removes claims from an existing role.
+     * @description 🔒 Removes claims from an existing role. Admin only.
      *
-     * @tags Roles
-     * @name RemoveClaimsFromRole
-     * @summary Remove Claims from Role
-     * @request DELETE:/api/v1/roles/{id}/claims
+     * @tags Roles - Admin
+     * @name RemoveClaimsFromRoleAdmin
+     * @summary Remove Claims from Role (Admin)
+     * @request DELETE:/api/v1/admin/roles/{id}/claims
      * @secure
      */
-    removeClaimsFromRole: (
+    removeClaimsFromRoleAdmin: (
       id: string,
       data: RemoveClaimsRequest,
       params: RequestParams = {},
@@ -8115,7 +9792,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/roles/${id}/claims`,
+        path: `/api/v1/admin/roles/${id}/claims`,
         method: "DELETE",
         body: data,
         secure: true,
@@ -8124,7 +9801,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name CreateSection
@@ -8142,7 +9819,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name CreateCategory
@@ -8160,7 +9837,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name SetSetting
@@ -8178,7 +9855,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name GetSettings
@@ -8210,7 +9887,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name BulkUpdateSettings
@@ -8231,7 +9908,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name UpdateSetting
@@ -8253,7 +9930,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name GetSettingsBySection
@@ -8277,7 +9954,7 @@ export class Api<
       }),
 
     /**
-     * @description 🌐 🌐 This endpoint is publicly accessible.
+     * @description 🌐 This endpoint is publicly accessible.
      *
      * @tags Settings
      * @name GetSettingByKey
@@ -9259,6 +10936,65 @@ export class Api<
       }),
 
     /**
+     * @description 🌐 This endpoint is publicly accessible.
+     *
+     * @tags Surveys
+     * @name GenerateSurveyReport
+     * @request POST:/api/v1/surveys/reports/generate
+     */
+    generateSurveyReport: (
+      data: GenerateSurveyReportRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        File,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/surveys/reports/generate`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * @description 🌐 This endpoint is publicly accessible.
+     *
+     * @tags Surveys
+     * @name ExportSurveysToExcel
+     * @request POST:/api/v1/surveys/reports/export
+     */
+    exportSurveysToExcel: (
+      data: ExportSurveysToExcelRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        File,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/surveys/reports/export`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
      * @description 🔒 This endpoint requires authentication.
      *
      * @tags Tour Reservations
@@ -9550,7 +11286,37 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns a paginated list of tours with optional search and filtering.
+     * @description 🌐 This endpoint is publicly accessible.
+     *
+     * @tags Tour Reservations - Admin
+     * @name AdminAddMemberToCapacity
+     * @request POST:/api/admin/recreation/reservations/add-member-to-capacity
+     */
+    adminAddMemberToCapacity: (
+      data: AddMemberToCapacityRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        AddMemberToCapacityCommandResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/admin/recreation/reservations/add-member-to-capacity`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 Returns a paginated list of tours with optional search and filtering.
      *
      * @tags Tours
      * @name GetToursPaginated
@@ -9618,15 +11384,15 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns a paginated list of users with optional search filter.
+     * @description 🔒 Returns a paginated list of users with optional search filter. Admin only.
      *
-     * @tags Users
-     * @name GetUsersPaginated
-     * @summary Get Users Paginated
-     * @request GET:/api/v1/users
+     * @tags Users - Admin
+     * @name GetUsersPaginatedAdmin
+     * @summary Get Users Paginated (Admin)
+     * @request GET:/api/v1/admin/users
      * @secure
      */
-    getUsersPaginated: (
+    getUsersPaginatedAdmin: (
       query: {
         /** @format int32 */
         pageNumber: number;
@@ -9648,7 +11414,7 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/users`,
+        path: `/api/v1/admin/users`,
         method: "GET",
         query: query,
         body: data,
@@ -9658,15 +11424,15 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Creates a new user with the provided information.
+     * @description 🔒 Creates a new user with the provided information. Admin only.
      *
-     * @tags Users
-     * @name CreateUser
-     * @summary Create User
-     * @request POST:/api/v1/users
+     * @tags Users - Admin
+     * @name CreateUserAdmin
+     * @summary Create User (Admin)
+     * @request POST:/api/v1/admin/users
      * @secure
      */
-    createUser: (data: CreateUserCommand, params: RequestParams = {}) =>
+    createUserAdmin: (data: CreateUserCommand, params: RequestParams = {}) =>
       this.request<
         GuidApplicationResult,
         | GuidApplicationResult
@@ -9679,7 +11445,7 @@ export class Api<
             timestamp?: string;
           }
       >({
-        path: `/api/v1/users`,
+        path: `/api/v1/admin/users`,
         method: "POST",
         body: data,
         secure: true,
@@ -9689,15 +11455,15 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Returns full UserDetail DTO with roles, claims, preferences and tokens.
+     * @description 🔒 Returns full User DTO with roles, claims, preferences and tokens. Admin only.
      *
-     * @tags Users
-     * @name GetUserDetail
-     * @summary Get UserDetail Detail
-     * @request GET:/api/v1/users/{id}
+     * @tags Users - Admin
+     * @name GetUserDetailAdmin
+     * @summary Get User Detail (Admin)
+     * @request GET:/api/v1/admin/users/{id}
      * @secure
      */
-    getUserDetail: (id: string, data: any, params: RequestParams = {}) =>
+    getUserDetailAdmin: (id: string, data: any, params: RequestParams = {}) =>
       this.request<
         UserDetailDtoApplicationResult,
         | UserDetailDtoApplicationResult
@@ -9710,7 +11476,7 @@ export class Api<
             timestamp?: string;
           }
       >({
-        path: `/api/v1/users/${id}`,
+        path: `/api/v1/admin/users/${id}`,
         method: "GET",
         body: data,
         secure: true,
@@ -9719,15 +11485,15 @@ export class Api<
       }),
 
     /**
-     * @description 🔒 🔒 Updates an existing user with the provided information.
+     * @description 🔒 Updates an existing user with the provided information. Admin only.
      *
-     * @tags Users
-     * @name UpdateUser
-     * @summary Update User
-     * @request PUT:/api/v1/users/{id}
+     * @tags Users - Admin
+     * @name UpdateUserAdmin
+     * @summary Update User (Admin)
+     * @request PUT:/api/v1/admin/users/{id}
      * @secure
      */
-    updateUser: (
+    updateUserAdmin: (
       id: string,
       data: UpdateUserCommand,
       params: RequestParams = {},
@@ -9744,11 +11510,462 @@ export class Api<
             timestamp?: string;
           }
       >({
-        path: `/api/v1/users/${id}`,
+        path: `/api/v1/admin/users/${id}`,
         method: "PUT",
         body: data,
         secure: true,
         type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 Deletes a user (soft delete). Admin only.
+     *
+     * @tags Users - Admin
+     * @name DeleteUserAdmin
+     * @summary Delete User (Admin)
+     * @request DELETE:/api/v1/admin/users/{id}
+     * @secure
+     */
+    deleteUserAdmin: (id: string, data: any, params: RequestParams = {}) =>
+      this.request<
+        ApplicationResult,
+        | ApplicationResult
+        | {
+            /** @example "internal_server_error" */
+            error?: string;
+            /** @example "خطای داخلی سرور رخ داده است" */
+            message?: string;
+            /** @format date-time */
+            timestamp?: string;
+          }
+      >({
+        path: `/api/v1/admin/users/${id}`,
+        method: "DELETE",
+        body: data,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 Activates a deactivated user account. Admin only.
+     *
+     * @tags Users - Admin
+     * @name ActivateUserAdmin
+     * @summary Activate User (Admin)
+     * @request POST:/api/v1/admin/users/{id}/activate
+     * @secure
+     */
+    activateUserAdmin: (id: string, data: any, params: RequestParams = {}) =>
+      this.request<
+        ApplicationResult,
+        | ApplicationResult
+        | {
+            /** @example "internal_server_error" */
+            error?: string;
+            /** @example "خطای داخلی سرور رخ داده است" */
+            message?: string;
+            /** @format date-time */
+            timestamp?: string;
+          }
+      >({
+        path: `/api/v1/admin/users/${id}/activate`,
+        method: "POST",
+        body: data,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 Deactivates a user account. Admin only.
+     *
+     * @tags Users - Admin
+     * @name DeactivateUserAdmin
+     * @summary Deactivate User (Admin)
+     * @request POST:/api/v1/admin/users/{id}/deactivate
+     * @secure
+     */
+    deactivateUserAdmin: (
+      id: string,
+      data: DeactivateUserRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ApplicationResult,
+        | ApplicationResult
+        | {
+            /** @example "internal_server_error" */
+            error?: string;
+            /** @example "خطای داخلی سرور رخ داده است" */
+            message?: string;
+            /** @format date-time */
+            timestamp?: string;
+          }
+      >({
+        path: `/api/v1/admin/users/${id}/deactivate`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 Locks a user account temporarily or indefinitely. Admin only.
+     *
+     * @tags Users - Admin
+     * @name LockUserAdmin
+     * @summary Lock User (Admin)
+     * @request POST:/api/v1/admin/users/{id}/lock
+     * @secure
+     */
+    lockUserAdmin: (
+      id: string,
+      data: LockUserRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ApplicationResult,
+        | ApplicationResult
+        | {
+            /** @example "internal_server_error" */
+            error?: string;
+            /** @example "خطای داخلی سرور رخ داده است" */
+            message?: string;
+            /** @format date-time */
+            timestamp?: string;
+          }
+      >({
+        path: `/api/v1/admin/users/${id}/lock`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 Unlocks a locked user account. Admin only.
+     *
+     * @tags Users - Admin
+     * @name UnlockUserAdmin
+     * @summary Unlock User (Admin)
+     * @request POST:/api/v1/admin/users/{id}/unlock
+     * @secure
+     */
+    unlockUserAdmin: (
+      id: string,
+      data: UnlockUserRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ApplicationResult,
+        | ApplicationResult
+        | {
+            /** @example "internal_server_error" */
+            error?: string;
+            /** @example "خطای داخلی سرور رخ داده است" */
+            message?: string;
+            /** @format date-time */
+            timestamp?: string;
+          }
+      >({
+        path: `/api/v1/admin/users/${id}/unlock`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 Revokes all tokens or tokens of a specific type for a user. Admin only.
+     *
+     * @tags Users - Admin
+     * @name RevokeUserTokensAdmin
+     * @summary Revoke User Tokens (Admin)
+     * @request POST:/api/v1/admin/users/{id}/revoke-tokens
+     * @secure
+     */
+    revokeUserTokensAdmin: (
+      id: string,
+      data: RevokeUserTokensRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ApplicationResult,
+        | ApplicationResult
+        | {
+            /** @example "internal_server_error" */
+            error?: string;
+            /** @example "خطای داخلی سرور رخ داده است" */
+            message?: string;
+            /** @format date-time */
+            timestamp?: string;
+          }
+      >({
+        path: `/api/v1/admin/users/${id}/revoke-tokens`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 Adds a claim to a user. Admin only.
+     *
+     * @tags Users - Admin
+     * @name AddClaimToUserAdmin
+     * @summary Add Claim to User (Admin)
+     * @request POST:/api/v1/admin/users/{id}/claims
+     * @secure
+     */
+    addClaimToUserAdmin: (
+      id: string,
+      data: AddClaimToUserRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ApplicationResult,
+        | ApplicationResult
+        | {
+            /** @example "internal_server_error" */
+            error?: string;
+            /** @example "خطای داخلی سرور رخ داده است" */
+            message?: string;
+            /** @format date-time */
+            timestamp?: string;
+          }
+      >({
+        path: `/api/v1/admin/users/${id}/claims`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 Removes a claim from a user. Admin only.
+     *
+     * @tags Users - Admin
+     * @name RemoveClaimFromUserAdmin
+     * @summary Remove Claim from User (Admin)
+     * @request DELETE:/api/v1/admin/users/{id}/claims/{claimId}
+     * @secure
+     */
+    removeClaimFromUserAdmin: (
+      id: string,
+      claimId: string,
+      data: any,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ApplicationResult,
+        | ApplicationResult
+        | {
+            /** @example "internal_server_error" */
+            error?: string;
+            /** @example "خطای داخلی سرور رخ داده است" */
+            message?: string;
+            /** @format date-time */
+            timestamp?: string;
+          }
+      >({
+        path: `/api/v1/admin/users/${id}/claims/${claimId}`,
+        method: "DELETE",
+        body: data,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 Assigns a role to a user with optional expiration. Admin only.
+     *
+     * @tags Users - Admin
+     * @name AssignRoleToUserAdmin
+     * @summary Assign Role to User (Admin)
+     * @request POST:/api/v1/admin/users/{id}/roles
+     * @secure
+     */
+    assignRoleToUserAdmin: (
+      id: string,
+      data: AssignRoleToUserRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ApplicationResult,
+        | ApplicationResult
+        | {
+            /** @example "internal_server_error" */
+            error?: string;
+            /** @example "خطای داخلی سرور رخ داده است" */
+            message?: string;
+            /** @format date-time */
+            timestamp?: string;
+          }
+      >({
+        path: `/api/v1/admin/users/${id}/roles`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 Removes a role assignment from a user. Admin only.
+     *
+     * @tags Users - Admin
+     * @name RemoveRoleFromUserAdmin
+     * @summary Remove Role from User (Admin)
+     * @request DELETE:/api/v1/admin/users/{id}/roles/{roleId}
+     * @secure
+     */
+    removeRoleFromUserAdmin: (
+      id: string,
+      roleId: string,
+      data: any,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ApplicationResult,
+        | ApplicationResult
+        | {
+            /** @example "internal_server_error" */
+            error?: string;
+            /** @example "خطای داخلی سرور رخ داده است" */
+            message?: string;
+            /** @format date-time */
+            timestamp?: string;
+          }
+      >({
+        path: `/api/v1/admin/users/${id}/roles/${roleId}`,
+        method: "DELETE",
+        body: data,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 Returns a paginated list of user sessions. Admin only.
+     *
+     * @tags Users - Admin
+     * @name GetUserSessionsAdmin
+     * @summary Get User Sessions (Admin)
+     * @request GET:/api/v1/admin/users/{id}/sessions
+     * @secure
+     */
+    getUserSessionsAdmin: (
+      id: string,
+      query: {
+        /** @format int32 */
+        pageNumber: number;
+        /** @format int32 */
+        pageSize: number;
+        onlyActive?: boolean;
+      },
+      data: any,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        SessionDtoPaginatedResultApplicationResult,
+        | SessionDtoPaginatedResultApplicationResult
+        | {
+            /** @example "internal_server_error" */
+            error?: string;
+            /** @example "خطای داخلی سرور رخ داده است" */
+            message?: string;
+            /** @format date-time */
+            timestamp?: string;
+          }
+      >({
+        path: `/api/v1/admin/users/${id}/sessions`,
+        method: "GET",
+        query: query,
+        body: data,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 Revokes a specific user session by session ID. Admin only.
+     *
+     * @tags Users - Admin
+     * @name RevokeUserSessionAdmin
+     * @summary Revoke User Session (Admin)
+     * @request POST:/api/v1/admin/users/{id}/sessions/{sessionId}/revoke
+     * @secure
+     */
+    revokeUserSessionAdmin: (
+      id: string,
+      sessionId: string,
+      data: any,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ApplicationResult,
+        | ApplicationResult
+        | {
+            /** @example "internal_server_error" */
+            error?: string;
+            /** @example "خطای داخلی سرور رخ داده است" */
+            message?: string;
+            /** @format date-time */
+            timestamp?: string;
+          }
+      >({
+        path: `/api/v1/admin/users/${id}/sessions/${sessionId}/revoke`,
+        method: "POST",
+        body: data,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 Revokes all active sessions for a user. Admin only.
+     *
+     * @tags Users - Admin
+     * @name RevokeAllUserSessionsAdmin
+     * @summary Revoke All User Sessions (Admin)
+     * @request POST:/api/v1/admin/users/{id}/sessions/revoke-all
+     * @secure
+     */
+    revokeAllUserSessionsAdmin: (
+      id: string,
+      data: any,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ApplicationResult,
+        | ApplicationResult
+        | {
+            /** @example "internal_server_error" */
+            error?: string;
+            /** @example "خطای داخلی سرور رخ داده است" */
+            message?: string;
+            /** @format date-time */
+            timestamp?: string;
+          }
+      >({
+        path: `/api/v1/admin/users/${id}/sessions/revoke-all`,
+        method: "POST",
+        body: data,
+        secure: true,
         format: "json",
         ...params,
       }),

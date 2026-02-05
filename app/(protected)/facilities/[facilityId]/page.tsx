@@ -14,7 +14,6 @@ import { PageHeader } from '@/src/components/ui/PageHeader';
 import { ScrollableArea } from '@/src/components/ui/ScrollableArea';
 import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
-import FacilityVideoTutorialDrawer from '@/src/components/overlays/FacilityVideoTutorialDrawer';
 import {
   PiArrowRight,
   PiCalendar,
@@ -155,7 +154,6 @@ function getRequestStatusInfo(status: string | null | undefined) {
 export default function FacilityDetailPage({ params }: FacilityDetailPageProps) {
   const router = useRouter();
   const [facilityIdFromParams, setFacilityIdFromParams] = useState<string>('');
-  const [isVideoDrawerOpen, setIsVideoDrawerOpen] = useState(false);
 
   // Redux selectors
   const isLoading = useSelector(selectFacilitiesLoading);
@@ -213,22 +211,22 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
     }
   };
 
-  const handleOpenVideoDrawer = () => {
-    setIsVideoDrawerOpen(true);
-  };
+  // const handleOpenVideoDrawer = () => {
+  //   // setIsVideoDrawerOpen(true);
+  // };
 
-  const handleCloseVideoDrawer = () => {
-    setIsVideoDrawerOpen(false);
-  };
+  // const handleCloseVideoDrawer = () => {
+  //   // setIsVideoDrawerOpen(false);
+  // };
 
-  const handleRequestFromVideo = () => {
-    setIsVideoDrawerOpen(false);
-    // Find first active cycle and navigate to request page
-    const activeCycle = cycles.find(cycle => cycle.isActive === true);
-    if (activeCycle?.id) {
-      router.push(`/facilities/cycles/${activeCycle.id}/request`);
-    }
-  };
+  // const handleRequestFromVideo = () => {
+  //   // setIsVideoDrawerOpen(false);
+  //   // Find first active cycle and navigate to request page
+  //   const activeCycle = cycles.find(cycle => cycle.isActive === true);
+  //   if (activeCycle?.id) {
+  //     router.push(`/facilities/cycles/${activeCycle.id}/request`);
+  //   }
+  // };
 
   // Access cycles from response
   // cyclesData is GetFacilityCyclesResponse (ApplicationResult wrapper)
@@ -321,12 +319,12 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
         showBackButton={true}
         onBack={handleBack}
         rightActions={[
-          {
-            icon: <PiVideo className="h-4 w-4" />,
-            onClick: handleOpenVideoDrawer,
-            label: 'آموزش ویدویی',
-            'aria-label': 'آموزش ویدویی',
-          },
+          // {
+          //   icon: <PiVideo className="h-4 w-4" />,
+          //   onClick: handleOpenVideoDrawer,
+          //   label: 'آموزش ویدویی',
+          //   'aria-label': 'آموزش ویدویی',
+          // },
           {
             icon: <PiArrowRight className="h-4 w-4" />,
             onClick: handleViewCycles,
@@ -351,7 +349,7 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
                 <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed mb-3">
                   {guideMessage.description}
                 </p>
-                <Button
+                {/* <Button
                   variant="outline"
                   color="primary"
                   size="sm"
@@ -361,7 +359,7 @@ export default function FacilityDetailPage({ params }: FacilityDetailPageProps) 
                   className="font-medium"
                 >
                   نحوه درخواست (ویدیو)
-                </Button>
+                </Button> */}
               </div>
             </div>
           </Card>

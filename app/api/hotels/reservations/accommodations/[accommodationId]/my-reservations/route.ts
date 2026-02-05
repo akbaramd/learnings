@@ -5,20 +5,31 @@ import { AxiosError } from 'axios';
 import { ReservationStatus } from '@/src/services/Api';
 
 /**
- * GET /api/hotels/reservations/user/me
- * Get current user's reservations
+ * GET /api/hotels/reservations/accommodations/[accommodationId]/my-reservations
+ * Get my reservations for a specific accommodation
  */
-export async function GET(req: NextRequest) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ accommodationId: string }> }
+) {
   try {
     const api = createApiInstance(req);
-    const { searchParams } = new URL(req.url);
+    const { accommodationId } = await params;
 
-    const accommodationId = searchParams.get('accommodationId') || undefined;
-    const roomId = searchParams.get('roomId') || undefined;
+    if (!accommodationId) {
+      return NextResponse.json({
+        isSuccess: false,
+        message: 'Accommodation ID is required',
+        errors: ['Accommodation ID is required'],
+        data: null,
+      }, { status: 400 });
+    }
+
+    const { searchParams } = new URL(req.url);
     const statusRaw = searchParams.get('status');
-    const onlyActiveParam = searchParams.get('onlyActive');
-    const onlyFutureParam = searchParams.get('onlyFuture');
-    const onlyPastParam = searchParams.get('onlyPast');
+    const onlyActiveRaw = searchParams.get('onlyActive');
+    const onlyFutureRaw = searchParams.get('onlyFuture');
+    const onlyPastRaw = searchParams.get('onlyPast');
 
     // Validate status against ReservationStatus enum
     const validStatuses = Object.values(ReservationStatus) as string[];
@@ -26,27 +37,20 @@ export async function GET(req: NextRequest) {
       ? (statusRaw as ReservationStatus)
       : undefined;
 
-    const onlyActive = onlyActiveParam === 'true' ? true :
-      onlyActiveParam === 'false' ? false :
-      undefined;
+    const onlyActive = onlyActiveRaw === 'true' ? true : onlyActiveRaw === 'false' ? false : undefined;
+    const onlyFuture = onlyFutureRaw === 'true' ? true : onlyFutureRaw === 'false' ? false : undefined;
+    const onlyPast = onlyPastRaw === 'true' ? true : onlyPastRaw === 'false' ? false : undefined;
 
-    const onlyFuture = onlyFutureParam === 'true' ? true :
-      onlyFutureParam === 'false' ? false :
-      undefined;
-
-    const onlyPast = onlyPastParam === 'true' ? true :
-      onlyPastParam === 'false' ? false :
-      undefined;
-
-    const upstream = await api.api.getUserReservations({
+    const upstream = await api.api.getMyReservationsForAccommodation(
       accommodationId,
-      roomId,
-      status,
-      onlyActive,
-      onlyFuture,
-      onlyPast,
-    }, {});
-
+      {
+        status,
+        onlyActive,
+        onlyFuture,
+        onlyPast,
+      },
+      {}
+    );
     const statusCode = upstream.status ?? 200;
 
     const response: GetUserReservationsResponse = {
@@ -67,7 +71,7 @@ export async function GET(req: NextRequest) {
 
     return res;
   } catch (error) {
-    console.error('[Hotels Reservations] Get User Reservations BFF error:', {
+    console.error('[Hotels Reservations] My Reservations BFF error:', {
       name: error instanceof Error ? error.name : 'Unknown',
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
@@ -77,4 +81,3 @@ export async function GET(req: NextRequest) {
     return handleApiError(error as AxiosError);
   }
 }
-

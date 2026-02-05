@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createApiInstance, handleApiError } from '@/app/api/generatedClient';
-import { GetReservationsPaginatedResponse } from '@/src/store/accommodations/accommodations.types';
+import { GetReservationsPaginatedResponse, GetReservationDetailResponse } from '@/src/store/accommodations/accommodations.types';
 import { AxiosError } from 'axios';
 import { ReservationStatus } from '@/src/services/Api';
 
@@ -13,7 +13,8 @@ export async function GET(req: NextRequest) {
     const api = createApiInstance(req);
     const { searchParams } = new URL(req.url);
 
-    const pageRaw = searchParams.get('page');
+    // Support both 'page' and 'pageNumber' for compatibility
+    const pageRaw = searchParams.get('page') || searchParams.get('pageNumber');
     const pageSizeRaw = searchParams.get('pageSize');
     const searchTerm = searchParams.get('searchTerm') || undefined;
     const statusRaw = searchParams.get('status');
@@ -29,29 +30,54 @@ export async function GET(req: NextRequest) {
     const minPriceRialsRaw = searchParams.get('minPriceRials');
     const maxPriceRialsRaw = searchParams.get('maxPriceRials');
 
+    // Validate and parse pagination parameters
     const page = Number.isFinite(Number(pageRaw)) && Number(pageRaw) > 0
       ? Number(pageRaw)
       : 1;
 
-    const pageSize = Number.isFinite(Number(pageSizeRaw)) && Number(pageSizeRaw) > 0
+    const pageSize = Number.isFinite(Number(pageSizeRaw)) && Number(pageSizeRaw) > 0 && Number(pageSizeRaw) <= 100
       ? Number(pageSizeRaw)
       : 10;
 
     // Validate status against ReservationStatus enum
+    // Support both lowercase and uppercase status values (e.g., "pending" -> "Pending")
     const validStatuses = Object.values(ReservationStatus) as string[];
-    const status: ReservationStatus | undefined = statusRaw && validStatuses.includes(statusRaw)
-      ? (statusRaw as ReservationStatus)
-      : undefined;
+    let status: ReservationStatus | undefined = undefined;
+    
+    if (statusRaw) {
+      // Try exact match first (uppercase)
+      if (validStatuses.includes(statusRaw as ReservationStatus)) {
+        status = statusRaw as ReservationStatus;
+      } else {
+        // Try case-insensitive match (convert lowercase to proper case)
+        const normalized = statusRaw.charAt(0).toUpperCase() + statusRaw.slice(1).toLowerCase();
+        if (validStatuses.includes(normalized as ReservationStatus)) {
+          status = normalized as ReservationStatus;
+        }
+      }
+    }
 
-    const minPriceRials = minPriceRialsRaw && Number.isFinite(Number(minPriceRialsRaw))
+    // Validate and parse price filters
+    const minPriceRials = minPriceRialsRaw && Number.isFinite(Number(minPriceRialsRaw)) && Number(minPriceRialsRaw) >= 0
       ? Number(minPriceRialsRaw)
       : undefined;
 
-    const maxPriceRials = maxPriceRialsRaw && Number.isFinite(Number(maxPriceRialsRaw))
+    const maxPriceRials = maxPriceRialsRaw && Number.isFinite(Number(maxPriceRialsRaw)) && Number(maxPriceRialsRaw) >= 0
       ? Number(maxPriceRialsRaw)
       : undefined;
 
-    const upstream = await api.api.hotelsGetReservationsPaginated({
+    // Validate price range
+    if (minPriceRials !== undefined && maxPriceRials !== undefined && minPriceRials > maxPriceRials) {
+      return NextResponse.json({
+        isSuccess: false,
+        message: 'Minimum price cannot be greater than maximum price',
+        errors: ['Minimum price cannot be greater than maximum price'],
+        data: null,
+      }, { status: 400 });
+    }
+
+    // Call upstream API with pagination and filters
+    const upstream = await api.api.getReservationsPaginated({
       page,
       pageSize,
       searchTerm,
@@ -71,16 +97,19 @@ export async function GET(req: NextRequest) {
 
     const statusCode = upstream.status ?? 200;
 
+    // Transform GetReservationsPaginatedResultApplicationResult to ApplicationResult format
+    const serviceResult = upstream.data;
     const response: GetReservationsPaginatedResponse = {
-      isSuccess: !!upstream.data?.data,
-      message: upstream.data?.message || 'Operation completed',
-      errors: upstream.data?.errors || undefined,
-      data: upstream.data?.data || undefined
+      isSuccess: !!serviceResult?.isSuccess && !!serviceResult?.data,
+      message: serviceResult?.message || 'Reservations retrieved successfully',
+      errors: serviceResult?.errors || undefined,
+      data: serviceResult?.data || undefined
     };
 
     const res = NextResponse.json(response, { status: statusCode });
     res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
 
+    // Forward upstream cookies
     const setCookie = upstream.headers?.['set-cookie'];
     if (setCookie) {
       if (Array.isArray(setCookie)) setCookie.forEach(c => res.headers.append('set-cookie', c));
@@ -89,7 +118,7 @@ export async function GET(req: NextRequest) {
 
     return res;
   } catch (error) {
-    console.error('[Hotels Reservations] BFF error:', {
+    console.error('[Hotels Reservations] Get paginated BFF error:', {
       name: error instanceof Error ? error.name : 'Unknown',
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,

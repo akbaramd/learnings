@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createApiInstance, handleApiError } from '@/app/api/generatedClient';
-import { GetReservationPricingResponse } from '@/src/store/accommodations/accommodations.types';
+import { GetReservationDetailResponse } from '@/src/store/accommodations/accommodations.types';
 import { AxiosError } from 'axios';
 
 /**
- * GET /api/hotels/reservations/[reservationId]/pricing
- * Get reservation pricing information
+ * POST /api/hotels/reservations/[reservationId]/reject
+ * Reject a hotel reservation
  */
-export async function GET(
+export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ reservationId: string }> }
 ) {
@@ -24,14 +24,23 @@ export async function GET(
       }, { status: 400 });
     }
 
-    const upstream = await api.api.getReservationPricing(reservationId, {});
+    const body = await req.json().catch(() => ({}));
+    const reason = body.reason || undefined;
+
+    const upstream = await api.api.rejectReservation(
+      reservationId,
+      { reason },
+      {}
+    );
     const status = upstream.status ?? 200;
 
-    const response: GetReservationPricingResponse = {
-      isSuccess: !!upstream.data?.data,
-      message: upstream.data?.message || 'Operation completed',
-      errors: upstream.data?.errors || undefined,
-      data: upstream.data?.data || undefined,
+    // Transform ReservationDetailsDtoServiceResult to ApplicationResult format
+    const serviceResult = upstream.data;
+    const response: GetReservationDetailResponse = {
+      isSuccess: !!serviceResult?.isSuccess && !!serviceResult?.value,
+      message: serviceResult?.message || 'Reservation rejected successfully',
+      errors: serviceResult?.errors?.map(e => e.message || e.code || 'Unknown error') || undefined,
+      data: serviceResult?.value || undefined,
     };
 
     const res = NextResponse.json(response, { status });
@@ -45,7 +54,7 @@ export async function GET(
 
     return res;
   } catch (error) {
-    console.error('[Hotels Reservations] Get Pricing BFF error:', {
+    console.error('[Hotels Reservations] Reject BFF error:', {
       name: error instanceof Error ? error.name : 'Unknown',
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
@@ -55,4 +64,3 @@ export async function GET(
     return handleApiError(error as AxiosError);
   }
 }
-

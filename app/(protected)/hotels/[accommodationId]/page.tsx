@@ -26,7 +26,7 @@ import {
 } from 'react-icons/pi';
 
 import { buildImageUrl } from '@/src/config/env';
-import { useGetAccommodationDetailQuery } from '@/src/store/accommodations';
+import { useGetAccommodationDetailQuery, useGetMyReservationsForAccommodationQuery } from '@/src/store/accommodations';
 
 /* ===================== Utils ===================== */
 
@@ -139,7 +139,13 @@ export default function AccommodationDetailsPage({ params }: Props) {
     skip: !accommodationId,
   });
 
+  const { data: reservationsRes, isLoading: isLoadingReservations } = useGetMyReservationsForAccommodationQuery(
+    { accommodationId, onlyActive: true },
+    { skip: !accommodationId }
+  );
+
   const acc = detailRes?.data;
+  const reservations = reservationsRes?.data?.reservations || [];
 
   const addressText = useMemo(() => toAddressText(acc?.address), [acc?.address]);
 
@@ -372,6 +378,78 @@ export default function AccommodationDetailsPage({ params }: Props) {
             ) : null}
           </Card>
 
+          {/* Reservations List */}
+          {!isLoadingReservations && (
+            <Card variant="default" radius="lg" padding="md">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <PiCalendar className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  رزروهای من برای این هتل
+                </h3>
+                {reservations.length > 0 && (
+                  <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                    {faDigits(reservations.length)} رزرو
+                  </div>
+                )}
+              </div>
+              {reservations.length > 0 ? (
+                <div className="space-y-2">
+                  {reservations.slice(0, 5).map((reservation: any) => (
+                    <div
+                      key={reservation?.id}
+                      className="rounded-lg border border-neutral-200 dark:border-neutral-700 px-3 py-2.5 bg-white/60 dark:bg-neutral-900/30"
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <div className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
+                          {reservation?.trackingCode || '—'}
+                        </div>
+                        <Badge className={reservation?.status === 'Paid' || reservation?.status === '4' 
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
+                          : reservation?.status === 'Paying' || reservation?.status === '3'
+                          ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200'
+                          : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+                        }>
+                          {reservation?.status === 'Paid' || reservation?.status === '4' ? 'پرداخت شده' :
+                           reservation?.status === 'Paying' || reservation?.status === '3' ? 'در حال پرداخت' :
+                           reservation?.status === 'Confirmed' || reservation?.status === '2' ? 'تأیید شده' :
+                           reservation?.status === 'Submitted' || reservation?.status === '1' ? 'ارسال شده' :
+                           reservation?.status === 'Pending' || reservation?.status === '0' ? 'در حال ویرایش' :
+                           reservation?.status || '—'}
+                        </Badge>
+                      </div>
+                      <div className="text-[11px] text-neutral-600 dark:text-neutral-300">
+                        {reservation?.checkInDate && formatDateFa(reservation.checkInDate)} - {reservation?.checkOutDate && formatDateFa(reservation.checkOutDate)}
+                      </div>
+                      {reservation?.room?.number && (
+                        <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1">
+                          اتاق: {reservation.room.number}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {reservations.length > 5 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => router.push('/hotels/reservations')}
+                    >
+                      مشاهده همه رزروها ({faDigits(reservations.length)})
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <PiCalendar className="h-10 w-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">هیچ رزروی برای این هتل یافت نشد</p>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-500">
+                    می‌توانید با کلیک روی دکمه "شروع رزرو" یک رزرو جدید ایجاد کنید
+                  </p>
+                </div>
+              )}
+            </Card>
+          )}
+
           {/* Rooms */}
           <Card variant="default" radius="lg" padding="md">
             <div className="flex items-center justify-between mb-3">
@@ -510,15 +588,8 @@ export default function AccommodationDetailsPage({ params }: Props) {
 
           <Button
             className="flex-1"
-            onClick={() => {
-              toast({
-                title: 'به‌زودی',
-                description: 'رزرو آنلاین اقامتگاه در نسخه‌های بعدی فعال می‌شود ✅',
-                variant: 'info',
-              });
-            }}
+            onClick={() => router.push(`/hotels/${accommodationId}/reserve`)}
             leftIcon={<PiCheckCircle className="h-4 w-4" />}
-            disabled={!acc.hasAvailableRooms}
           >
             شروع رزرو
           </Button>
