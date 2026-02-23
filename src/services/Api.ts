@@ -123,6 +123,8 @@ export enum ReservationStatus {
   Canceled = "Canceled",
   Rejected = "Rejected",
   Expired = "Expired",
+  AwaitingBill = "AwaitingBill",
+  AwaitingMemberApproval = "AwaitingMemberApproval",
 }
 
 export enum PropertyAttributes {

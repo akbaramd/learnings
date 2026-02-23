@@ -110,14 +110,44 @@ function formatDateFa(date: string | null | undefined): string {
   }
 }
 
+/** Statuses that mean "waiting for backend" – show loading and poll every 3s */
+function isAwaitingStatus(status: string | null | undefined): boolean {
+  if (!status) return false;
+  const s = String(status).toLowerCase();
+  return (
+    s === 'awaitingbill' ||
+    s === 'awaitingmemberapproval' ||
+    s === '8' ||
+    s === '9'
+  );
+}
+
 function getStatusBadge(status: string | null | undefined) {
-  // Map enum values based on new workflow: Pending=0, Submitted=1, Confirmed=2, Paying=3, Paid=4, Canceled=5, Rejected=6, Expired=7
+  // برچسب‌های وضعیت با معنی روشن برای کاربر
   switch (status) {
+    case 'AwaitingMemberApproval': case 'awaitingmemberapproval':
+    case '9':
+      return {
+        icon: PiSpinner,
+        text: 'منتظر تأیید عضویت',
+        color: 'text-amber-600 dark:text-amber-400',
+        bg: 'bg-amber-100 dark:bg-amber-900/30',
+        border: 'border-amber-200 dark:border-amber-800',
+      };
+    case 'AwaitingBill': case 'awaitingbill':
+    case '8':
+      return {
+        icon: PiSpinner,
+        text: 'منتظر صدور فاکتور',
+        color: 'text-amber-600 dark:text-amber-400',
+        bg: 'bg-amber-100 dark:bg-amber-900/30',
+        border: 'border-amber-200 dark:border-amber-800',
+      };
     case 'Pending': case 'pending':
     case '0':
       return {
         icon: PiClock,
-        text: 'در حال ویرایش',
+        text: 'منتظر تکمیل',
         color: 'text-blue-600 dark:text-blue-400',
         bg: 'bg-blue-100 dark:bg-blue-900/30',
         border: 'border-blue-200 dark:border-blue-800',
@@ -126,7 +156,7 @@ function getStatusBadge(status: string | null | undefined) {
     case '1':
       return {
         icon: PiClock,
-        text: 'ارسال شده',
+        text: 'منتظر بررسی',
         color: 'text-yellow-600 dark:text-yellow-400',
         bg: 'bg-yellow-100 dark:bg-yellow-900/30',
         border: 'border-yellow-200 dark:border-yellow-800',
@@ -135,7 +165,7 @@ function getStatusBadge(status: string | null | undefined) {
     case '2':
       return {
         icon: PiCheckCircle,
-        text: 'تأیید شده',
+        text: 'آماده پرداخت',
         color: 'text-green-600 dark:text-green-400',
         bg: 'bg-green-100 dark:bg-green-900/30',
         border: 'border-green-200 dark:border-green-800',
@@ -144,7 +174,7 @@ function getStatusBadge(status: string | null | undefined) {
     case '3':
       return {
         icon: PiClock,
-        text: 'در حال پرداخت',
+        text: 'منتظر پرداخت',
         color: 'text-orange-600 dark:text-orange-400',
         bg: 'bg-orange-100 dark:bg-orange-900/30',
         border: 'border-orange-200 dark:border-orange-800',
@@ -153,7 +183,7 @@ function getStatusBadge(status: string | null | undefined) {
     case '4':
       return {
         icon: PiCheckCircle,
-        text: 'پرداخت شده',
+        text: 'تکمیل شده',
         color: 'text-green-600 dark:text-green-400',
         bg: 'bg-green-100 dark:bg-green-900/30',
         border: 'border-green-200 dark:border-green-800',
@@ -224,7 +254,7 @@ export default function ReservationDetailPage({ params }: Props) {
   const { toast } = useToast();
   const { reservationId } = use(params);
 
-  const { data: detailRes, isLoading: isLoadingDetail, refetch: refetchDetail } = useGetReservationDetailQuery(reservationId, {
+  const { data: detailRes, isLoading: isLoadingDetail, isFetching: isFetchingDetail, refetch: refetchDetail } = useGetReservationDetailQuery(reservationId, {
     skip: !reservationId,
   });
 
@@ -245,6 +275,17 @@ export default function ReservationDetailPage({ params }: Props) {
   const pricing = pricingRes?.data;
   const status = reservation?.status || null;
   const badge = getStatusBadge(status);
+  const awaitingStatus = isAwaitingStatus(status);
+
+  // When status is awaiting (e.g. AwaitingBill, AwaitingMemberApproval), poll detail every 3s to detect status change
+  useEffect(() => {
+    if (!reservationId || !awaitingStatus) return;
+    const interval = setInterval(() => {
+      refetchDetail();
+      refetchPricing();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [reservationId, awaitingStatus, refetchDetail, refetchPricing]);
   const StatusIcon = badge.icon;
 
   // Check if status allows adding/deleting guests
@@ -554,7 +595,7 @@ export default function ReservationDetailPage({ params }: Props) {
   };
 
   const handleRevert = async () => {
-    if (!confirm('آیا از بازگشت این رزرو به وضعیت در حال ویرایش اطمینان دارید؟')) {
+    if (!confirm('آیا از بازگشت این رزرو به وضعیت «منتظر تکمیل» اطمینان دارید؟')) {
       return;
     }
 
@@ -564,7 +605,7 @@ export default function ReservationDetailPage({ params }: Props) {
       if (result.isSuccess && result.data) {
         toast({
           title: 'موفق',
-          description: 'رزرو با موفقیت به وضعیت در حال ویرایش بازگشت. می‌توانید تغییرات لازم را اعمال کنید.',
+          description: 'رزرو با موفقیت به وضعیت «منتظر تکمیل» بازگشت. همراه‌ها را بررسی کنید و دوباره ارسال کنید.',
           variant: 'success',
         });
 
@@ -886,50 +927,73 @@ export default function ReservationDetailPage({ params }: Props) {
               {/* Status Badge with Description */}
               <div className="border-t border-subtle pt-3 mt-3">
                 <div className="flex flex-col gap-2">
-                  <div className={`px-3 py-1.5 rounded-lg ${badge.bg} ${badge.border} border inline-flex items-center gap-2 w-fit`}>
-                    <StatusIcon className={`h-4 w-4 ${badge.color}`} />
-                    <span className={`text-caption font-semibold ${badge.color}`}>{badge.text}</span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className={`px-3 py-1.5 rounded-lg ${badge.bg} ${badge.border} border inline-flex items-center gap-2 w-fit`}>
+                      <StatusIcon className={`h-4 w-4 shrink-0 ${badge.color} ${isAwaitingStatus(status) ? 'animate-spin' : ''}`} />
+                      <span className={`text-caption font-semibold ${badge.color}`}>{badge.text}</span>
+                    </div>
+                    {isAwaitingStatus(status) && (
+                      <span className="text-caption text-muted inline-flex items-center gap-1.5">
+                        {isFetchingDetail ? (
+                          <>
+                            <PiSpinner className="h-3.5 w-3.5 animate-spin" />
+                            در حال به‌روزرسانی...
+                          </>
+                        ) : (
+                          <>بررسی خودکار هر ۳ ثانیه</>
+                        )}
+                      </span>
+                    )}
                   </div>
-                  {status === 'Pending' || status === 'pending' || status === '0' ? (
-                    <span className="text-caption text-muted">
-                      در حال ویرایش: می‌توانید مهمان‌ها را اضافه یا حذف کنید. پس از تکمیل، روی "ارسال رزرو" کلیک کنید.
-                    </span>
+                  {/* توضیح راهنما زیر هر وضعیت */}
+                  {status === 'AwaitingMemberApproval' || status === 'awaitingmemberapproval' || status === '9' ? (
+                    <p className="text-caption text-muted">
+                      در حال بررسی اعتبار عضویت شما. لطفاً چند لحظه صبر کنید؛ وضعیت به‌طور خودکار به‌روز می‌شود.
+                    </p>
+                  ) : status === 'AwaitingBill' || status === 'awaitingbill' || status === '8' ? (
+                    <p className="text-caption text-muted">
+                      در حال صدور صورت‌حساب. لطفاً چند لحظه صبر کنید؛ پس از آماده شدن فاکتور می‌توانید پرداخت کنید.
+                    </p>
+                  ) : status === 'Pending' || status === 'pending' || status === '0' ? (
+                    <p className="text-caption text-muted">
+                      همراه‌های خود را اضافه کنید و پس از تکمیل روی «ارسال رزرو» کلیک کنید.
+                    </p>
                   ) : status === 'Submitted' || status === 'submitted' || status === '1' ? (
-                    <span className="text-caption text-muted">
-                      ارسال شده: رزرو شما در انتظار بررسی کارشناس است. پس از تأیید، می‌توانید پرداخت را انجام دهید.
-                    </span>
+                    <p className="text-caption text-muted">
+                      رزرو شما برای کارشناس ارسال شده است. پس از تأیید، می‌توانید پرداخت را انجام دهید.
+                    </p>
                   ) : status === 'Confirmed' || status === 'confirmed' || status === '2' ? (
-                    <span className="text-caption text-muted">
-                      تأیید شده: رزرو شما تأیید شده است. برای تکمیل رزرو، روی دکمه "پرداخت" کلیک کنید.
-                    </span>
+                    <p className="text-caption text-muted">
+                      رزرو شما تأیید شده است. برای تکمیل، روی دکمه «پرداخت» کلیک کنید.
+                    </p>
                   ) : status === 'Paying' || status === 'paying' || status === '3' ? (
-                    <span className="text-caption text-muted">
-                      در حال پرداخت: برای تکمیل پرداخت، روی دکمه زیر کلیک کنید. مهلت شما ۲۴ ساعت است.
-                    </span>
+                    <p className="text-caption text-muted">
+                      برای تکمیل پرداخت روی دکمه زیر کلیک کنید. مهلت شما ۲۴ ساعت است.
+                    </p>
                   ) : status === 'Paid' || status === 'paid' || status === '4' ? (
-                    <span className="text-caption text-muted">
-                      پرداخت شده: رزرو شما با موفقیت تکمیل شد. اطلاعات رزرو را در این صفحه مشاهده می‌کنید.
-                    </span>
+                    <p className="text-caption text-muted">
+                      رزرو شما با موفقیت تکمیل شد. اطلاعات رزرو را در این صفحه مشاهده می‌کنید.
+                    </p>
                   ) : status === 'Canceled' || status === 'canceled' || status === '5' ? (
-                    <span className="text-caption text-muted">
-                      لغو شده: این رزرو لغو شده است.
+                    <div className="text-caption text-muted space-y-1">
+                      <p>این رزرو لغو شده است.</p>
                       {reservation.cancellationReason && (
-                        <span className="block mt-1">دلیل لغو: {reservation.cancellationReason}</span>
+                        <p>دلیل لغو: {reservation.cancellationReason}</p>
                       )}
-                      <span className="block mt-2 text-xs">می‌توانید این رزرو را حذف کنید.</span>
-                    </span>
+                      <p className="text-xs">در صورت تمایل می‌توانید این رزرو را از لیست حذف کنید.</p>
+                    </div>
                   ) : status === 'Rejected' || status === 'rejected' || status === '6' ? (
-                    <span className="text-caption text-muted">
-                      رد شده: این رزرو رد شده است.
+                    <div className="text-caption text-muted space-y-1">
+                      <p>این رزرو رد شده است.</p>
                       {reservation.rejectionReason && (
-                        <span className="block mt-1">دلیل رد: {reservation.rejectionReason}</span>
+                        <p>دلیل رد: {reservation.rejectionReason}</p>
                       )}
-                      <span className="block mt-2 text-xs">می‌توانید این رزرو را حذف کنید.</span>
-                    </span>
+                      <p className="text-xs">در صورت تمایل می‌توانید این رزرو را از لیست حذف کنید.</p>
+                    </div>
                   ) : status === 'Expired' || status === 'expired' || status === '7' ? (
-                    <span className="text-caption text-muted">
-                      منقضی شده: مهلت پرداخت این رزرو به پایان رسیده است. برای رزرو مجدد، یک رزرو جدید ایجاد کنید.
-                    </span>
+                    <p className="text-caption text-muted">
+                      مهلت پرداخت این رزرو به پایان رسیده است. برای رزرو مجدد، یک رزرو جدید ایجاد کنید.
+                    </p>
                   ) : null}
                 </div>
               </div>
