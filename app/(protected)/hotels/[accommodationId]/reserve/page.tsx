@@ -9,7 +9,7 @@ import { Button } from '@/src/components/ui/Button';
 import { InputField } from '@/src/components/forms/InputField';
 import { ShamsiDateRangePicker } from '@/src/components/forms/ShamsiDateRangePicker';
 import { useToast } from '@/src/hooks/useToast';
-import { toJalaali } from 'jalaali-js';
+import { toJalaali, toGregorian } from 'jalaali-js';
 import {
   PiBuildingsDuotone,
   PiDoor,
@@ -29,6 +29,9 @@ import {
 } from '@/src/store/accommodations';
 import type { CreateReservationRequest } from '@/src/store/accommodations/accommodations.types';
 
+/** پیش‌فرض مبدا انتخاب تاریخ وقتی reservationStartDate نال است: ۲۵ اسفند ۱۴۰۴ */
+const DEFAULT_MIN_DATE_SHAMSI = { year: 1404, month: 12, day: 25 };
+
 type Props = {
   params: Promise<{ accommodationId: string }>;
 };
@@ -44,7 +47,24 @@ export default function ReservePage({ params }: Props) {
 
   const [createReservation, { isLoading: isSubmitting }] = useCreateReservationMutation();
 
+  // AccommodationDetailsDto from API
   const acc = detailRes?.data;
+
+  // مبدا انتخاب تاریخ: از reservationStartDate در AccommodationDetailsDto؛ اگر نال بود پیش‌فرض ۲۵ اسفند ۱۴۰۴
+  const minSelectableDate = useMemo((): string => {
+    const reservationStartDate = acc?.reservationStartDate;
+    if (!reservationStartDate) {
+      const g = toGregorian(DEFAULT_MIN_DATE_SHAMSI.year, DEFAULT_MIN_DATE_SHAMSI.month, DEFAULT_MIN_DATE_SHAMSI.day);
+      return `${g.gy}-${String(g.gm).padStart(2, '0')}-${String(g.gd).padStart(2, '0')}`;
+    }
+    const d = new Date(reservationStartDate);
+    if (isNaN(d.getTime())) {
+      const g = toGregorian(DEFAULT_MIN_DATE_SHAMSI.year, DEFAULT_MIN_DATE_SHAMSI.month, DEFAULT_MIN_DATE_SHAMSI.day);
+      return `${g.gy}-${String(g.gm).padStart(2, '0')}-${String(g.gd).padStart(2, '0')}`;
+    }
+    return d.toISOString().split('T')[0];
+  }, [acc?.reservationStartDate]);
+
   const activeRooms = useMemo(() => {
     if (!acc?.rooms) return [];
     return acc.rooms.filter((r: any) => r?.isActive && r?.canAccommodateGuests !== false);
@@ -219,11 +239,10 @@ export default function ReservePage({ params }: Props) {
     if (!formData.checkInDate) {
       newErrors.checkInDate = 'لطفاً تاریخ ورود را وارد کنید';
     } else {
-      const checkIn = new Date(formData.checkInDate);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (checkIn < today) {
-        newErrors.checkInDate = 'تاریخ ورود نمی‌تواند در گذشته باشد';
+      const checkIn = new Date(formData.checkInDate + 'T12:00:00');
+      const minDate = new Date(minSelectableDate + 'T12:00:00');
+      if (checkIn < minDate) {
+        newErrors.checkInDate = 'تاریخ ورود نمی‌تواند قبل از شروع امکان رزرو باشد';
       }
     }
 
@@ -458,11 +477,16 @@ export default function ReservePage({ params }: Props) {
                 handleChange('checkInDate', checkIn);
                 handleChange('checkOutDate', checkOut);
               }}
-              minDate={new Date().toISOString().split('T')[0]}
+              minDate={minSelectableDate}
               required
               disabled={isSubmitting}
               error={errors.checkInDate || errors.checkOutDate}
             />
+            {acc?.reservationStartDate && (
+              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                امکان رزرو از تاریخ {formatShamsiDate(minSelectableDate)}
+              </p>
+            )}
             {formData.roomId && formData.checkInDate && formData.checkOutDate && !isRoomAvailable && (
               <div className="mt-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
                 {overlappingUserReservation ? (

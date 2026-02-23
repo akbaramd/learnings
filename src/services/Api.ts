@@ -317,6 +317,9 @@ export interface AccommodationDetailsDto {
   isCancellable?: boolean;
   /** @format int32 */
   cancellableUntilHoursBeforeCheckIn?: number | null;
+  /** @format date-time */
+  reservationStartDate?: string | null;
+  reservationStartDateText?: string | null;
   primaryPhotoUrl?: string | null;
   /** @format double */
   lowestPriceRials?: number | null;
@@ -372,6 +375,9 @@ export interface AccommodationDto {
   isCancellable?: boolean;
   /** @format int32 */
   cancellableUntilHoursBeforeCheckIn?: number | null;
+  /** @format date-time */
+  reservationStartDate?: string | null;
+  reservationStartDateText?: string | null;
   primaryPhotoUrl?: string | null;
   /** @format double */
   lowestPriceRials?: number | null;
@@ -498,6 +504,126 @@ export interface AddressDto {
   cityName?: string | null;
   provinceName?: string | null;
   fullAddress?: string | null;
+}
+
+export interface AdminCancelReservationRequest {
+  reason?: string | null;
+}
+
+export interface AdminCancelReservationResult {
+  /** @format uuid */
+  reservationId?: string;
+  trackingCode?: string | null;
+  status?: string | null;
+  cancellationReason?: string | null;
+}
+
+export interface AdminCancelReservationResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: AdminCancelReservationResult;
+}
+
+export interface AdminCreateAccommodationRequest {
+  name?: string | null;
+  type?: string | null;
+  street?: string | null;
+  /** @format uuid */
+  provinceId?: string;
+  /** @format uuid */
+  cityId?: string;
+  /** @format double */
+  latitude?: number;
+  /** @format double */
+  longitude?: number;
+  postalCode?: string | null;
+  description?: string | null;
+  /** @format int32 */
+  maxGuests?: number | null;
+  isCancellable?: boolean;
+  /** @format int32 */
+  cancellableUntilHoursBeforeCheckIn?: number | null;
+}
+
+export interface AdminCreateRoomRequest {
+  roomType?: string | null;
+  number?: string | null;
+  /** @format int32 */
+  bedCount?: number;
+  /** @format int32 */
+  capacity?: number;
+  /** @format int32 */
+  floor?: number | null;
+  description?: string | null;
+}
+
+export interface AdminDeleteReservationResult {
+  /** @format uuid */
+  reservationId?: string;
+  trackingCode?: string | null;
+}
+
+export interface AdminDeleteReservationResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: AdminDeleteReservationResult;
+}
+
+export interface AdminRejectReservationRequest {
+  reason?: string | null;
+}
+
+export interface AdminSetRoomPriceRequest {
+  /** @format date-time */
+  startDate?: string;
+  /** @format date-time */
+  endDate?: string;
+  /** @format double */
+  price?: number;
+  pricingMatchType?: string | null;
+}
+
+export interface AdminUpdateAccommodationRequest {
+  name?: string | null;
+  street?: string | null;
+  /** @format uuid */
+  provinceId?: string;
+  /** @format uuid */
+  cityId?: string;
+  /** @format double */
+  latitude?: number;
+  /** @format double */
+  longitude?: number;
+  postalCode?: string | null;
+  description?: string | null;
+  /** @format int32 */
+  maxGuests?: number | null;
+  isCancellable?: boolean;
+  /** @format int32 */
+  cancellableUntilHoursBeforeCheckIn?: number | null;
+}
+
+export interface AdminUpdateReservationPriceRequest {
+  /** @format int64 */
+  newPriceRials?: number;
+  currency?: string | null;
+  adminNotes?: string | null;
+}
+
+export interface AdminUpdateRoomRequest {
+  roomType?: string | null;
+  number?: string | null;
+  /** @format int32 */
+  bedCount?: number;
+  /** @format int32 */
+  capacity?: number;
+  /** @format int32 */
+  floor?: number | null;
+  description?: string | null;
 }
 
 export interface AgencyDetailDto {
@@ -1139,12 +1265,6 @@ export interface CommandProgressDto {
   completionPercentage?: number;
 }
 
-export interface CompletePaymentCommand {
-  /** @format uuid */
-  paymentId?: string;
-  gatewayTransactionId?: string | null;
-}
-
 export interface CompletePaymentRequest {
   /** @format uuid */
   billId?: string;
@@ -1191,6 +1311,19 @@ export interface CooldownInfo {
   /** @format int32 */
   seconds?: number;
   message?: string | null;
+}
+
+export interface CreateAccommodationResult {
+  /** @format uuid */
+  id?: string;
+}
+
+export interface CreateAccommodationResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: CreateAccommodationResult;
 }
 
 export interface CreateAgencyRequest {
@@ -4257,6 +4390,28 @@ export interface RoomDtoListApplicationResult {
   data?: RoomDto[] | null;
 }
 
+export interface RoomPriceDto {
+  /** @format uuid */
+  id?: string;
+  /** @format double */
+  priceRials?: number;
+  currency?: string | null;
+  /** @format int32 */
+  priority?: number;
+  /** @format uuid */
+  accommodationId?: string;
+  /** @format uuid */
+  roomId?: string | null;
+}
+
+export interface RoomPriceDtoApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: RoomPriceDto;
+}
+
 export interface RoomSummaryDto {
   /** @format uuid */
   id?: string;
@@ -5434,6 +5589,21 @@ export interface UnreadCountResponseApplicationResult {
   data?: UnreadCountResponse;
 }
 
+export interface UpdateAccommodationResult {
+  /** @format uuid */
+  id?: string;
+  name?: string | null;
+  isActive?: boolean;
+}
+
+export interface UpdateAccommodationResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: UpdateAccommodationResult;
+}
+
 export interface UpdateAgencyRequest {
   /** @format uuid */
   id: string;
@@ -5473,11 +5643,47 @@ export interface UpdateAgencyRequest {
   establishedDate?: string | null;
 }
 
+export interface UpdateReservationPriceResult {
+  /** @format uuid */
+  reservationId?: string;
+  trackingCode?: string | null;
+  /** @format int64 */
+  newPriceRials?: number;
+  currency?: string | null;
+  status?: string | null;
+}
+
+export interface UpdateReservationPriceResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: UpdateReservationPriceResult;
+}
+
 export interface UpdateRoleRequest {
   name?: string | null;
   description?: string | null;
   /** @format int32 */
   displayOrder?: number;
+}
+
+export interface UpdateRoomResult {
+  /** @format uuid */
+  id?: string;
+  /** @format uuid */
+  accommodationId?: string;
+  number?: string | null;
+  roomType?: string | null;
+  isActive?: boolean;
+}
+
+export interface UpdateRoomResultApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: UpdateRoomResult;
 }
 
 export interface UpdateSettingCommand {
@@ -6253,6 +6459,724 @@ export class Api<
   SecurityDataType extends unknown,
 > extends HttpClient<SecurityDataType> {
   api = {
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Hotel Accommodations
+     * @name AdminGetAccommodationsPaginated
+     * @request GET:/api/v1/admin/hotels/accommodations
+     * @secure
+     */
+    adminGetAccommodationsPaginated: (
+      query?: {
+        /**
+         * @format int32
+         * @default 1
+         */
+        page?: number;
+        /**
+         * @format int32
+         * @default 10
+         */
+        pageSize?: number;
+        searchTerm?: string;
+        type?: AccommodationType;
+        isActive?: boolean;
+        /** @format uuid */
+        provinceId?: string;
+        /** @format uuid */
+        cityId?: string;
+        featureIds?: string[];
+        /** @format int64 */
+        minPriceRials?: number;
+        /** @format int64 */
+        maxPriceRials?: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        GetAccommodationsPaginatedResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/hotels/accommodations`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Hotel Accommodations
+     * @name AdminCreateAccommodation
+     * @request POST:/api/v1/admin/hotels/accommodations
+     * @secure
+     */
+    adminCreateAccommodation: (
+      data: AdminCreateAccommodationRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        CreateAccommodationResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/hotels/accommodations`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Hotel Accommodations
+     * @name AdminGetAccommodationDetails
+     * @request GET:/api/v1/admin/hotels/accommodations/{accommodationId}
+     * @secure
+     */
+    adminGetAccommodationDetails: (
+      accommodationId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        AccommodationDetailsDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/hotels/accommodations/${accommodationId}`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Hotel Accommodations
+     * @name AdminUpdateAccommodation
+     * @request PUT:/api/v1/admin/hotels/accommodations/{accommodationId}
+     * @secure
+     */
+    adminUpdateAccommodation: (
+      accommodationId: string,
+      data: AdminUpdateAccommodationRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        UpdateAccommodationResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/hotels/accommodations/${accommodationId}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Hotel Accommodations
+     * @name AdminActivateAccommodation
+     * @request POST:/api/v1/admin/hotels/accommodations/{accommodationId}/activate
+     * @secure
+     */
+    adminActivateAccommodation: (
+      accommodationId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/hotels/accommodations/${accommodationId}/activate`,
+        method: "POST",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Hotel Accommodations
+     * @name AdminDeactivateAccommodation
+     * @request POST:/api/v1/admin/hotels/accommodations/{accommodationId}/deactivate
+     * @secure
+     */
+    adminDeactivateAccommodation: (
+      accommodationId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/hotels/accommodations/${accommodationId}/deactivate`,
+        method: "POST",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Hotel Accommodations
+     * @name AdminGetAccommodationRooms
+     * @request GET:/api/v1/admin/hotels/accommodations/{accommodationId}/rooms
+     * @secure
+     */
+    adminGetAccommodationRooms: (
+      accommodationId: string,
+      query?: {
+        activeOnly?: boolean;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        RoomDtoListApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/hotels/accommodations/${accommodationId}/rooms`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Hotel Accommodations
+     * @name AdminCreateRoom
+     * @request POST:/api/v1/admin/hotels/accommodations/{accommodationId}/rooms
+     * @secure
+     */
+    adminCreateRoom: (
+      accommodationId: string,
+      data: AdminCreateRoomRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/hotels/accommodations/${accommodationId}/rooms`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Hotel Accommodations
+     * @name AdminUpdateRoom
+     * @request PUT:/api/v1/admin/hotels/accommodations/{accommodationId}/rooms/{roomId}
+     * @secure
+     */
+    adminUpdateRoom: (
+      accommodationId: string,
+      roomId: string,
+      data: AdminUpdateRoomRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        UpdateRoomResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/hotels/accommodations/${accommodationId}/rooms/${roomId}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Hotel Accommodations
+     * @name AdminActivateRoom
+     * @request POST:/api/v1/admin/hotels/accommodations/{accommodationId}/rooms/{roomId}/activate
+     * @secure
+     */
+    adminActivateRoom: (
+      accommodationId: string,
+      roomId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/hotels/accommodations/${accommodationId}/rooms/${roomId}/activate`,
+        method: "POST",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Hotel Accommodations
+     * @name AdminDeactivateRoom
+     * @request POST:/api/v1/admin/hotels/accommodations/{accommodationId}/rooms/{roomId}/deactivate
+     * @secure
+     */
+    adminDeactivateRoom: (
+      accommodationId: string,
+      roomId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/hotels/accommodations/${accommodationId}/rooms/${roomId}/deactivate`,
+        method: "POST",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Hotel Accommodations
+     * @name AdminSetRoomPricing
+     * @request POST:/api/v1/admin/hotels/accommodations/{accommodationId}/rooms/{roomId}/pricing
+     * @secure
+     */
+    adminSetRoomPricing: (
+      accommodationId: string,
+      roomId: string,
+      data: AdminSetRoomPriceRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        RoomPriceDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/hotels/accommodations/${accommodationId}/rooms/${roomId}/pricing`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Hotel Reservations
+     * @name AdminGetReservationsPaginated
+     * @request GET:/api/v1/admin/hotels/reservations
+     * @secure
+     */
+    adminGetReservationsPaginated: (
+      query?: {
+        /**
+         * @format int32
+         * @default 1
+         */
+        page?: number;
+        /**
+         * @format int32
+         * @default 10
+         */
+        pageSize?: number;
+        searchTerm?: string;
+        status?: ReservationStatus;
+        /** @format uuid */
+        accommodationId?: string;
+        /** @format uuid */
+        roomId?: string;
+        /** @format uuid */
+        externalUserId?: string;
+        /** @format date-time */
+        checkInDateFrom?: string;
+        /** @format date-time */
+        checkInDateTo?: string;
+        /** @format date-time */
+        checkOutDateFrom?: string;
+        /** @format date-time */
+        checkOutDateTo?: string;
+        /** @format date-time */
+        reservationDateFrom?: string;
+        /** @format date-time */
+        reservationDateTo?: string;
+        /** @format int64 */
+        minPriceRials?: number;
+        /** @format int64 */
+        maxPriceRials?: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        GetReservationsPaginatedResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/hotels/reservations`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Hotel Reservations
+     * @name AdminGetReservationDetails
+     * @request GET:/api/v1/admin/hotels/reservations/{reservationId}
+     * @secure
+     */
+    adminGetReservationDetails: (
+      reservationId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ReservationDetailsDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/hotels/reservations/${reservationId}`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Hotel Reservations
+     * @name AdminDeleteReservation
+     * @request DELETE:/api/v1/admin/hotels/reservations/{reservationId}
+     * @secure
+     */
+    adminDeleteReservation: (
+      reservationId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        AdminDeleteReservationResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/hotels/reservations/${reservationId}`,
+        method: "DELETE",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Hotel Reservations
+     * @name AdminConfirmReservation
+     * @request POST:/api/v1/admin/hotels/reservations/{reservationId}/confirm
+     * @secure
+     */
+    adminConfirmReservation: (
+      reservationId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ReservationDetailsDtoServiceResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/hotels/reservations/${reservationId}/confirm`,
+        method: "POST",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Hotel Reservations
+     * @name AdminRejectReservation
+     * @request POST:/api/v1/admin/hotels/reservations/{reservationId}/reject
+     * @secure
+     */
+    adminRejectReservation: (
+      reservationId: string,
+      data: AdminRejectReservationRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ReservationDetailsDtoServiceResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/hotels/reservations/${reservationId}/reject`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Hotel Reservations
+     * @name AdminUpdateReservationPrice
+     * @request POST:/api/v1/admin/hotels/reservations/{reservationId}/update-price
+     * @secure
+     */
+    adminUpdateReservationPrice: (
+      reservationId: string,
+      data: AdminUpdateReservationPriceRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        UpdateReservationPriceResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/hotels/reservations/${reservationId}/update-price`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Hotel Reservations
+     * @name AdminCancelReservation
+     * @request POST:/api/v1/admin/hotels/reservations/{reservationId}/cancel
+     * @secure
+     */
+    adminCancelReservation: (
+      reservationId: string,
+      data: AdminCancelReservationRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        AdminCancelReservationResultApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/hotels/reservations/${reservationId}/cancel`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Membership
+     * @name AdminGetMemberById
+     * @request GET:/api/v1/admin/membership/members/{memberId}
+     * @secure
+     */
+    adminGetMemberById: (memberId: string, params: RequestParams = {}) =>
+      this.request<
+        MemberDetailDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/membership/members/${memberId}`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Membership
+     * @name AdminGetMemberByExternalUserId
+     * @request GET:/api/v1/admin/membership/members/by-external-user/{externalUserId}
+     * @secure
+     */
+    adminGetMemberByExternalUserId: (
+      externalUserId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        MemberDetailDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/membership/members/by-external-user/${externalUserId}`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
     /**
      * @description 🌐 Sends an OTP (One-Time Password) code to the user's phone number for authentication purposes
      *
@@ -9276,36 +10200,6 @@ export class Api<
         path: `/api/v1/payments/gateways`,
         method: "GET",
         secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🌐 This endpoint is publicly accessible.
-     *
-     * @tags Payments
-     * @name CompletePayment
-     * @request POST:/api/v1/payments/complete
-     */
-    completePayment: (
-      data: CompletePaymentCommand,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        CreatePaymentResponseApplicationResult,
-        void | {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/v1/payments/complete`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
         format: "json",
         ...params,
       }),
