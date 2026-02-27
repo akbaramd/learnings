@@ -229,39 +229,7 @@ export default function AccommodationDetailsPage({ params }: Props) {
 
       <ScrollableArea className="flex-1" hideScrollbar>
         <div className="p-2 space-y-3 pb-20">
-          {/* ===================== Coming Soon / Developing Alert ===================== */}
-          <Card
-            variant="default"
-            radius="lg"
-            padding="md"
-            className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/10 border border-amber-200 dark:border-amber-800"
-          >
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 mt-0.5">
-                <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/40 grid place-items-center">
-                  <PiSparkle className="h-5 w-5 text-amber-700 dark:text-amber-300" />
-                </div>
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
-                  <p className="text-xs font-bold text-amber-900 dark:text-amber-100">
-                    این بخش در حال تکمیل است
-                  </p>
-                  <Badge className="bg-amber-200/70 text-amber-900 dark:bg-amber-800/40 dark:text-amber-100">
-                    به‌زودی
-                  </Badge>
-                </div>
-
-                <p className="text-[11px] text-amber-800 dark:text-amber-200 leading-relaxed">
-                  رزرو آنلاین، قیمت روز اتاق‌ها، تقویم موجودی و پرداخت در همین صفحه اضافه می‌شود.
-                  فعلاً می‌توانید <strong>جزئیات اقامتگاه</strong> و <strong>لیست اتاق‌ها</strong> را ببینید.
-                </p>
-
-               
-              </div>
-            </div>
-          </Card>
+   
 
           {/* HERO */}
           <Card variant="default" radius="lg" padding="none" className="overflow-hidden">

@@ -226,6 +226,22 @@ function getStatusBadge(status: string | null | undefined) {
   }
 }
 
+const DEFAULT_REASON_TEXT = 'توضیحاتی برای لغو این رزرو ثبت نشده است';
+
+/** For Canceled: show cancellationReason, else rejectionReason, else default. For Rejected: show rejectionReason, else cancellationReason, else default. */
+function getDisplayReason(
+  cancellationReason: string | null | undefined,
+  rejectionReason: string | null | undefined,
+  status: 'canceled' | 'rejected'
+): string {
+  if (status === 'canceled') {
+    const reason = cancellationReason?.trim() || rejectionReason?.trim();
+    return reason || DEFAULT_REASON_TEXT;
+  }
+  const reason = rejectionReason?.trim() || cancellationReason?.trim();
+  return reason || DEFAULT_REASON_TEXT;
+}
+
 function copyToClipboard(text: string, toast: (opts: { title: string; description: string; variant: 'success' | 'error'; duration: number }) => void) {
   if (!text) return;
   navigator.clipboard.writeText(text).then(() => {
@@ -977,17 +993,13 @@ export default function ReservationDetailPage({ params }: Props) {
                   ) : status === 'Canceled' || status === 'canceled' || status === '5' ? (
                     <div className="text-caption text-muted space-y-1">
                       <p>این رزرو لغو شده است.</p>
-                      {reservation.cancellationReason && (
-                        <p>دلیل لغو: {reservation.cancellationReason}</p>
-                      )}
+                      <p>دلیل: {getDisplayReason(reservation.cancellationReason, reservation.rejectionReason, 'canceled')}</p>
                       <p className="text-xs">در صورت تمایل می‌توانید این رزرو را از لیست حذف کنید.</p>
                     </div>
                   ) : status === 'Rejected' || status === 'rejected' || status === '6' ? (
                     <div className="text-caption text-muted space-y-1">
                       <p>این رزرو رد شده است.</p>
-                      {reservation.rejectionReason && (
-                        <p>دلیل رد: {reservation.rejectionReason}</p>
-                      )}
+                      <p>دلیل: {getDisplayReason(reservation.cancellationReason, reservation.rejectionReason, 'rejected')}</p>
                       <p className="text-xs">در صورت تمایل می‌توانید این رزرو را از لیست حذف کنید.</p>
                     </div>
                   ) : status === 'Expired' || status === 'expired' || status === '7' ? (

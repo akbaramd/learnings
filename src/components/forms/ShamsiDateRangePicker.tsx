@@ -12,6 +12,7 @@ export interface ShamsiDateRangePickerProps {
   checkOutDate?: string; // Gregorian date in YYYY-MM-DD format
   onChange?: (checkIn: string, checkOut: string) => void;
   minDate?: string; // Gregorian date in YYYY-MM-DD format
+  maxNights?: number; // Maximum allowed nights (e.g. 2)
   disabled?: boolean;
   required?: boolean;
   error?: string;
@@ -87,6 +88,7 @@ export const ShamsiDateRangePicker: React.FC<ShamsiDateRangePickerProps> = ({
   checkOutDate,
   onChange,
   minDate,
+  maxNights,
   disabled = false,
   required = false,
   error,
@@ -433,7 +435,8 @@ export const ShamsiDateRangePicker: React.FC<ShamsiDateRangePickerProps> = ({
     return checkOut > checkIn;
   }, [tempCheckIn, tempCheckOut]);
 
-  const canConfirm = tempCheckIn && tempCheckOut && nights > 0 && isValidDateRange;
+  const exceedsMaxNights = maxNights != null && nights > maxNights;
+  const canConfirm = tempCheckIn && tempCheckOut && nights > 0 && isValidDateRange && !exceedsMaxNights;
 
   return (
     <>
@@ -645,32 +648,102 @@ export const ShamsiDateRangePicker: React.FC<ShamsiDateRangePickerProps> = ({
 
               {/* Nights Summary - Clear and Prominent */}
               {tempCheckIn && tempCheckOut && nights > 0 && (
-                <div className="mb-6 p-4 border-2 border-emerald-500 dark:border-emerald-400 rounded-md bg-emerald-50 dark:bg-emerald-900/20">
+                <div
+                  className={[
+                    'mb-4 p-4 border-2 rounded-md',
+                    exceedsMaxNights
+                      ? 'border-red-500 dark:border-red-400 bg-red-50 dark:bg-red-900/20'
+                      : 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20',
+                  ].join(' ')}
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-md bg-emerald-600 dark:bg-emerald-500 flex items-center justify-center shadow-sm">
+                      <div
+                        className={[
+                          'w-12 h-12 rounded-md flex items-center justify-center shadow-sm',
+                          exceedsMaxNights
+                            ? 'bg-red-600 dark:bg-red-500'
+                            : 'bg-emerald-600 dark:bg-emerald-500',
+                        ].join(' ')}
+                      >
                         <span className="text-xl font-bold text-white">{nights}</span>
                       </div>
                       <div>
-                        <div className="text-xs text-emerald-700 dark:text-emerald-300 font-medium mb-0.5">
+                        <div
+                          className={[
+                            'text-xs font-medium mb-0.5',
+                            exceedsMaxNights
+                              ? 'text-red-700 dark:text-red-300'
+                              : 'text-emerald-700 dark:text-emerald-300',
+                          ].join(' ')}
+                        >
                           مدت اقامت
                         </div>
-                        <div className="text-lg font-bold text-emerald-900 dark:text-emerald-100">
-                          {nights} {nights === 1 ? 'شب' : 'شب'}
+                        <div
+                          className={[
+                            'text-lg font-bold',
+                            exceedsMaxNights
+                              ? 'text-red-900 dark:text-red-100'
+                              : 'text-emerald-900 dark:text-emerald-100',
+                          ].join(' ')}
+                        >
+                          {nights} شب
                         </div>
                       </div>
                     </div>
                     <div className="text-left">
-                      <div className="text-xs text-emerald-600 dark:text-emerald-400 mb-1">از</div>
-                      <div className="text-xs font-semibold text-emerald-900 dark:text-emerald-100">
-                        {tempCheckIn && formatShamsiDate(tempCheckIn.year, tempCheckIn.month, tempCheckIn.day)}
+                      <div
+                        className={[
+                          'text-xs mb-1',
+                          exceedsMaxNights
+                            ? 'text-red-600 dark:text-red-400'
+                            : 'text-emerald-600 dark:text-emerald-400',
+                        ].join(' ')}
+                      >
+                        از
                       </div>
-                      <div className="text-xs text-emerald-600 dark:text-emerald-400 my-1">تا</div>
-                      <div className="text-xs font-semibold text-emerald-900 dark:text-emerald-100">
-                        {tempCheckOut && formatShamsiDate(tempCheckOut.year, tempCheckOut.month, tempCheckOut.day)}
+                      <div
+                        className={[
+                          'text-xs font-semibold',
+                          exceedsMaxNights
+                            ? 'text-red-900 dark:text-red-100'
+                            : 'text-emerald-900 dark:text-emerald-100',
+                        ].join(' ')}
+                      >
+                        {formatShamsiDate(tempCheckIn.year, tempCheckIn.month, tempCheckIn.day)}
+                      </div>
+                      <div
+                        className={[
+                          'text-xs my-1',
+                          exceedsMaxNights
+                            ? 'text-red-600 dark:text-red-400'
+                            : 'text-emerald-600 dark:text-emerald-400',
+                        ].join(' ')}
+                      >
+                        تا
+                      </div>
+                      <div
+                        className={[
+                          'text-xs font-semibold',
+                          exceedsMaxNights
+                            ? 'text-red-900 dark:text-red-100'
+                            : 'text-emerald-900 dark:text-emerald-100',
+                        ].join(' ')}
+                      >
+                        {formatShamsiDate(tempCheckOut.year, tempCheckOut.month, tempCheckOut.day)}
                       </div>
                     </div>
                   </div>
+
+                  {/* Over-limit error banner */}
+                  {exceedsMaxNights && (
+                    <div className="mt-3 pt-3 border-t border-red-200 dark:border-red-700 flex items-start gap-2">
+                      <span className="text-red-500 dark:text-red-400 text-base leading-none mt-0.5 flex-shrink-0">⚠️</span>
+                      <p className="text-xs font-semibold text-red-700 dark:text-red-300">
+                        حداکثر مدت اقامت {maxNights} شب است. لطفاً تاریخ خروج را تغییر دهید.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 

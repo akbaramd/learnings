@@ -213,10 +213,27 @@ export default function ReservePage({ params }: Props) {
         const checkIn = new Date(value);
         if (prev.checkOutDate) {
           const checkOut = new Date(prev.checkOutDate);
-          // If check-out is before or equal to new check-in, clear it
           if (checkOut <= checkIn) {
             updated.checkOutDate = '';
+          } else {
+            const nights = Math.round((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+            if (nights > 2) {
+              const maxCheckOut = new Date(checkIn);
+              maxCheckOut.setDate(maxCheckOut.getDate() + 2);
+              updated.checkOutDate = maxCheckOut.toISOString().split('T')[0];
+            }
           }
+        }
+      }
+      // If check-out date changed, enforce 2-night max
+      if (field === 'checkOutDate' && typeof value === 'string' && value && prev.checkInDate) {
+        const checkIn = new Date(prev.checkInDate);
+        const checkOut = new Date(value);
+        const nights = Math.round((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+        if (nights > 2) {
+          const maxCheckOut = new Date(checkIn);
+          maxCheckOut.setDate(maxCheckOut.getDate() + 2);
+          updated.checkOutDate = maxCheckOut.toISOString().split('T')[0];
         }
       }
       
@@ -253,6 +270,11 @@ export default function ReservePage({ params }: Props) {
       const checkOut = new Date(formData.checkOutDate);
       if (checkOut <= checkIn) {
         newErrors.checkOutDate = 'تاریخ خروج باید بعد از تاریخ ورود باشد';
+      } else {
+        const nights = Math.round((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+        if (nights > 2) {
+          newErrors.checkOutDate = 'حداکثر مدت اقامت ۲ شب می‌باشد';
+        }
       }
     }
 
@@ -333,6 +355,9 @@ export default function ReservePage({ params }: Props) {
   const selectedRoom = activeRooms.find((r: any) => r?.id === formData.roomId);
   const minCheckOutDate = formData.checkInDate
     ? new Date(new Date(formData.checkInDate).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    : '';
+  const maxCheckOutDate = formData.checkInDate
+    ? new Date(new Date(formData.checkInDate).getTime() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     : '';
 
   // Convert Gregorian date to Shamsi for display
@@ -469,6 +494,9 @@ export default function ReservePage({ params }: Props) {
 
           {/* Date Range */}
           <Card variant="default" radius="lg" padding="md">
+            <p className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2 mb-3">
+              ⚠️ حداکثر مدت اقامت ۲ شب می‌باشد
+            </p>
             <ShamsiDateRangePicker
               label="تاریخ ورود و خروج"
               checkInDate={formData.checkInDate}
@@ -478,6 +506,7 @@ export default function ReservePage({ params }: Props) {
                 handleChange('checkOutDate', checkOut);
               }}
               minDate={minSelectableDate}
+              maxNights={2}
               required
               disabled={isSubmitting}
               error={errors.checkInDate || errors.checkOutDate}

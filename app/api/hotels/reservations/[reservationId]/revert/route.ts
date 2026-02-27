@@ -29,6 +29,7 @@ export async function POST(
 
     // Transform ReservationDetailsDtoServiceResult to ApplicationResult format
     const serviceResult = upstream.data;
+    console.log('serviceResult', serviceResult);
     const response: GetReservationDetailResponse = {
       isSuccess: !!serviceResult?.isSuccess && !!serviceResult?.value,
       message: serviceResult?.message || 'Reservation reverted successfully',
