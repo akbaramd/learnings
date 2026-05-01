@@ -1326,42 +1326,6 @@ export interface CreateAccommodationResultApplicationResult {
   data?: CreateAccommodationResult;
 }
 
-export interface CreateAgencyRequest {
-  /**
-   * @minLength 2
-   * @maxLength 50
-   */
-  code: string;
-  /**
-   * @minLength 2
-   * @maxLength 50
-   */
-  externalCode: string;
-  /**
-   * @minLength 2
-   * @maxLength 200
-   */
-  name: string;
-  /**
-   * @minLength 5
-   * @maxLength 500
-   */
-  address: string;
-  /**
-   * @minLength 0
-   * @maxLength 100
-   */
-  managerName?: string | null;
-  /**
-   * @format tel
-   * @minLength 0
-   * @maxLength 20
-   */
-  managerPhone?: string | null;
-  /** @format date-time */
-  establishedDate?: string | null;
-}
-
 export interface CreateCategoryCommand {
   name?: string | null;
   description?: string | null;
@@ -2880,6 +2844,53 @@ export interface NotificationDtoPaginatedResultApplicationResult {
   message?: string | null;
   errors?: string[] | null;
   data?: NotificationDtoPaginatedResult;
+}
+
+export interface OAuthLoginWithTokenCommand {
+  oidcAccessToken?: string | null;
+  oidcRefreshToken?: string | null;
+  oidcIdToken?: string | null;
+  externalUserId?: string | null;
+  deviceId?: string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  scope?: string | null;
+  provider?: string | null;
+}
+
+export interface OAuthLoginWithTokenResponse {
+  accessToken?: string | null;
+  refreshToken?: string | null;
+  /** @format int32 */
+  expiryMinutes?: number;
+  tokenType?: string | null;
+  /** @format uuid */
+  userId?: string;
+  externalId?: string | null;
+  userName?: string | null;
+  fullName?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
+  phoneNumber?: string | null;
+  nationalCode?: string | null;
+  membershipNumber?: string | null;
+  isEngineer?: boolean;
+  roles?: string[] | null;
+  /** @format date-time */
+  lastSyncedAt?: string;
+  isNewUser?: boolean;
+  isProfileComplete?: boolean;
+  deviceId?: string | null;
+  provider?: string | null;
+}
+
+export interface OAuthLoginWithTokenResponseApplicationResult {
+  isSuccess?: boolean;
+  status?: ResultStatus;
+  message?: string | null;
+  errors?: string[] | null;
+  data?: OAuthLoginWithTokenResponse;
 }
 
 export interface PaginationInfo {
@@ -5604,45 +5615,6 @@ export interface UpdateAccommodationResultApplicationResult {
   data?: UpdateAccommodationResult;
 }
 
-export interface UpdateAgencyRequest {
-  /** @format uuid */
-  id: string;
-  /**
-   * @minLength 2
-   * @maxLength 50
-   */
-  code: string;
-  /**
-   * @minLength 2
-   * @maxLength 50
-   */
-  externalCode: string;
-  /**
-   * @minLength 2
-   * @maxLength 200
-   */
-  name: string;
-  /**
-   * @minLength 5
-   * @maxLength 500
-   */
-  address: string;
-  /**
-   * @minLength 0
-   * @maxLength 100
-   */
-  managerName?: string | null;
-  /**
-   * @format tel
-   * @minLength 0
-   * @maxLength 20
-   */
-  managerPhone?: string | null;
-  isActive?: boolean;
-  /** @format date-time */
-  establishedDate?: string | null;
-}
-
 export interface UpdateReservationPriceResult {
   /** @format uuid */
   reservationId?: string;
@@ -7226,6 +7198,38 @@ export class Api<
         }
       >({
         path: `/api/v1/auth/otp/verify`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🌐 Handles OAuth/OIDC login when client already has tokens from external provider. Validates access token via userinfo endpoint, finds/creates local user by NationalCode, assigns roles, and issues system tokens (JWT access + refresh).
+     *
+     * @tags Authentication
+     * @name OAuthLoginWithToken
+     * @summary OAuth Login with External Token
+     * @request POST:/api/v1/auth/oauth/login-with-token
+     */
+    oAuthLoginWithToken: (
+      data: OAuthLoginWithTokenCommand,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        OAuthLoginWithTokenResponseApplicationResult,
+        | OAuthLoginWithTokenResponseApplicationResult
+        | {
+            /** @example "internal_server_error" */
+            error?: string;
+            /** @example "خطای داخلی سرور رخ داده است" */
+            message?: string;
+            /** @format date-time */
+            timestamp?: string;
+          }
+      >({
+        path: `/api/v1/auth/oauth/login-with-token`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -10201,233 +10205,6 @@ export class Api<
         method: "GET",
         secure: true,
         format: "json",
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Representative Offices
-     * @name GetActiveOffices
-     * @summary Get all active representative offices
-     * @request GET:/api/representative-offices
-     * @secure
-     */
-    getActiveOffices: (params: RequestParams = {}) =>
-      this.request<
-        void,
-        {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/representative-offices`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Representative Offices
-     * @name CreateOffice
-     * @summary Create a new representative office
-     * @request POST:/api/representative-offices
-     * @secure
-     */
-    createOffice: (data: CreateAgencyRequest, params: RequestParams = {}) =>
-      this.request<
-        void,
-        {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/representative-offices`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Representative Offices
-     * @name GetAllOffices
-     * @summary Get all representative offices (including inactive)
-     * @request GET:/api/representative-offices/all
-     * @secure
-     */
-    getAllOffices: (params: RequestParams = {}) =>
-      this.request<
-        void,
-        {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/representative-offices/all`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Representative Offices
-     * @name GetOfficeById
-     * @summary Get representative office by ID
-     * @request GET:/api/representative-offices/{id}
-     * @secure
-     */
-    getOfficeById: (id: string, params: RequestParams = {}) =>
-      this.request<
-        void,
-        {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/representative-offices/${id}`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Representative Offices
-     * @name UpdateOffice
-     * @summary Update an existing representative office
-     * @request PUT:/api/representative-offices/{id}
-     * @secure
-     */
-    updateOffice: (
-      id: string,
-      data: UpdateAgencyRequest,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        void,
-        {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/representative-offices/${id}`,
-        method: "PUT",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Representative Offices
-     * @name DeleteOffice
-     * @summary Delete a representative office
-     * @request DELETE:/api/representative-offices/{id}
-     * @secure
-     */
-    deleteOffice: (id: string, params: RequestParams = {}) =>
-      this.request<
-        void,
-        {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/representative-offices/${id}`,
-        method: "DELETE",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Representative Offices
-     * @name GetOfficeByCode
-     * @summary Get representative office by code
-     * @request GET:/api/representative-offices/by-code/{code}
-     * @secure
-     */
-    getOfficeByCode: (code: string, params: RequestParams = {}) =>
-      this.request<
-        void,
-        {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/representative-offices/by-code/${code}`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * @description 🔒 This endpoint requires authentication.
-     *
-     * @tags Representative Offices
-     * @name GetOfficeByExternalCode
-     * @summary Get representative office by external code
-     * @request GET:/api/representative-offices/by-external-code/{externalCode}
-     * @secure
-     */
-    getOfficeByExternalCode: (
-      externalCode: string,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        void,
-        {
-          /** @example "internal_server_error" */
-          error?: string;
-          /** @example "خطای داخلی سرور رخ داده است" */
-          message?: string;
-          /** @format date-time */
-          timestamp?: string;
-        }
-      >({
-        path: `/api/representative-offices/by-external-code/${externalCode}`,
-        method: "GET",
-        secure: true,
         ...params,
       }),
 
