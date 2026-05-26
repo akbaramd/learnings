@@ -6,12 +6,21 @@ import { createApiInstance } from '@/app/api/generatedClient';
 import { getRequestInfo } from '@/src/lib/requestInfo';
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-
+import CredentialsProvider from "next-auth/providers/credentials";
+import { CredentialsSignin } from "next-auth";
 // CRITICAL: Set runtime to nodejs for NextAuth
 // This ensures NextAuth can use Node.js APIs (crypto, etc.)
 // and prevents issues with session endpoint
 export const runtime = 'nodejs';
 
+class DejbanAuthError extends CredentialsSignin {
+    constructor(message: string) {
+        super();
+        this.message = message;
+        // کدی برای شناسایی دقیق‌تر خطا در سمت کلاینت
+        this.code = "custom_dejban_error";
+    }
+}
 // 🔥 CRITICAL: Temporary storage for refresh tokens during token rotation
 // In NextAuth v5, cookies().set() in authorize callback may not work
 // We use this Map to temporarily store refresh tokens and set them in response headers
@@ -116,7 +125,7 @@ async function refreshAccessToken(refreshToken: string): Promise<{
     try {
       // Create a minimal request for API instance
       // We need this to call the upstream API
-      const baseUrl = process.env.UPSTREAM_API_BASE_URL || 'https://auth.wa-nezam.org';
+      const baseUrl = process.env.UPSTREAM_API_BASE_URL || 'http://localhost:5000';
       const req = new NextRequest(baseUrl, {
         method: 'POST',
         headers: {
@@ -772,6 +781,98 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       },
     }),
+
+      CredentialsProvider({
+          id: "dejban",
+          name: "Dejban Auth",
+          credentials: {
+              code: { label: "Authorization Code", type: "text" },
+              codeVerifier: { label: "Code Verifier", type: "text" },
+              redirectUri: { label: "Redirect URI", type: "text" },
+              deviceId: { label: "Device ID", type: "text" },
+              ipAddress: { label: "IP Address", type: "text" },
+              userAgent: { label: "User Agent", type: "text" },
+              scope: { label: "Scope", type: "text" },
+              provider: { label: "Provider", type: "text" }
+          },
+          async authorize(credentials, req) {
+              if (!credentials) {
+                  throw new DejbanAuthError("داده‌های احراز هویت به طرز عجیبی مفقود شده‌اند.");
+              }
+
+              if (!credentials.code) {
+                  throw new DejbanAuthError("ارائه کد تایید الزامی است.");
+              }
+              if (!credentials.codeVerifier) {
+                  throw new DejbanAuthError("ارائه تاییدکننده کد الزامی است.");
+              }
+              if (!credentials.redirectUri) {
+                  throw new DejbanAuthError("آدرس بازگشت الزامی است.");
+              }
+
+              try {
+                  // نکته ظریف: req در اینجا یک آبجکت استاندارد Request از Web API است.
+                  // اگر createApiInstance شما انتظار آبجکت‌های قدیمی Next.js را دارد، اینجا همان نقطه‌ی فروپاشی است.
+                  const api = createApiInstance(req  as NextRequest);
+
+                  const payload = {
+                      code: String(credentials.code),
+                      codeVerifier: String(credentials.codeVerifier),
+                      redirectUri: String(credentials.redirectUri),
+                      deviceId: credentials.deviceId ? String(credentials.deviceId) : "unknown-device",
+                      ipAddress: credentials.ipAddress ? String(credentials.ipAddress) : null,
+                      userAgent: credentials.userAgent ? String(credentials.userAgent) : null,
+                      scope: credentials.scope ? String(credentials.scope) : "app",
+                      provider: credentials.provider ? String(credentials.provider) : "Dejban",
+                  };
+
+                  const response = await api.api.oAuthLoginWithToken(payload);
+                  console.log(response)
+                  const responseData = response?.data;
+
+                  if (response?.status === 200 && responseData?.isSuccess && responseData?.data) {
+                      const userData = responseData.data;
+
+                      if (!userData.accessToken || !userData.userId) {
+                          throw new DejbanAuthError("پاسخ سرور، با وجود اعلام موفقیت، فاقد توکن‌های حیاتی است.");
+                      }
+
+                      return {
+                          id: String(userData.userId),
+                          name: userData.userName ? String(userData.userName) : "کاربر سامانه",
+                          accessToken: String(userData.accessToken),
+                          refreshToken: userData.refreshToken ? String(userData.refreshToken) : undefined,
+                          isProfileComplete: Boolean(userData.isProfileComplete),
+                      };
+                  }
+
+                  throw new DejbanAuthError(responseData?.message || "ورود با شکست مواجه شد و سرور تمایلی به ارائه دلیل نداشت.");
+
+              } catch (error: unknown) {
+                  let errorMessage = "خطای غیرمنتظره در ارتباط با سرور احراز هویت رخ داد.";
+
+                  // مدیریت هوشمندانه‌تر خطاها بدون استفاده از any
+                  if (error instanceof DejbanAuthError) {
+                      // اگر خطا را خودمان پرتاب کرده‌ایم، مستقیما همان را به بیرون بفرست
+                      throw error;
+                  }
+
+                  if (typeof error === "object" && error !== null) {
+                      const axiosError = error as { response?: { data?: { message?: string } } };
+                      if (axiosError.response?.data?.message) {
+                          errorMessage = axiosError.response.data.message;
+                      } else if (error instanceof Error && error.message) {
+                          errorMessage = error.message;
+                      }
+                  }
+
+                  console.error("[NextAuth Dejban] Authorization Exception: " + errorMessage);
+                  throw new DejbanAuthError(errorMessage);
+              }
+          }
+      })
+
+
   ],
 
   callbacks: {

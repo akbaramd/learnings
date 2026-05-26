@@ -108,6 +108,7 @@ export function createApiInstance(req: NextRequest) {
     const url = config.url || '';
     const isAuthEndpoint = 
       url.includes('/api/v1/auth/otp') || // sendOtp or verifyOtp
+      url.includes('/api/v1/auth/oauth/login-with-token') || // sendOtp or verifyOtp
       url.includes('/api/v1/auth/refresh'); // refreshToken
     
     // 🔥 STANDARD: Only add Bearer token if NOT an auth endpoint

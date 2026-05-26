@@ -506,6 +506,14 @@ export interface AddressDto {
   fullAddress?: string | null;
 }
 
+export interface AdminAssignCapabilityRequest {
+  capabilityKey?: string | null;
+}
+
+export interface AdminAssignFeatureRequest {
+  featureKey?: string | null;
+}
+
 export interface AdminCancelReservationRequest {
   reason?: string | null;
 }
@@ -575,6 +583,18 @@ export interface AdminDeleteReservationResultApplicationResult {
 
 export interface AdminRejectReservationRequest {
   reason?: string | null;
+}
+
+export interface AdminRemoveCapabilityRequest {
+  capabilityKey?: string | null;
+}
+
+export interface AdminRemoveFeatureRequest {
+  featureKey?: string | null;
+}
+
+export interface AdminSetMemberAgenciesRequest {
+  agencyIds?: string[] | null;
 }
 
 export interface AdminSetRoomPriceRequest {
@@ -2846,15 +2866,13 @@ export interface NotificationDtoPaginatedResultApplicationResult {
   data?: NotificationDtoPaginatedResult;
 }
 
-export interface OAuthLoginWithTokenCommand {
-  oidcAccessToken?: string | null;
-  oidcRefreshToken?: string | null;
-  oidcIdToken?: string | null;
-  externalUserId?: string | null;
+export interface OAuthLoginWithCodeCommand {
+  code?: string | null;
+  redirectUri?: string | null;
+  codeVerifier?: string | null;
   deviceId?: string | null;
-  ipAddress?: string | null;
   userAgent?: string | null;
-  scope?: string | null;
+  ipAddress?: string | null;
   provider?: string | null;
 }
 
@@ -7096,13 +7114,21 @@ export class Api<
      * @description 🔒 This endpoint requires authentication.
      *
      * @tags Admin - Membership
-     * @name AdminGetMemberById
-     * @request GET:/api/v1/admin/membership/members/{memberId}
+     * @name AdminListMembers
+     * @request GET:/api/v1/admin/membership/members
      * @secure
      */
-    adminGetMemberById: (memberId: string, params: RequestParams = {}) =>
+    adminListMembers: (
+      query: {
+        /** @format int32 */
+        pageNumber: number;
+        /** @format int32 */
+        pageSize: number;
+      },
+      params: RequestParams = {},
+    ) =>
       this.request<
-        MemberDetailDtoApplicationResult,
+        void,
         void | {
           /** @example "internal_server_error" */
           error?: string;
@@ -7112,10 +7138,10 @@ export class Api<
           timestamp?: string;
         }
       >({
-        path: `/api/v1/admin/membership/members/${memberId}`,
+        path: `/api/v1/admin/membership/members`,
         method: "GET",
+        query: query,
         secure: true,
-        format: "json",
         ...params,
       }),
 
@@ -7146,6 +7172,303 @@ export class Api<
         method: "GET",
         secure: true,
         format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Membership
+     * @name AdminGetMemberById
+     * @request GET:/api/v1/admin/membership/members/{memberId}
+     * @secure
+     */
+    adminGetMemberById: (memberId: string, params: RequestParams = {}) =>
+      this.request<
+        MemberDetailDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/membership/members/${memberId}`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Membership
+     * @name AdminAssignMemberCapability
+     * @request POST:/api/v1/admin/membership/members/{memberId}/capabilities/assign
+     * @secure
+     */
+    adminAssignMemberCapability: (
+      memberId: string,
+      data: AdminAssignCapabilityRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        MemberDetailDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/membership/members/${memberId}/capabilities/assign`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Membership
+     * @name AdminRemoveMemberCapability
+     * @request POST:/api/v1/admin/membership/members/{memberId}/capabilities/remove
+     * @secure
+     */
+    adminRemoveMemberCapability: (
+      memberId: string,
+      data: AdminRemoveCapabilityRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        MemberDetailDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/membership/members/${memberId}/capabilities/remove`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Membership
+     * @name AdminAssignMemberFeature
+     * @request POST:/api/v1/admin/membership/members/{memberId}/features/assign
+     * @secure
+     */
+    adminAssignMemberFeature: (
+      memberId: string,
+      data: AdminAssignFeatureRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        MemberDetailDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/membership/members/${memberId}/features/assign`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Membership
+     * @name AdminRemoveMemberFeature
+     * @request POST:/api/v1/admin/membership/members/{memberId}/features/remove
+     * @secure
+     */
+    adminRemoveMemberFeature: (
+      memberId: string,
+      data: AdminRemoveFeatureRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        MemberDetailDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/membership/members/${memberId}/features/remove`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Membership
+     * @name AdminSetMemberAgencies
+     * @request PUT:/api/v1/admin/membership/members/{memberId}/agencies
+     * @secure
+     */
+    adminSetMemberAgencies: (
+      memberId: string,
+      data: AdminSetMemberAgenciesRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        MemberDetailDtoApplicationResult,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/membership/members/${memberId}/agencies`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Membership
+     * @name AdminListAgencyDefinitions
+     * @request GET:/api/v1/admin/membership/definitions/agencies
+     * @secure
+     */
+    adminListAgencyDefinitions: (
+      query: {
+        /** @format int32 */
+        pageNumber: number;
+        /** @format int32 */
+        pageSize: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        void,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/membership/definitions/agencies`,
+        method: "GET",
+        query: query,
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Membership
+     * @name AdminListCapabilityDefinitions
+     * @request GET:/api/v1/admin/membership/definitions/capabilities
+     * @secure
+     */
+    adminListCapabilityDefinitions: (
+      query: {
+        /** @format int32 */
+        pageNumber: number;
+        /** @format int32 */
+        pageSize: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        void,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/membership/definitions/capabilities`,
+        method: "GET",
+        query: query,
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description 🔒 This endpoint requires authentication.
+     *
+     * @tags Admin - Membership
+     * @name AdminListFeatureDefinitions
+     * @request GET:/api/v1/admin/membership/definitions/features
+     * @secure
+     */
+    adminListFeatureDefinitions: (
+      query: {
+        /** @format int32 */
+        pageNumber: number;
+        /** @format int32 */
+        pageSize: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        void,
+        void | {
+          /** @example "internal_server_error" */
+          error?: string;
+          /** @example "خطای داخلی سرور رخ داده است" */
+          message?: string;
+          /** @format date-time */
+          timestamp?: string;
+        }
+      >({
+        path: `/api/v1/admin/membership/definitions/features`,
+        method: "GET",
+        query: query,
+        secure: true,
         ...params,
       }),
 
@@ -7214,7 +7537,7 @@ export class Api<
      * @request POST:/api/v1/auth/oauth/login-with-token
      */
     oAuthLoginWithToken: (
-      data: OAuthLoginWithTokenCommand,
+      data: OAuthLoginWithCodeCommand,
       params: RequestParams = {},
     ) =>
       this.request<

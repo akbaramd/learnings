@@ -46,7 +46,7 @@ pm2 status
 
 echo.
 echo Deployment completed successfully!
-echo Application is running on https://auth.wa-nezam.org
+echo Application is running on http://localhost:5000
 echo.
 echo Useful PM2 commands:
 echo   pm2 status          - Check application status

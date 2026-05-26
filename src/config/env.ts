@@ -52,7 +52,7 @@ function getServerEnv(): ServerEnv {
       '',
       'Make sure you have:',
       '  1. Created .env.local file in the project root',
-      '  2. Added UPSTREAM_API_BASE_URL=https://auth.wa-nezam.org',
+      '  2. Added UPSTREAM_API_BASE_URL=http://localhost:5000',
       '  3. Restarted your Next.js dev server',
       '',
       'You can copy .env.example to .env.local and update the values.',

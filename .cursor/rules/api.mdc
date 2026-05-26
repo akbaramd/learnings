@@ -94,13 +94,13 @@ catch (error) {
 
 ### ❌ Environment Variables
 - **NEVER use `NEXT_PUBLIC_API_BASE_URL` in API routes**
-- **NEVER hardcode URLs like `'https://auth.wa-nezam.org'`**
+- **NEVER hardcode URLs like `'http://localhost:5000'`**
 - **ALWAYS use `UPSTREAM_API_BASE_URL`**
 
 ```typescript
 // ❌ WRONG
 const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
-const baseURL = 'https://auth.wa-nezam.org';
+const baseURL = 'http://localhost:5000';
 
 // ✅ CORRECT
 const api = createApiInstance(req); // Uses UPSTREAM_API_BASE_URL

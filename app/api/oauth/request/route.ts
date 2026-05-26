@@ -18,7 +18,9 @@ function bufferToBase64Url(buffer: ArrayBuffer): string {
 function generateRandomBase64Url(length: number): string {
     const array = new Uint8Array(length);
     crypto.getRandomValues(array);
-    return bufferToBase64Url(array);
+
+    // اصلاح: دسترسی مستقیم به حافظه خام از طریق ویژگی buffer
+    return bufferToBase64Url(array.buffer);
 }
 
 async function generateCodeChallenge(codeVerifier: string): Promise<string> {
